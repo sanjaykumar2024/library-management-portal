@@ -1,0 +1,58 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Online Reader — {{ ebook.book.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <a href="{% url 'ebooks:detail' ebook.id %}" class="text-decoration-none" style="color: var(--text-secondary);">
+            <i class="bi bi-arrow-left me-1"></i> Back to Details
+        </a>
+        <h3 class="h5 mb-0 mt-2" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-book-half me-2" style="color: var(--accent-primary-hover);"></i>{{ ebook.book.title }}
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            By {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            &bull; {{ ebook.page_count|default:"--" }} pages &bull; {{ ebook.get_rights_status_display }}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" onclick="toggleFullscreen()" class="btn btn-sm btn-outline-secondary" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);" title="Toggle Fullscreen">
+            <i class="bi bi-arrows-fullscreen me-1"></i> Fullscreen
+        </button>
+        {% if ebook.access_mode == 'READ_AND_DOWNLOAD' %}
+        <a href="{% url 'ebooks:download' ebook.id %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);">
+            <i class="bi bi-download me-1"></i> Download PDF
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Embedded PDF Reader Container -->
+<div id="readerContainer" class="glass-card p-2 mb-4 overflow-hidden position-relative" style="background: rgba(15, 23, 42, 0.95); border-color: rgba(99, 102, 241, 0.3);">
+    <div class="ratio ratio-16x9 position-relative" style="min-height: 80vh;">
+        <iframe id="pdfFrame" src="{{ stream_url }}#toolbar=1&navpanes=0" title="{{ ebook.book.title }}" class="w-100 h-100" style="border: none; border-radius: var(--radius-sm); background: #ffffff;"></iframe>
+    </div>
+</div>
+
+<!-- Reader Footer Notice -->
+<div class="p-3 glass-card d-flex align-items-center justify-content-between">
+    <div class="small" style="color: var(--text-muted);">
+        <i class="bi bi-shield-check me-1" style="color: var(--accent-primary-hover);"></i>
+        Protected Digital Stream &bull; Licence: {{ ebook.get_rights_status_display }}
+    </div>
+    <a href="{% url 'ebooks:catalog' %}" class="btn btn-sm btn-outline-secondary" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);">Close Reader</a>
+</div>
+
+<script>
+function toggleFullscreen() {
+    const elem = document.getElementById("readerContainer");
+    if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) elem.requestFullscreen();
+        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+    } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+    }
+}
+</script>
+{% endblock %}

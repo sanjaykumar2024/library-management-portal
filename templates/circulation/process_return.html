@@ -1,0 +1,70 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Process Return{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'circulation:return_list' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Active Loans</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="glass-card mb-4">
+            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
+                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Confirm Book Return</h5>
+            </div>
+            
+            <div class="p-4 p-md-5">
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="p-4" style="background: rgba(0,0,0,0.15); border-radius: var(--radius-md); border: 1px solid var(--glass-border); height: 100%;">
+                            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Book Details</h6>
+                            <div class="fw-medium fs-5 mb-1" style="color: var(--text-primary);">{{ loan.book_copy.book.title }}</div>
+                            <div style="color: var(--text-muted);">{{ loan.book_copy.book.author }}</div>
+                            <div class="mt-3 small" style="color: var(--text-secondary);">Accession: <span class="font-monospace text-white">{{ loan.book_copy.accession_number }}</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="p-4" style="background: rgba(0,0,0,0.15); border-radius: var(--radius-md); border: 1px solid var(--glass-border); height: 100%;">
+                            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Member Details</h6>
+                            <div class="fw-medium fs-5 mb-1" style="color: var(--text-primary);">{{ loan.member.user.get_full_name|default:loan.member.user.username }}</div>
+                            <div style="color: var(--text-muted);">{{ loan.member.user.email }}</div>
+                            <div class="mt-3 small" style="color: var(--text-secondary);">ID: <span class="font-monospace text-white">{{ loan.member.membership_number }}</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mb-4">
+                    <p style="color: var(--text-primary);">Are you sure you want to process the return for this loan?</p>
+                    <p class="small" style="color: var(--text-muted);">This action will mark the book as available and generate any applicable overdue fines.</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3 mb-4 text-start">
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase" style="color: var(--text-muted);">Returned Copy Status</label>
+                            <select name="copy_status" class="form-select">
+                                <option value="AVAILABLE">Available (Good Condition)</option>
+                                <option value="DAMAGED">Damaged (Requires Repair / Maintenance)</option>
+                                <option value="LOST">Lost (Charge $25.00 Replacement Fee)</option>
+                                <option value="MAINTENANCE">Maintenance (Remove from Shelf)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase" style="color: var(--text-muted);">Condition Notes (Optional)</label>
+                            <input type="text" name="condition_notes" class="form-control" placeholder="e.g. Spine damaged, missing cover page...">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'circulation:return_list' %}" class="btn btn-outline-secondary px-4" style="color: var(--text-secondary); border-color: rgba(255,255,255,0.2);">Cancel</a>
+                        <button type="submit" class="btn btn-success px-5"><i class="bi bi-check-circle me-1"></i> Confirm Return</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

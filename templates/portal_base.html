@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LibrarySphere Portal{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+          rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="portal-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="portal-sidebar" id="portalSidebar">
+            <div class="d-flex align-items-center mb-5 px-2">
+                <svg class="brand-logo-svg me-2" style="width: 32px; height: 32px;" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="19" stroke="#6366F1" stroke-width="2"/>
+                    <path d="M12 26V14C12 12.8954 12.8954 12 14 12H20C21.1046 12 22 12.8954 22 14V26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M22 14H26C27.1046 14 28 14.8954 28 16V26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="12" y1="26" x2="28" y2="26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M15 16H19" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M15 20H19" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span class="brand-name m-0">LibrarySphere</span>
+            </div>
+
+            <nav class="nav flex-column flex-grow-1">
+                <a class="nav-link {% if request.resolver_match.view_name == 'core:dashboard' or 'dashboard' in request.path %}active{% endif %}" href="{% url 'core:dashboard' %}">
+                    <i class="bi bi-grid"></i> Dashboard
+                </a>
+                <a class="nav-link {% if request.resolver_match.view_name == 'catalog:list' %}active{% endif %}" href="{% url 'catalog:list' %}">
+                    <i class="bi bi-search"></i> Catalog Search
+                </a>
+                <a class="nav-link {% if 'ebooks' in request.path and 'manage' not in request.path and 'upload' not in request.path and 'edit' not in request.path and 'reports' not in request.path %}active{% endif %}" href="{% url 'ebooks:catalog' %}">
+                    <i class="bi bi-book-half"></i> E-Book Library
+                </a>
+
+                {% if not user.profile.is_librarian and not user.profile.is_admin %}
+                <a class="nav-link {% if 'reservations' in request.path %}active{% endif %}" href="{% url 'reservations:my_reservations' %}">
+                    <i class="bi bi-bookmark-heart"></i> My Reservations
+                </a>
+                <a class="nav-link {% if 'ebooks/history' in request.path %}active{% endif %}" href="{% url 'ebooks:history' %}">
+                    <i class="bi bi-clock-history"></i> Reading History
+                </a>
+                {% endif %}
+                
+                {% if user.profile.is_librarian or user.profile.is_admin %}
+                <div class="mt-4 mb-2 px-3 text-uppercase" style="color: var(--text-muted); font-size: 0.75rem; font-weight: 600; letter-spacing: 1px;">Management</div>
+                {% if user.profile.is_librarian %}
+                <a class="nav-link {% if 'circulation' in request.path %}active{% endif %}" href="{% url 'circulation:dashboard' %}">
+                    <i class="bi bi-journal-bookmark"></i> Circulation
+                </a>
+                <a class="nav-link {% if 'accounts/members' in request.path %}active{% endif %}" href="{% url 'accounts:member_list' %}">
+                    <i class="bi bi-people"></i> Members
+                </a>
+                <a class="nav-link {% if 'reservations/manage' in request.path %}active{% endif %}" href="{% url 'reservations:manage_reservations' %}">
+                    <i class="bi bi-inboxes"></i> Holds & Reservations
+                </a>
+                <a class="nav-link {% if 'ebooks/manage' in request.path or 'ebooks/upload' in request.path or 'ebooks/reports' in request.path %}active{% endif %}" href="{% url 'ebooks:manage' %}">
+                    <i class="bi bi-file-earmark-pdf"></i> E-Book Management
+                </a>
+                <a class="nav-link {% if 'reports' in request.path %}active{% endif %}" href="{% url 'reports:index' %}">
+                    <i class="bi bi-bar-chart-line"></i> Reports & Analytics
+                </a>
+                {% endif %}
+                {% if user.profile.is_admin %}
+                <a class="nav-link" href="/admin/">
+                    <i class="bi bi-gear"></i> System Admin
+                </a>
+                {% endif %}
+                {% endif %}
+            </nav>
+            
+            <div class="mt-auto">
+                <a href="{% url 'core:home' %}" class="nav-link">
+                    <i class="bi bi-house"></i> Public Site
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="portal-main">
+            <!-- Topbar -->
+            <header class="portal-topbar">
+                <div class="d-flex align-items-center">
+                    <button type="button" class="sidebar-toggle me-2" id="sidebarToggle" aria-label="Toggle navigation menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'notifications:list' %}" class="position-relative text-decoration-none {% if unread_notification_count > 0 %}notification-bell-active{% endif %}" style="color: var(--text-primary);" title="Notifications">
+                        <i class="bi bi-bell fs-5"></i>
+                        {% if unread_notification_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" style="background: var(--accent-danger); font-size: 0.65rem;">
+                            {{ unread_notification_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" style="color: var(--text-primary);" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar me-2">
+                            {{ user.username.0|upper }}
+                        </div>
+                        <span class="d-none d-md-block" style="font-weight: 500;">{{ user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                        <li><h6 class="dropdown-header">Logged in as {{ user.profile.get_role_display }}</h6></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Account Settings</a></li>
+                        <li><hr class="dropdown-divider" style="border-color: var(--glass-border);"></li>
+                        <li>
+                            <form action="{% url 'accounts:logout' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item" style="color: var(--accent-danger);">Log Out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="portal-content">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert-message alert-{{ message.tags|default:'info' }}">
+                        <div>
+                            {% if message.tags == 'success' %}<i class="bi bi-check-circle me-2"></i>
+                            {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle me-2"></i>
+                            {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-circle me-2"></i>
+                            {% else %}<i class="bi bi-info-circle me-2"></i>{% endif %}
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('portalSidebar');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (toggleBtn && sidebar && overlay) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('sidebar-open');
+                    overlay.classList.toggle('active');
+                });
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('sidebar-open');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

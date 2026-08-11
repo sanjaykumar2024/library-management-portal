@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Borrowing Receipt #LOAN-{{ loan.id }}</title>
+    <style>
+        body { font-family: monospace, monospace; max-width: 400px; margin: 20px auto; padding: 20px; border: 1px dashed #ccc; font-size: 13px; line-height: 1.5; }
+        .center { text-align: center; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .flex { display: flex; justify-content: space-between; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 15px; text-align: center;">
+        <button onclick="window.print()" style="padding: 8px 16px; cursor: pointer;">🖨️ Print Slip</button>
+    </div>
+    
+    <div class="center">
+        <h2 style="margin: 0;">LIBRARYSPHERE</h2>
+        <div>Public Library System</div>
+        <div>Check-out Slip</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="flex"><span>Loan ID:</span> <span>#{{ loan.id }}</span></div>
+    <div class="flex"><span>Date:</span> <span>{{ loan.issue_date }}</span></div>
+    <div class="flex"><span>Member:</span> <span>{{ loan.member.user.get_full_name|default:loan.member.user.username }}</span></div>
+    <div class="flex"><span>Card #:</span> <span>{{ loan.member.membership_number }}</span></div>
+
+    <div class="divider"></div>
+
+    <div><strong>ITEM ISSUED:</strong></div>
+    <div>Title: {{ loan.book_copy.book.title }}</div>
+    <div>Accession: {{ loan.book_copy.accession_number }}</div>
+    <div>Shelf: {{ loan.book_copy.shelf_location }}</div>
+
+    <div class="divider"></div>
+
+    <div class="flex" style="font-size: 14px; font-weight: bold;">
+        <span>DUE DATE:</span> <span>{{ loan.due_date }}</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="center" style="font-size: 11px; margin-top: 15px;">
+        Please return items on or before the due date.<br>
+        Overdue fine: $5.00/day per item.<br>
+        Thank you for visiting LibrarySphere!
+    </div>
+</body>
+</html>

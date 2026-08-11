@@ -1,0 +1,57 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}My Reading History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-clock-history me-2"></i>My E-Book Reading History
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">Your personal e-book access log.</p>
+    </div>
+    <a href="{% url 'ebooks:catalog' %}" class="btn btn-outline-primary" style="border-color: rgba(99,102,241,0.5);">
+        <i class="bi bi-book-half me-1"></i> Browse E-Books
+    </a>
+</div>
+
+{% if logs %}
+<div class="glass-card overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">E-Book Title</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Action</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-4 py-3">
+                        <a href="{% url 'ebooks:detail' log.ebook.id %}" class="text-decoration-none fw-medium" style="color: var(--text-primary);">{{ log.ebook.book.title }}</a>
+                    </td>
+                    <td class="px-4 py-3">
+                        {% if log.action == 'READ' %}
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);"><i class="bi bi-book-half me-1"></i>Read Online</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);"><i class="bi bi-download me-1"></i>Downloaded</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 small" style="color: var(--text-muted);">{{ log.accessed_at|date:"M d, Y - h:i A" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="glass-card p-5 text-center">
+    <i class="bi bi-journal-x fs-1 d-block mb-3" style="color: var(--text-muted); opacity: 0.4;"></i>
+    <h5 style="color: var(--text-primary);">No Reading History</h5>
+    <p class="small mb-3" style="color: var(--text-muted);">You haven't accessed any e-books yet.</p>
+    <a href="{% url 'ebooks:catalog' %}" class="btn btn-primary"><i class="bi bi-book-half me-1"></i> Browse E-Books</a>
+</div>
+{% endif %}
+{% endblock %}

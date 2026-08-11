@@ -1,0 +1,95 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Book Inventory Report{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'reports:index' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Report Hub</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-box-seam me-2"></i>Book Inventory Report
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">Total copies: {{ total_copies }}</p>
+    </div>
+    <a href="{% url 'reports:inventory_csv' %}?category={{ selected_category }}&type={{ selected_type }}&copy_status={{ selected_copy_status }}&q={{ q }}" class="btn btn-outline-primary" style="border-color: rgba(99,102,241,0.5);">
+        <i class="bi bi-download me-1"></i> Export Filtered CSV
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="glass-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-3">
+            <input type="text" name="q" class="form-control" placeholder="Search title / accession..." value="{{ q }}">
+        </div>
+        <div class="col-md-3">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"i" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="type" class="form-select">
+                <option value="">All Formats</option>
+                {% for val, label in book_type_choices %}
+                <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="copy_status" class="form-select">
+                <option value="">All Statuses</option>
+                {% for val, label in copy_status_choices %}
+                <option value="{{ val }}" {% if selected_copy_status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+        </div>
+    </form>
+</div>
+
+<!-- Data Table -->
+<div class="glass-card overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Accession #</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Book Title</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Category</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Shelf Location</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for copy in copies %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-4 py-3 font-monospace small fw-bold">{{ copy.accession_number }}</td>
+                    <td class="px-4 py-3 fw-medium">{{ copy.book.title }}</td>
+                    <td class="px-4 py-3 small" style="color: var(--text-muted);">{{ copy.book.category.name|default:"Uncategorized" }}</td>
+                    <td class="px-4 py-3 small">{{ copy.shelf_location|default:"--" }}</td>
+                    <td class="px-4 py-3">
+                        {% if copy.status == 'AVAILABLE' %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">Available</span>
+                        {% elif copy.status == 'ISSUED' %}
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">Issued</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: var(--accent-info);">{{ copy.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-4 py-5 text-center text-muted">No physical book copies found matching the specified filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

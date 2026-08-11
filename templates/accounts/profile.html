@@ -1,0 +1,82 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="glass-card mb-4">
+            <div class="p-4 p-md-5">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="user-avatar border-0 me-4" style="width: 80px; height: 80px; font-size: 2.5rem; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); color: var(--text-primary); border-radius: 50%;">
+                        {{ user.username.0|upper }}
+                    </div>
+                    <div>
+                        <h2 class="h3 mb-1" style="color: var(--text-primary); font-weight: 700;">{{ user.get_full_name|default:user.username }}</h2>
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">{{ profile.get_role_display }}</span>
+                    </div>
+                </div>
+                
+                <hr style="border-color: var(--glass-border); margin: 2rem 0;">
+                
+                <h3 class="h6 mb-4 text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Account Details</h3>
+                
+                <div class="mb-4">
+                    <label style="color: var(--text-muted); font-size: 0.875rem;">Username</label>
+                    <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ user.username }}</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label style="color: var(--text-muted); font-size: 0.875rem;">Email Address</label>
+                    <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ user.email|default:"Not provided" }}</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label style="color: var(--text-muted); font-size: 0.875rem;">Phone Number</label>
+                    <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ profile.phone_number|default:"Not provided" }}</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label style="color: var(--text-muted); font-size: 0.875rem;">Member Since</label>
+                    <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ user.date_joined|date:"F j, Y" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="glass-card mb-4" style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); border-color: rgba(99,102,241,0.3);">
+            <div class="p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4" style="border-color: rgba(255,255,255,0.1) !important;">
+                    <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Library Card</h5>
+                    <i class="bi bi-credit-card-2-front fs-3" style="color: var(--accent-primary-hover);"></i>
+                </div>
+                
+                <div class="mb-4">
+                    <label style="color: rgba(255,255,255,0.6); font-size: 0.875rem;">Membership Number</label>
+                    <div class="fs-4 font-monospace letter-spacing-1" style="color: var(--text-primary);">{{ profile.membership_number|default:"Pending" }}</div>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label style="color: rgba(255,255,255,0.6); font-size: 0.875rem;">Status</label>
+                        <div>
+                            {% if profile.membership_status == 'ACTIVE' %}
+                                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Active</span>
+                            {% elif profile.membership_status == 'EXPIRED' %}
+                                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Expired</span>
+                            {% else %}
+                                <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Suspended</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label style="color: rgba(255,255,255,0.6); font-size: 0.875rem;">Valid Thru</label>
+                        <div class="fw-medium" style="color: var(--text-primary);">{{ profile.membership_expiry_date|date:"M j, Y" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

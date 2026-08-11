@@ -1,0 +1,122 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Librarian Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="h5 mb-0" style="color: var(--text-primary); font-weight: 600;">Circulation & Operations</h3>
+    <div class="d-flex gap-2">
+        <a href="{% url 'circulation:issue_book' %}" class="btn btn-primary rounded-pill px-3">
+            <i class="bi bi-plus-circle me-1"></i> Issue Book
+        </a>
+        <a href="{% url 'circulation:return_list' %}" class="btn btn-outline-primary rounded-pill px-3" style="border-color: rgba(99,102,241,0.5);">
+            <i class="bi bi-arrow-return-left me-1"></i> Process Return
+        </a>
+        <a href="{% url 'reports:index' %}" class="btn btn-outline-secondary rounded-pill px-3" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);">
+            <i class="bi bi-bar-chart me-1"></i> Reports
+        </a>
+    </div>
+</div>
+
+<!-- Daily & Circulation Stats -->
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card h-100">
+            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">
+                <i class="bi bi-journal-arrow-up"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ issued_today_count }}</h3>
+                <p>Issued Today</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card h-100">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">
+                <i class="bi bi-journal-arrow-down"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ returned_today_count }}</h3>
+                <p>Returned Today</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card h-100">
+            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
+                <i class="bi bi-book"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ active_loans_count }}</h3>
+                <p>Active Loans ({{ overdue_loans_count }} Overdue)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card h-100">
+            <div class="stat-icon" style="background: rgba(139, 92, 246, 0.2); color: var(--accent-info);">
+                <i class="bi bi-bookmark-check"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ ready_reservations_count }}</h3>
+                <p>Holds Ready ({{ pending_reservations_count }} Pending)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Stats Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100">
+            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;"><i class="bi bi-laptop me-2"></i>E-Book Usage Summary</h6>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="small" style="color: var(--text-muted);">Total E-Books:</span>
+                <span class="fw-bold" style="color: var(--text-primary);">{{ total_ebooks }} ({{ active_ebooks }} Active)</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="small" style="color: var(--text-muted);">Total Reads:</span>
+                <span class="fw-bold" style="color: var(--accent-primary-hover);">{{ total_reads }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+                <span class="small" style="color: var(--text-muted);">Total Downloads:</span>
+                <span class="fw-bold" style="color: var(--accent-success);">{{ total_downloads }}</span>
+            </div>
+            <a href="{% url 'ebooks:manage' %}" class="btn btn-sm btn-outline-primary w-100" style="border-color: rgba(99,102,241,0.5);">Manage E-Books</a>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-8">
+        <div class="glass-card p-4 h-100">
+            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;"><i class="bi bi-clock-history me-2"></i>Recently Added Books</h6>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" style="color: var(--text-primary);">
+                    <thead>
+                        <tr class="text-uppercase small" style="color: var(--text-secondary);">
+                            <th class="py-2 border-0">Title</th>
+                            <th class="py-2 border-0">Author</th>
+                            <th class="py-2 border-0">ISBN</th>
+                            <th class="py-2 border-0">Format</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in recent_books %}
+                        <tr style="border-bottom: 1px solid var(--glass-border);">
+                            <td class="py-2 fw-medium">{{ book.title }}</td>
+                            <td class="py-2 small">{% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                            <td class="py-2 small font-monospace">{{ book.isbn }}</td>
+                            <td class="py-2">
+                                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">{{ book.get_book_type_display }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-3 text-muted">No books added recently.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

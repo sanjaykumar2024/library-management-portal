@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fine Receipt #FINE-{{ fine.id }}</title>
+    <style>
+        body { font-family: monospace, monospace; max-width: 400px; margin: 20px auto; padding: 20px; border: 1px dashed #ccc; font-size: 13px; line-height: 1.5; }
+        .center { text-align: center; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .flex { display: flex; justify-content: space-between; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 15px; text-align: center;">
+        <button onclick="window.print()" style="padding: 8px 16px; cursor: pointer;">🖨️ Print Receipt</button>
+    </div>
+    
+    <div class="center">
+        <h2 style="margin: 0;">LIBRARYSPHERE</h2>
+        <div>Public Library System</div>
+        <div>Official Fine Payment Receipt</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="flex"><span>Receipt #:</span> <span>FINE-{{ fine.id }}</span></div>
+    <div class="flex"><span>Date:</span> <span>{{ fine.created_at|date:"Y-m-d H:i" }}</span></div>
+    <div class="flex"><span>Member:</span> <span>{{ fine.loan.member.user.get_full_name|default:fine.loan.member.user.username }}</span></div>
+    <div class="flex"><span>Card #:</span> <span>{{ fine.loan.member.membership_number }}</span></div>
+
+    <div class="divider"></div>
+
+    <div><strong>DETAILS:</strong></div>
+    <div>Book: {{ fine.loan.book_copy.book.title }}</div>
+    <div>Accession #: {{ fine.loan.book_copy.accession_number }}</div>
+    <div>Overdue Days: {{ fine.overdue_days }}</div>
+    <div>Notes: {{ fine.notes|default:"None" }}</div>
+
+    <div class="divider"></div>
+
+    <div class="flex" style="font-size: 15px; font-weight: bold;">
+        <span>AMOUNT PAID:</span> <span>${{ fine.amount }}</span>
+    </div>
+    <div class="flex"><span>Status:</span> <span>PAID / CLEARED</span></div>
+
+    <div class="divider"></div>
+
+    <div class="center" style="font-size: 11px; margin-top: 15px;">
+        Thank you! All fine obligations for this loan have been settled.<br>
+        LibrarySphere Circulation Desk
+    </div>
+</body>
+</html>

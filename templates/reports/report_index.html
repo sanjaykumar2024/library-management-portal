@@ -1,0 +1,204 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}System Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-bar-chart-line me-2"></i>System Reports & Analytics
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">Comprehensive reports, system analytics, and CSV data export.</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-5">
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: var(--accent-primary-hover);">{{ total_members }}</div>
+            <div class="small" style="color: var(--text-muted);">Registered Members</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: #60a5fa;">{{ total_books }}</div>
+            <div class="small" style="color: var(--text-muted);">Book Titles</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: var(--accent-warning);">{{ active_loans }}</div>
+            <div class="small" style="color: var(--text-muted);">Active Loans ({{ overdue_loans }} Overdue)</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: var(--accent-success);">${{ total_fines|floatformat:2 }}</div>
+            <div class="small" style="color: var(--text-muted);">Pending Fines</div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Grid -->
+<div class="row g-4">
+    <!-- Membership Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">
+                    <i class="bi bi-people fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Membership Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Status, expiry, joining dates</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Detailed list of members with filters by status (Active/Expired/Suspended) and joining date ranges.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:membership' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:membership_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(139, 92, 246, 0.2); color: var(--accent-info);">
+                    <i class="bi bi-box-seam fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Book Inventory Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Copy status, format, locations</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Inventory log of physical copies, accession numbers, shelf locations, and availability statuses.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:inventory' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:inventory_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan & Return Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(59, 130, 246, 0.2); color: #60a5fa;">
+                    <i class="bi bi-journal-arrow-up fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Loan & Return Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Active, returned, and historical loans</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Complete circulation log with issue dates, due dates, return dates, and member activity.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:loans' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:loans_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Books Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(239, 68, 68, 0.2); color: var(--accent-danger);">
+                    <i class="bi bi-exclamation-triangle fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Overdue Books Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Overdue loans & days past due</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Focus list of overdue loans with member contact numbers and overdue duration.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:overdue' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:overdue_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fine Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">
+                    <i class="bi bi-cash-stack fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Fine & Payment Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Pending vs paid fines</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Summary of outstanding and collected overdue fines by member.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:fines' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:fines_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(139, 92, 246, 0.2); color: var(--accent-info);">
+                    <i class="bi bi-bookmark-check fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Reservation Queue Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Pending vs allocated holds</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Track reservation queue positions, allocated books ready for pickup, and expired holds.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:reservations' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:reservations_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- E-Book Usage Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">
+                    <i class="bi bi-laptop fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">E-Book Usage Report</h5>
+                    <span class="small" style="color: var(--text-muted);">Reads, downloads & audit log</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Access history logs for online e-book reading and PDF file downloads.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:ebook_usage' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:ebook_usage_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Books Report Card -->
+    <div class="col-md-6 col-xl-4">
+        <div class="glass-card p-4 h-100 d-flex flex-column">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">
+                    <i class="bi bi-trophy fs-4"></i>
+                </div>
+                <div>
+                    <h5 class="h6 mb-1" style="color: var(--text-primary); font-weight: 600;">Popular Books & E-Books</h5>
+                    <span class="small" style="color: var(--text-muted);">Most borrowed & read titles</span>
+                </div>
+            </div>
+            <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Top ranking physical books by circulation frequency and top digital titles by online access.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports:popular' %}" class="btn btn-sm btn-primary w-100"><i class="bi bi-eye me-1"></i> View Rankings</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

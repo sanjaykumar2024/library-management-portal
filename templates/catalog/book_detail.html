@@ -1,0 +1,109 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Book Details{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'catalog:list' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Catalogue</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4 col-lg-3 mb-4">
+        <div class="book-cover-wrapper" style="border-radius: var(--radius-md); box-shadow: var(--shadow-float); height: auto; aspect-ratio: 2/3;">
+            {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" class="book-cover w-100 h-100 object-fit-cover" alt="{{ book.title }}">
+            {% else %}
+                <div class="book-cover-fallback">
+                    <div class="fallback-title fs-4">{{ book.title }}</div>
+                    <div class="fallback-author fs-6">
+                        {% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-8 col-lg-9">
+        <div class="glass-card h-100 p-4 p-lg-5">
+            <div class="mb-3">
+                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">{{ book.category.name }}</span>
+            </div>
+            <h2 class="mb-2" style="font-size: 2rem;">{{ book.title }}</h2>
+            <h4 class="h5 mb-4" style="color: var(--text-secondary); font-weight: 400;">
+                By {% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </h4>
+            
+            <p class="mb-5 lh-lg" style="color: var(--text-primary); opacity: 0.9;">{{ book.description }}</p>
+            
+            <div class="row mb-5">
+                <div class="col-sm-6 mb-4 mb-sm-0">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Metadata</h6>
+                    <ul class="list-unstyled mb-0 small" style="color: var(--text-muted);">
+                        <li class="mb-2"><span class="d-inline-block" style="width: 80px;">ISBN:</span> <span style="color: var(--text-primary);">{{ book.isbn }}</span></li>
+                        <li class="mb-2"><span class="d-inline-block" style="width: 80px;">Publisher:</span> <span style="color: var(--text-primary);">{{ book.publisher|default:"N/A" }}</span></li>
+                        <li class="mb-2"><span class="d-inline-block" style="width: 80px;">Published:</span> <span style="color: var(--text-primary);">{{ book.publication_year|default:"N/A" }}</span></li>
+                        <li><span class="d-inline-block" style="width: 80px;">Language:</span> <span style="color: var(--text-primary);">{{ book.language }}</span></li>
+                    </ul>
+                </div>
+                
+                <div class="col-sm-6" style="border-left: 1px solid var(--glass-border); padding-left: 1.5rem;">
+                    <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Availability</h6>
+                    
+                    {% if book.book_type == 'PHYSICAL' or book.book_type == 'BOTH' %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="bi bi-book me-2" style="color: var(--text-primary);"></i> 
+                            <span class="fw-medium">Physical Copies</span>
+                        </div>
+                        <span class="small {% if available_physical_copies > 0 %}fw-semibold{% endif %}" style="color: {% if available_physical_copies > 0 %}var(--accent-success){% else %}var(--accent-danger){% endif %};">
+                            {{ available_physical_copies }} of {{ total_physical_copies }} available on shelf
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if book.book_type == 'EBOOK' or book.book_type == 'BOTH' %}
+                    <div>
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="bi bi-laptop me-2" style="color: var(--text-primary);"></i> 
+                            <span class="fw-medium">Digital Edition</span>
+                        </div>
+                        <span class="small fw-semibold" style="color: var(--accent-primary-hover);">
+                            <i class="bi bi-check-circle"></i> Available to read online
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Call to Action Area -->
+            <div class="d-flex flex-wrap gap-3 pt-4" style="border-top: 1px solid var(--glass-border);">
+                {% if book.book_type == 'PHYSICAL' or book.book_type == 'BOTH' %}
+                    {% if user.is_authenticated and not user.profile.is_librarian and not user.profile.is_admin %}
+                    <form method="post" action="{% url 'reservations:reserve_book' book.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-bookmark-plus me-1"></i> Reserve Physical Copy
+                        </button>
+                    </form>
+                    {% elif user.is_authenticated %}
+                    <button class="btn btn-outline-primary" disabled title="Librarians and admins cannot reserve books.">
+                        <i class="bi bi-bookmark-plus me-1"></i> Reserve Physical Copy
+                    </button>
+                    {% else %}
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login to Reserve
+                    </a>
+                    {% endif %}
+                {% endif %}
+                
+                {% if book.book_type == 'EBOOK' or book.book_type == 'BOTH' %}
+                <button class="btn btn-primary" disabled title="E-books are coming in a future update.">
+                    <i class="bi bi-book-half me-1"></i> Read Online Now
+                </button>
+                {% endif %}
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

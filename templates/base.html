@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LibrarySphere — Public Library Membership Management and Book Reservation Tracking Portal with E-Book Access">
+    <title>{% block title %}LibrarySphere{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+          rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg sticky-top" style="background: rgba(10, 10, 15, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--glass-border);">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'core:home' %}">
+                <!-- Abstract Book/Seal SVG -->
+                <svg class="brand-logo-svg me-2" style="width: 36px; height: 36px;" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle cx="20" cy="20" r="19" stroke="#6366F1" stroke-width="2"/>
+                    <path d="M12 26V14C12 12.8954 12.8954 12 14 12H20C21.1046 12 22 12.8954 22 14V26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M22 14H26C27.1046 14 28 14.8954 28 16V26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="12" y1="26" x2="28" y2="26" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M15 16H19" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M15 20H19" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <div>
+                    <span class="brand-name d-block" style="color: var(--text-primary); font-size: 1.25rem; font-weight: 700;">LibrarySphere</span>
+                    <span class="brand-subtitle d-block" style="color: var(--text-secondary); font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">Public Library Portal</span>
+                </div>
+            </a>
+            <button class="navbar-toggler border-0 shadow-none" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mainNav"
+                    aria-controls="mainNav" aria-expanded="false"
+                    aria-label="Toggle navigation" style="filter: invert(1) grayscale(100%) brightness(200%);">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="{% url 'core:home' %}" style="color: var(--text-primary); font-weight: 500;">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#features" style="color: var(--text-secondary);">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/#how-it-works" style="color: var(--text-secondary);">How It Works</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="{% url 'accounts:login' %}" class="btn btn-primary rounded-pill px-4" role="button">Member Access</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="container mt-3 position-absolute start-50 translate-middle-x" style="z-index: 1050; max-width: 600px;">
+        {% for message in messages %}
+        <div class="glass-card p-3 mb-2 d-flex align-items-center justify-content-between" style="border-left: 4px solid var(--accent-primary);">
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer py-5 mt-5" style="background: rgba(10, 10, 15, 0.5); border-top: 1px solid var(--glass-border);">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-4 mb-md-0">
+                    <span class="footer-brand d-block mb-2" style="font-size: 1.5rem; font-weight: 700; font-family: 'Inter', sans-serif; letter-spacing: -0.02em; color: var(--text-primary);">LibrarySphere</span>
+                    <p class="footer-text mb-0" style="color: var(--text-secondary);">Final Year Project &middot; Library Membership &amp; Reservation Portal</p>
+                    <p class="footer-text mb-0 mt-1 small" style="color: var(--text-muted);">&copy; 2026. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 d-flex justify-content-center justify-content-md-end">
+                    <ul class="footer-links list-inline mb-0">
+                        <li class="list-inline-item me-4"><a href="#" class="text-decoration-none" style="color: var(--text-secondary); transition: color 0.2s;">Privacy</a></li>
+                        <li class="list-inline-item me-4"><a href="#" class="text-decoration-none" style="color: var(--text-secondary); transition: color 0.2s;">Terms</a></li>
+                        <li class="list-inline-item"><a href="#" class="text-decoration-none" style="color: var(--text-secondary); transition: color 0.2s;">Help</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

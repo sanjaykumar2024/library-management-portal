@@ -1,0 +1,120 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Loan Details{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    {% if user.profile.is_librarian %}
+        <a href="{% url 'circulation:dashboard' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Circulation Dashboard</a>
+    {% else %}
+        <a href="{% url 'accounts:profile' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Profile</a>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card h-100">
+            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
+                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Loan Status</h5>
+            </div>
+            <div class="p-4 text-center">
+                {% if loan.status == 'RETURNED' %}
+                    <i class="bi bi-check-circle fs-1 mb-3 d-block" style="color: var(--accent-success);"></i>
+                    <h4 style="color: var(--text-primary);">Returned</h4>
+                    <p class="small" style="color: var(--text-secondary);">Returned on {{ loan.return_date|date:"F j, Y" }}</p>
+                {% else %}
+                    {% if loan.due_date|date:"Y-m-d" < now|date:"Y-m-d" %}
+                        <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block" style="color: var(--accent-danger);"></i>
+                        <h4 style="color: var(--accent-danger);">Overdue</h4>
+                    {% else %}
+                        <i class="bi bi-book fs-1 mb-3 d-block" style="color: var(--accent-primary);"></i>
+                        <h4 style="color: var(--accent-primary);">Active</h4>
+                    {% endif %}
+                    <p class="small" style="color: var(--text-secondary);">Due on {{ loan.due_date|date:"F j, Y" }}</p>
+                    
+                    {% if loan.status == 'ISSUED' %}
+                    <div class="mt-4 pt-4 border-top" style="border-color: var(--glass-border) !important;">
+                        <form method="post" action="{% url 'circulation:renew_book' loan.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-primary w-100 mb-2">Renew Loan ({{ loan.renewal_count }}/2)</button>
+                            <div class="small" style="color: var(--text-muted);">Extends due date by 14 days</div>
+                        </form>
+                        
+                        {% if user.profile.is_librarian %}
+                        <a href="{% url 'circulation:process_return' loan.id %}" class="btn btn-primary w-100 mt-3">Process Return</a>
+                        {% endif %}
+                        <a href="{% url 'circulation:loan_receipt' loan.id %}" target="_blank" class="btn btn-outline-secondary w-100 mt-2" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);">
+                            <i class="bi bi-printer me-1"></i> Print Check-out Slip
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card mb-4">
+            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
+                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Book & Member Info</h5>
+            </div>
+            <div class="p-4">
+                <div class="row g-4 mb-4 border-bottom pb-4" style="border-color: var(--glass-border) !important;">
+                    <div class="col-md-6">
+                        <label class="small text-uppercase fw-bold mb-2" style="color: var(--text-secondary); letter-spacing: 1px;">Book</label>
+                        <div class="fs-5 fw-medium mb-1" style="color: var(--text-primary);">{{ loan.book_copy.book.title }}</div>
+                        <div class="mb-2" style="color: var(--text-muted);">{{ loan.book_copy.book.author }}</div>
+                        <div class="small" style="color: var(--text-secondary);">Accession #: <span class="font-monospace text-white">{{ loan.book_copy.accession_number }}</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-uppercase fw-bold mb-2" style="color: var(--text-secondary); letter-spacing: 1px;">Member</label>
+                        <div class="fs-5 fw-medium mb-1" style="color: var(--text-primary);">{{ loan.member.user.get_full_name|default:loan.member.user.username }}</div>
+                        <div class="mb-2" style="color: var(--text-muted);">{{ loan.member.user.email }}</div>
+                        <div class="small" style="color: var(--text-secondary);">Member #: <span class="font-monospace text-white">{{ loan.member.membership_number }}</span></div>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+                    <div class="col-sm-6">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Issue Date</label>
+                        <div class="fw-medium" style="color: var(--text-primary);">{{ loan.issue_date|date:"F j, Y" }}</div>
+                        <div class="small mt-1" style="color: var(--text-muted);">Issued by: {{ loan.issued_by.username }}</div>
+                    </div>
+                    {% if loan.status == 'RETURNED' %}
+                    <div class="col-sm-6">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Return Details</label>
+                        <div class="fw-medium" style="color: var(--text-primary);">{{ loan.return_date|date:"F j, Y" }}</div>
+                        <div class="small mt-1" style="color: var(--text-muted);">Received by: {{ loan.returned_to.username }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if loan.fine %}
+        <div class="glass-card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--glass-border) !important; background: rgba(239, 68, 68, 0.1);">
+                <h5 class="mb-0" style="color: var(--accent-danger); font-weight: 600;">Fine Information</h5>
+                <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">${{ loan.fine.amount }}</span>
+            </div>
+            <div class="p-4">
+                <div class="row g-4">
+                    <div class="col-sm-4">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Status</label>
+                        <div class="fw-medium" style="color: var(--text-primary);">{{ loan.fine.get_status_display }}</div>
+                    </div>
+                    <div class="col-sm-4">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Overdue Days</label>
+                        <div class="fw-medium" style="color: var(--text-primary);">{{ loan.fine.overdue_days }}</div>
+                    </div>
+                    <div class="col-sm-4">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Generated On</label>
+                        <div class="fw-medium" style="color: var(--text-primary);">{{ loan.fine.created_at|date:"M j, Y" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

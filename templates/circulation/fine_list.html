@@ -1,0 +1,87 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Fine Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-cash-stack me-2"></i>Circulation Fine Management
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">View, collect, and record fine payments for overdue loans.</p>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="glass-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-5">
+            <input type="text" name="q" class="form-control" placeholder="Search by membership #, username, or book..." value="{{ q }}">
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="PENDING" {% if selected_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                <option value="PAID" {% if selected_status == 'PAID' %}selected{% endif %}>Paid</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-filter me-1"></i> Filter</button>
+            <a href="{% url 'circulation:fine_list' %}" class="btn btn-outline-secondary ms-2" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted);">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Fines Table -->
+<div class="glass-card overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Member</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Book Title</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Amount</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Overdue Days</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Status</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Date</th>
+                    <th class="px-4 py-3 small text-uppercase text-end" style="color: var(--text-muted);">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fine in fines %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-4 py-3">
+                        <div class="fw-medium">{{ fine.loan.member.user.get_full_name|default:fine.loan.member.user.username }}</div>
+                        <div class="small font-monospace" style="color: var(--text-muted);">{{ fine.loan.member.membership_number }}</div>
+                    </td>
+                    <td class="px-4 py-3">{{ fine.loan.book_copy.book.title }}</td>
+                    <td class="px-4 py-3 font-monospace fw-bold" style="color: var(--accent-warning);">${{ fine.amount }}</td>
+                    <td class="px-4 py-3 small font-monospace">{{ fine.overdue_days }} days</td>
+                    <td class="px-4 py-3">
+                        {% if fine.status == 'PENDING' %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Pending Payment</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Paid</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 small font-monospace">{{ fine.created_at|date:"Y-m-d" }}</td>
+                    <td class="px-4 py-3 text-end">
+                        {% if fine.status == 'PENDING' %}
+                        <a href="{% url 'circulation:pay_fine' fine.id %}" class="btn btn-sm px-3 py-1" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">
+                            <i class="bi bi-cash me-1"></i>Collect Payment
+                        </a>
+                        {% else %}
+                        <span class="small" style="color: var(--text-muted);"><i class="bi bi-check-circle me-1"></i>Cleared</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-4 py-5 text-center" style="color: var(--text-muted);">No fine records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

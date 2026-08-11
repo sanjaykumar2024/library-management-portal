@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}LibrarySphere — Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section position-relative overflow-hidden pt-5 pb-5">
+    <!-- Background Elements -->
+    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 50%); pointer-events: none; z-index: -1;"></div>
+    
+    <div class="container py-5 mt-4">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0 pe-lg-5 text-center text-lg-start">
+                <span class="d-inline-block mb-3 px-3 py-1 rounded-pill" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); font-size: 0.875rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;">
+                    A smarter way to connect
+                </span>
+                <h1 class="display-4 fw-bold mb-4" style="color: var(--text-primary); line-height: 1.1; letter-spacing: -0.03em;">
+                    Books, memberships, and digital reading—<span style="background: linear-gradient(135deg, #a78bfa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">together.</span>
+                </h1>
+                <p class="lead mb-5" style="color: var(--text-secondary); line-height: 1.6; font-size: 1.25rem;">
+                    Experience a seamless transition between the physical shelves and your digital devices. 
+                    Reserve hardcovers, manage your family's memberships, and instantly access e-books all from one unified portal.
+                </p>
+                <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start mb-5">
+                    <a href="#features" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm" style="font-size: 1.1rem;">Explore the Portal</a>
+                    <a href="#how-it-works" class="btn btn-outline-light rounded-pill px-4 py-2 fw-semibold" style="border-color: rgba(255,255,255,0.2); font-size: 1.1rem;">How It Works</a>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-4 justify-content-center justify-content-lg-start mt-4 pt-4" style="border-top: 1px solid var(--glass-border);">
+                    <div class="d-flex align-items-center" style="color: var(--text-secondary);">
+                        <i class="bi bi-person-badge fs-4 me-2 text-primary"></i> 
+                        <span class="fw-medium small text-uppercase" style="letter-spacing: 0.5px;">3 User Roles</span>
+                    </div>
+                    <div class="d-flex align-items-center" style="color: var(--text-secondary);">
+                        <i class="bi bi-book fs-4 me-2 text-primary"></i> 
+                        <span class="fw-medium small text-uppercase" style="letter-spacing: 0.5px;">Physical + E-Books</span>
+                    </div>
+                    <div class="d-flex align-items-center" style="color: var(--text-secondary);">
+                        <i class="bi bi-clock-history fs-4 me-2 text-primary"></i> 
+                        <span class="fw-medium small text-uppercase" style="letter-spacing: 0.5px;">Live Tracking</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <!-- Abstract Hero Visual Art -->
+                <div class="hero-art-container position-relative w-100" style="aspect-ratio: 1/1;" aria-hidden="true">
+                    <div class="hero-art position-absolute w-100 h-100" style="top:0;left:0;">
+                        
+                        <!-- Floating Glass Card 1 (Book) -->
+                        <div class="glass-card position-absolute shadow-lg" style="width: 200px; height: 280px; top: 10%; left: 15%; transform: rotate(-5deg); z-index: 2; padding: 20px;">
+                            <div class="w-100 h-100 rounded" style="background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2);"></div>
+                        </div>
+                        
+                        <!-- Floating Glass Card 2 (Digital Device) -->
+                        <div class="glass-card position-absolute shadow-lg" style="width: 280px; height: 200px; bottom: 15%; right: 10%; transform: rotate(8deg); z-index: 3; padding: 20px; border-top: 2px solid rgba(255,255,255,0.2);">
+                            <div class="d-flex gap-2 mb-3">
+                                <div class="rounded-circle" style="width:12px; height:12px; background: rgba(239, 68, 68, 0.8);"></div>
+                                <div class="rounded-circle" style="width:12px; height:12px; background: rgba(245, 158, 11, 0.8);"></div>
+                                <div class="rounded-circle" style="width:12px; height:12px; background: rgba(16, 185, 129, 0.8);"></div>
+                            </div>
+                            <div class="rounded" style="height: 10px; width: 60%; background: rgba(255,255,255,0.1); margin-bottom: 12px;"></div>
+                            <div class="rounded" style="height: 10px; width: 40%; background: rgba(255,255,255,0.1); margin-bottom: 24px;"></div>
+                            
+                            <div class="d-flex gap-3 mt-4">
+                                <div class="rounded" style="height: 60px; width: 60px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3);"></div>
+                                <div class="flex-grow-1">
+                                    <div class="rounded mb-2" style="height: 8px; width: 100%; background: rgba(255,255,255,0.1);"></div>
+                                    <div class="rounded mb-2" style="height: 8px; width: 80%; background: rgba(255,255,255,0.1);"></div>
+                                    <div class="rounded" style="height: 8px; width: 50%; background: rgba(255,255,255,0.1);"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Floating Verification Mark -->
+                        <div class="glass-card position-absolute shadow-lg rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; top: 40%; right: 20%; z-index: 4; transform: translateY(-50%); border: 2px solid rgba(16, 185, 129, 0.3);">
+                            <i class="bi bi-check-lg" style="font-size: 2.5rem; color: #10b981;"></i>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section py-5 my-5">
+    <div class="container">
+        <div class="row justify-content-center mb-5 pb-3 text-center">
+            <div class="col-lg-8">
+                <span class="text-primary text-uppercase fw-bold small mb-2 d-inline-block" style="letter-spacing: 1.5px;">Core Capabilities</span>
+                <h2 class="display-5 fw-bold mb-3" style="color: var(--text-primary);">A modern toolkit for readers</h2>
+                <p class="lead" style="color: var(--text-secondary);">
+                    Everything you need to make the most out of your library membership, designed with simplicity and elegance in mind.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Feature 1 -->
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card h-100 p-4 text-center hover-lift">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-4" style="width: 72px; height: 72px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2);">
+                        <i class="bi bi-people fs-2" style="color: var(--accent-primary-hover);"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3" style="color: var(--text-primary);">Membership</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Register online, renew easily, and manage your account details securely. Built with specific access for members, librarians, and admins.</p>
+                </div>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card h-100 p-4 text-center hover-lift">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-4" style="width: 72px; height: 72px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.2);">
+                        <i class="bi bi-bookmark-heart fs-2" style="color: #c4b5fd;"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3" style="color: var(--text-primary);">Reservations</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Search our physical catalogue and reserve books before you visit. Check availability and receive updates instantly.</p>
+                </div>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card h-100 p-4 text-center hover-lift">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-4" style="width: 72px; height: 72px; background: rgba(236, 72, 153, 0.1); border: 1px solid rgba(236, 72, 153, 0.2);">
+                        <i class="bi bi-laptop fs-2" style="color: #f9a8d4;"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3" style="color: var(--text-primary);">Digital Library</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Access our growing collection of digital titles. Read directly in your browser with our integrated PDF viewer.</p>
+                </div>
+            </div>
+            
+            <!-- Feature 4 -->
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card h-100 p-4 text-center hover-lift">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mx-auto mb-4" style="width: 72px; height: 72px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <i class="bi bi-journal-text fs-2" style="color: #6ee7b7;"></i>
+                    </div>
+                    <h3 class="h5 fw-bold mb-3" style="color: var(--text-primary);">Activity Tracking</h3>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">Keep a personal log of your reading history. Track what you've borrowed, when it's due, and review past reads.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="how-it-works-section py-5 position-relative">
+    <div class="container py-5">
+        <div class="row justify-content-center mb-5 pb-4 text-center">
+            <div class="col-lg-6">
+                <h2 class="display-5 fw-bold" style="color: var(--text-primary);">How LibrarySphere works</h2>
+            </div>
+        </div>
+        
+        <div class="row g-5 position-relative">
+            <!-- Connecting Line -->
+            <div class="d-none d-md-block position-absolute" style="top: 25%; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent); z-index: 0;"></div>
+            
+            <!-- Step 1 -->
+            <div class="col-md-4 position-relative z-1">
+                <div class="text-center px-lg-4">
+                    <div class="glass-card rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-lg" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 700; color: var(--accent-primary-hover); border: 2px solid rgba(99, 102, 241, 0.4);">
+                        1
+                    </div>
+                    <h4 class="fw-bold mb-3" style="color: var(--text-primary);">Join as a member</h4>
+                    <p style="color: var(--text-secondary);">Create your online account and get instantly verified to access the full library portal services.</p>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="col-md-4 position-relative z-1">
+                <div class="text-center px-lg-4">
+                    <div class="glass-card rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-lg" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 700; color: var(--accent-primary-hover); border: 2px solid rgba(99, 102, 241, 0.4);">
+                        2
+                    </div>
+                    <h4 class="fw-bold mb-3" style="color: var(--text-primary);">Discover & reserve</h4>
+                    <p style="color: var(--text-secondary);">Browse our extensive catalogue to reserve physical copies or find digital editions available immediately.</p>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="col-md-4 position-relative z-1">
+                <div class="text-center px-lg-4">
+                    <div class="glass-card rounded-circle d-inline-flex align-items-center justify-content-center mb-4 shadow-lg" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 700; color: var(--accent-primary-hover); border: 2px solid rgba(99, 102, 241, 0.4);">
+                        3
+                    </div>
+                    <h4 class="fw-bold mb-3" style="color: var(--text-primary);">Read & track</h4>
+                    <p style="color: var(--text-secondary);">Pick up your physical books or read e-books online while the portal tracks your reading history and due dates.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="cta-section py-5 my-5">
+    <div class="container">
+        <div class="glass-card p-5 text-center shadow-lg position-relative overflow-hidden" style="border: 1px solid rgba(99, 102, 241, 0.3);">
+            <div class="position-absolute w-100 h-100 top-0 start-0" style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); pointer-events: none;"></div>
+            
+            <div class="position-relative z-1 py-4">
+                <h2 class="display-6 fw-bold mb-3" style="color: var(--text-primary);">Ready to start exploring?</h2>
+                <p class="lead mb-4 mx-auto" style="color: var(--text-secondary); max-width: 600px;">
+                    Access to knowledge should be simple. Join our community and discover your next great read today.
+                </p>
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold mt-2 shadow">Become a Member</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

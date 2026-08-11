@@ -1,0 +1,109 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Digital E-Book Library{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-book-half text-indigo-400 me-2"></i>E-Book Collection
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">Explore and read digital library books online securely.</p>
+    </div>
+    {% if user.profile.is_librarian or user.profile.is_admin %}
+    <div>
+        <a href="{% url 'ebooks:upload' %}" class="btn btn-primary me-2"><i class="bi bi-upload me-1"></i> Upload E-Book</a>
+        <a href="{% url 'ebooks:manage' %}" class="btn btn-outline-primary" style="border-color: rgba(99,102,241,0.5);"><i class="bi bi-gear me-1"></i> Manage E-Books</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="glass-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Search</label>
+            <input type="text" name="q" class="form-control" placeholder="Search by title, author, or ISBN..." value="{{ q }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Category</label>
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Rights Status</label>
+            <select name="rights" class="form-select">
+                <option value="">All Rights Statuses</option>
+                {% for val, label in rights_choices %}
+                <option value="{{ val }}" {% if selected_rights == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+        </div>
+    </form>
+</div>
+
+<!-- E-Books Grid -->
+<div class="row g-4">
+    {% for ebook in ebooks %}
+    <div class="col-md-6 col-lg-4 col-xl-3">
+        <div class="glass-card h-100 d-flex flex-column hover-lift p-3 position-relative">
+            <!-- Cover image or fallback -->
+            <div class="book-cover-wrapper mb-3" style="aspect-ratio: 2/3; border-radius: var(--radius-sm); overflow: hidden; background: rgba(0,0,0,0.3);">
+                {% if ebook.book.cover_image %}
+                    <img src="{{ ebook.book.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="{{ ebook.book.title }}">
+                {% else %}
+                    <div class="book-cover-fallback h-100 p-3 d-flex flex-column justify-content-center text-center" style="background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.3));">
+                        <div class="fallback-title fs-5 mb-2">{{ ebook.book.title }}</div>
+                        <div class="fallback-author small" style="color: var(--text-secondary);">
+                            {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="d-flex flex-column flex-grow-1">
+                <div class="d-flex flex-wrap gap-1 mb-2">
+                    <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">E-Book</span>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Read Online</span>
+                    {% if ebook.access_mode == 'READ_AND_DOWNLOAD' %}
+                    <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">Download Available</span>
+                    {% endif %}
+                    {% if not ebook.is_active %}
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Inactive</span>
+                    {% endif %}
+                </div>
+
+                <h5 class="h6 text-truncate mb-1" style="color: var(--text-primary);" title="{{ ebook.book.title }}">{{ ebook.book.title }}</h5>
+                <div class="small text-truncate mb-2" style="color: var(--text-secondary);">
+                    {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+
+                <div class="small mb-3" style="color: var(--text-muted);">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> {{ ebook.page_count|default:"--" }} pages &bull; {{ ebook.get_rights_status_display }}
+                </div>
+
+                <div class="mt-auto pt-2 border-top" style="border-color: var(--glass-border) !important;">
+                    <a href="{% url 'ebooks:detail' ebook.id %}" class="btn btn-sm btn-outline-primary w-100" style="border-color: rgba(99,102,241,0.5);">View & Read</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="glass-card p-5 text-center">
+            <i class="bi bi-journal-x fs-1 d-block mb-3" style="color: var(--text-muted); opacity: 0.4;"></i>
+            <h5 style="color: var(--text-primary);">No E-Books Found</h5>
+            <p class="small mb-0" style="color: var(--text-muted);">No digital books matched your criteria. Try adjusting your search query or filters.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

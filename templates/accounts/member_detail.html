@@ -1,0 +1,108 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Member Details{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'accounts:member_list' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Members</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card">
+            <div class="p-4 text-center border-bottom border-secondary" style="border-color: var(--glass-border) !important;">
+                <div class="user-avatar mx-auto mb-3 border-0 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 3rem; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); color: var(--text-primary); border-radius: 50%;">
+                    {{ member_profile.user.username.0|upper }}
+                </div>
+                <h4 class="mb-1" style="color: var(--text-primary);">{{ member_profile.user.get_full_name|default:member_profile.user.username }}</h4>
+                <div class="mb-3 font-monospace" style="color: var(--text-secondary);">{{ member_profile.membership_number }}</div>
+                
+                {% if member_profile.membership_status == 'ACTIVE' %}
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Active Member</span>
+                {% elif member_profile.membership_status == 'EXPIRED' %}
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Expired</span>
+                {% else %}
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Suspended</span>
+                {% endif %}
+            </div>
+            
+            <div class="p-4">
+                <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Contact Information</h6>
+                <ul class="list-unstyled mb-0 small" style="color: var(--text-muted);">
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-envelope me-3 fs-5" style="color: var(--text-primary);"></i>
+                        <div>
+                            <div style="color: var(--text-secondary);">Email</div>
+                            <div style="color: var(--text-primary);">{{ member_profile.user.email }}</div>
+                        </div>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-telephone me-3 fs-5" style="color: var(--text-primary);"></i>
+                        <div>
+                            <div style="color: var(--text-secondary);">Phone</div>
+                            <div style="color: var(--text-primary);">{{ member_profile.phone_number|default:"Not provided" }}</div>
+                        </div>
+                    </li>
+                    <li class="d-flex align-items-start">
+                        <i class="bi bi-geo-alt me-3 fs-5" style="color: var(--text-primary);"></i>
+                        <div>
+                            <div style="color: var(--text-secondary);">Address</div>
+                            <div style="color: var(--text-primary);">{{ member_profile.address|default:"Not provided"|linebreaksbr }}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'accounts:member_edit' member_profile.pk %}" class="btn btn-outline-primary w-100" style="border-color: rgba(99,102,241,0.5);">
+                <i class="bi bi-pencil me-2"></i> Edit Member Profile
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="glass-card mb-4">
+            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
+                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Membership Details</h5>
+            </div>
+            <div class="p-4">
+                <div class="row g-4 mb-4">
+                    <div class="col-sm-6">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Join Date</label>
+                        <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ member_profile.joining_date|date:"F j, Y" }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label style="color: var(--text-muted); font-size: 0.875rem;">Expiry Date</label>
+                        <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ member_profile.membership_expiry_date|date:"F j, Y" }}</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Admin Notes</label>
+                    {% if member_profile.admin_notes %}
+                        <div class="p-3" style="background: rgba(0,0,0,0.15); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); color: var(--text-primary);">
+                            {{ member_profile.admin_notes|linebreaksbr }}
+                        </div>
+                    {% else %}
+                        <div class="p-3" style="background: rgba(0,0,0,0.1); border-radius: var(--radius-sm); border: 1px dashed var(--glass-border); color: var(--text-muted);">
+                            No administrative notes for this member.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Circulation integration placeholder -->
+        <div class="glass-card">
+            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
+                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Active Loans & Reservations</h5>
+            </div>
+            <div class="p-5 text-center">
+                <i class="bi bi-journal-bookmark fs-1 mb-3" style="color: var(--text-muted); opacity: 0.5;"></i>
+                <p style="color: var(--text-muted);">Circulation history will appear here once the circulation module is complete.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

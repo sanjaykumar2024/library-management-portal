@@ -1,0 +1,18 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}500 - Server Error{% endblock %}
+
+{% block content %}
+<div class="glass-card p-5 text-center my-5" style="max-width: 600px; margin: 0 auto; border-left: 4px solid var(--accent-danger);">
+    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.2); color: var(--accent-danger);">
+        <i class="bi bi-exclamation-octagon fs-1"></i>
+    </div>
+    <h3 class="h4 mb-2" style="color: var(--text-primary); font-weight: 700;">500 — Server Error</h3>
+    <p class="mb-4" style="color: var(--text-muted);">
+        An internal server error occurred while processing your request. Our technical team has been notified. Please try again later.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'core:dashboard' %}" class="btn btn-primary px-4"><i class="bi bi-house me-1"></i> Return to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

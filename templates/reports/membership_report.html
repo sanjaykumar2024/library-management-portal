@@ -1,0 +1,88 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Membership Report{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'reports:index' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Report Hub</a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
+            <i class="bi bi-people me-2"></i>Membership Report
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">Total records: {{ total_count }}</p>
+    </div>
+    <a href="{% url 'reports:membership_csv' %}?status={{ selected_status }}&q={{ q }}&start_date={{ start_date }}&end_date={{ end_date }}" class="btn btn-outline-primary" style="border-color: rgba(99,102,241,0.5);">
+        <i class="bi bi-download me-1"></i> Export Filtered CSV
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="glass-card p-4 mb-4">
+    <form method="GET" class="row g-3">
+        <div class="col-md-3">
+            <input type="text" name="q" class="form-control" placeholder="Search member name / phone..." value="{{ q }}">
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                {% for val, label in status_choices %}
+                <option value="{{ val }}" {% if selected_status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}" title="Joining Start Date">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}" title="Joining End Date">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a href="{% url 'reports:membership' %}" class="btn btn-outline-secondary ms-2" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted);">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Data Table -->
+<div class="glass-card overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Member #</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Full Name</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Email / Phone</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Joining Date</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Expiry Date</th>
+                    <th class="px-4 py-3 small text-uppercase" style="color: var(--text-muted);">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in members %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-4 py-3 font-monospace small fw-bold">{{ m.membership_number }}</td>
+                    <td class="px-4 py-3 fw-medium">{{ m.user.get_full_name|default:m.user.username }}</td>
+                    <td class="px-4 py-3 small" style="color: var(--text-muted);">{{ m.user.email }}<br>{{ m.phone_number }}</td>
+                    <td class="px-4 py-3 small">{{ m.joining_date }}</td>
+                    <td class="px-4 py-3 small">{{ m.membership_expiry_date }}</td>
+                    <td class="px-4 py-3">
+                        {% if m.membership_status == 'ACTIVE' %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">Active</span>
+                        {% elif m.membership_status == 'EXPIRED' %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">Expired</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger);">Suspended</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="px-4 py-5 text-center text-muted">No member records found matching the specified filters.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+# =============================
+# Python
+# =============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# =============================
+# Virtual Environment
+# =============================
+.venv/
+venv/
+ENV/
+
+# =============================
+# Environment Variables
+# =============================
+.env
+
+# =============================
+# Django
+# =============================
+db.sqlite3
+db.sqlite3-journal
+media/
+protected_ebooks/
+staticfiles/
+backups/
+*.log
+
+# =============================
+# IDE / Editor
+# =============================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# =============================
+# OS
+# =============================
+Thumbs.db
+.DS_Store

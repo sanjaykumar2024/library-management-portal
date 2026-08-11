@@ -1,0 +1,81 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}E-Book Usage Report{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'ebooks:manage' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to E-Book Management</a>
+</div>
+
+<h3 class="h5 mb-4" style="color: var(--text-primary); font-weight: 600;">
+    <i class="bi bi-bar-chart me-2"></i>E-Book Usage Report
+</h3>
+
+<!-- Top Read E-Books -->
+{% if top_read_ebooks %}
+<div class="glass-card p-4 mb-4">
+    <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;"><i class="bi bi-trophy me-2"></i>Top E-Books by Access</h6>
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <th class="px-3 py-2 small" style="color: var(--text-muted);">#</th>
+                    <th class="px-3 py-2 small" style="color: var(--text-muted);">Title</th>
+                    <th class="px-3 py-2 small" style="color: var(--text-muted);">Total Reads</th>
+                    <th class="px-3 py-2 small" style="color: var(--text-muted);">Total Downloads</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ebook in top_read_ebooks %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-3 py-2"><span class="badge" style="background: var(--accent-primary);">{{ forloop.counter }}</span></td>
+                    <td class="px-3 py-2 fw-medium">{{ ebook.book.title }}</td>
+                    <td class="px-3 py-2 font-monospace">{{ ebook.read_count }}</td>
+                    <td class="px-3 py-2 font-monospace">{{ ebook.download_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Access Logs -->
+<div class="glass-card overflow-hidden">
+    <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
+        <h6 class="mb-0 text-uppercase small fw-bold" style="color: var(--text-secondary); letter-spacing: 1px;">Recent Access Activity (Last 100)</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <th class="px-4 py-3 small" style="color: var(--text-muted);">User</th>
+                    <th class="px-4 py-3 small" style="color: var(--text-muted);">E-Book</th>
+                    <th class="px-4 py-3 small" style="color: var(--text-muted);">Action</th>
+                    <th class="px-4 py-3 small" style="color: var(--text-muted);">Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td class="px-4 py-3 small">{{ log.user.get_full_name|default:log.user.username }}</td>
+                    <td class="px-4 py-3 small fw-medium">{{ log.ebook.book.title }}</td>
+                    <td class="px-4 py-3">
+                        {% if log.action == 'READ' %}
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">Read</span>
+                        {% else %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">Download</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3 small" style="color: var(--text-muted);">{{ log.accessed_at|date:"M d, Y - h:i A" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-4 py-5 text-center" style="color: var(--text-muted);">No access activity recorded yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

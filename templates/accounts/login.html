@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}LibrarySphere — Member Login{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="glass-card p-5">
+                <div class="text-center mb-4">
+                    <h2 class="mb-2" style="font-weight: 700; color: var(--text-primary);">Welcome Back</h2>
+                    <p style="color: var(--text-secondary);">Sign in to your LibrarySphere account.</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label for="{{ form.username.id_for_label }}" class="form-label" style="color: var(--text-secondary);">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="small mt-1" style="color: var(--accent-danger);">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-5">
+                        <label for="{{ form.password.id_for_label }}" class="form-label" style="color: var(--text-secondary);">Password</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <div class="small mt-1" style="color: var(--accent-danger);">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100 py-2" style="font-weight: 600;">Sign In</button>
+                    
+                    <div class="text-center mt-4 pt-4" style="border-top: 1px solid var(--glass-border);">
+                        <p class="mb-0" style="color: var(--text-muted);">Don't have an account? <a href="{% url 'accounts:register' %}" class="fw-semibold" style="color: var(--accent-primary-hover); text-decoration: none;">Become a member</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add bootstrap form controls class dynamically
+    document.addEventListener("DOMContentLoaded", function() {
+        let inputs = document.querySelectorAll('.glass-card input');
+        inputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}
