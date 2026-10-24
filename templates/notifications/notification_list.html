@@ -38,13 +38,13 @@
             {% if notification.link %}
             <form method="post" action="{% url 'notifications:mark_read' notification.id %}" class="d-inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.4); font-size: 0.8rem;">View Details</button>
+                <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 0.8rem;">View Details</button>
             </form>
             {% endif %}
             {% if not notification.is_read %}
             <form method="post" action="{% url 'notifications:mark_read' notification.id %}" class="d-inline">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted); font-size: 0.8rem;">Dismiss</button>
+                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size: 0.8rem;">Dismiss</button>
             </form>
             {% endif %}
         </div>

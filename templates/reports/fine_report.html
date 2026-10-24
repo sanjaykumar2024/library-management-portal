@@ -12,7 +12,7 @@
         <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
             <i class="bi bi-cash-stack me-2"></i>Fine & Payment Report
         </h3>
-        <p class="small mb-0" style="color: var(--text-muted);">Total fines: {{ total_fines_count }} &bull; Total sum: <span class="fw-bold text-white">${{ total_amount|floatformat:2 }}</span></p>
+        <p class="small mb-0" style="color: var(--text-muted);">Total fines: {{ total_fines_count }} &bull; Total sum: <span class="fw-bold" style="color: var(--text-primary);">₹{{ total_amount|floatformat:2 }}</span></p>
     </div>
     <a href="{% url 'reports:fines_csv' %}?status={{ selected_status }}&q={{ q }}" class="btn btn-outline-primary" style="border-color: rgba(99,102,241,0.5);">
         <i class="bi bi-download me-1"></i> Export Filtered CSV
@@ -34,8 +34,8 @@
             </select>
         </div>
         <div class="col-md-4">
-            <button type="submit" class="btn btn-primary me-2"><i class="bi bi-funnel me-1"></i> Filter</button>
-            <a href="{% url 'reports:fines' %}" class="btn btn-outline-secondary" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted);">Reset</a>
+            <button type="submit" class="btn btn-primary rounded-pill px-3 me-2"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a href="{% url 'reports:fines' %}" class="btn btn-outline-secondary rounded-pill px-3">Reset</a>
         </div>
     </form>
 </div>
@@ -60,7 +60,7 @@
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <td class="px-4 py-3 fw-medium">{{ fine.loan.member.user.get_full_name|default:fine.loan.member.user.username }}</td>
                     <td class="px-4 py-3">{{ fine.loan.book_copy.book.title|default:"N/A" }}</td>
-                    <td class="px-4 py-3 font-monospace fw-bold" style="color: var(--accent-warning);">${{ fine.amount }}</td>
+                    <td class="px-4 py-3 font-monospace fw-bold" style="color: var(--accent-warning);">₹{{ fine.amount }}</td>
                     <td class="px-4 py-3 small font-monospace">{{ fine.overdue_days }} days</td>
                     <td class="px-4 py-3">
                         {% if fine.status == 'PENDING' %}
@@ -76,7 +76,9 @@
                             <i class="bi bi-cash me-1"></i>Pay Fine
                         </a>
                         {% else %}
-                        <span class="small" style="color: var(--text-muted);"><i class="bi bi-check-circle me-1"></i>Cleared</span>
+                        <a href="{% url 'circulation:fine_receipt' fine.id %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" title="Print Official Receipt">
+                            <i class="bi bi-printer me-1"></i>Receipt
+                        </a>
                         {% endif %}
                     </td>
                 </tr>

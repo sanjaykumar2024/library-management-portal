@@ -1,0 +1,16 @@
+{
+  "name": "LibrarySphere — Public Library Portal",
+  "short_name": "LibrarySphere",
+  "description": "Public Library Membership Management, Digital Card & Book Reservation Portal",
+  "start_url": "/accounts/profile/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/book-half.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

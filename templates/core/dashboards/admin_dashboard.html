@@ -1,19 +1,38 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}System Administration{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="h5 mb-0" style="color: var(--text-primary); font-weight: 600;">System Overview</h3>
+    <div>
+        <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 700;">Library Overview</h3>
+        <p class="small text-muted mb-0">Manage books, members, loans, and reservations.</p>
+    </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'reports:index' %}" class="btn btn-outline-primary rounded-pill px-4" style="border-color: rgba(99,102,241,0.5);">
-            <i class="bi bi-bar-chart me-1"></i> System Reports
+        <a href="{% url 'reports:index' %}" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="bi bi-bar-chart me-1"></i> Library Reports
         </a>
         <a href="/admin/" class="btn btn-primary rounded-pill px-4">
-            <i class="bi bi-gear me-2"></i> Django Admin
+            <i class="bi bi-shield-lock me-2"></i> System Admin
         </a>
     </div>
 </div>
+
+<!-- Admin Quick Action Hub -->
+<div class="glass-card p-3 mb-4">
+    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+        <span class="small text-uppercase fw-bold text-muted px-2" style="letter-spacing: 1px;"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Links:</span>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'circulation:dashboard' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-journal-bookmark me-1"></i> Borrow &amp; Return</a>
+            <a href="{% url 'circulation:issue_book' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-box-arrow-up-right me-1"></i> Lend Book</a>
+            <a href="{% url 'accounts:member_list' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-people me-1"></i> Members List</a>
+            <a href="{% url 'reservations:manage_reservations' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-inboxes me-1"></i> Book Holds Queue</a>
+            <a href="{% url 'ebooks:upload' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-cloud-arrow-up me-1"></i> Upload E-Book</a>
+            <a href="{% url 'catalog:list' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3"><i class="bi bi-search me-1"></i> Search Books</a>
+        </div>
+    </div>
+</div>
+
 
 <!-- Primary System Metrics -->
 <div class="row g-4 mb-4">
@@ -167,4 +186,105 @@
         </div>
     </div>
 </div>
+
+<!-- Unified Platform Activity Stream & Audit Log -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle p-2" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">
+                        <i class="bi bi-activity fs-5"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">System Activity Stream & Audit Trail</h5>
+                        <small class="text-muted">Real-time platform operations across circulation, catalog, e-books, and patrons</small>
+                    </div>
+                </div>
+                <a href="/admin/core/activitylog/" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    <i class="bi bi-shield-check me-1"></i> Full Audit Log &rarr;
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-borderless table-sm mb-0 align-middle" style="color: var(--text-primary);">
+                    <thead>
+                        <tr class="border-bottom text-uppercase small" style="border-color: var(--glass-border) !important; color: var(--text-secondary); letter-spacing: 0.5px;">
+                            <th class="ps-3 py-2">Timestamp</th>
+                            <th class="py-2">Action</th>
+                            <th class="py-2">Actor</th>
+                            <th class="py-2">Description</th>
+                            <th class="pe-3 py-2 text-end">Client IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_activities %}
+                        <tr class="border-bottom" style="border-color: rgba(255,255,255,0.04) !important;">
+                            <td class="ps-3 py-3 small text-muted font-monospace" style="white-space: nowrap;">
+                                <i class="bi bi-clock me-1 opacity-75"></i>{{ log.timestamp|date:"M j, H:i" }}
+                            </td>
+                            <td class="py-3">
+                                {% if log.action == 'LOAN_ISSUED' %}
+                                <span class="badge rounded-pill" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                    <i class="bi bi-journal-plus me-1"></i>Issued
+                                </span>
+                                {% elif log.action == 'LOAN_RETURNED' %}
+                                <span class="badge rounded-pill" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    <i class="bi bi-journal-check me-1"></i>Returned
+                                </span>
+                                {% elif log.action == 'LOAN_RENEWED' %}
+                                <span class="badge rounded-pill" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Renewed
+                                </span>
+                                {% elif log.action == 'FINE_PAID' %}
+                                <span class="badge rounded-pill" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                    <i class="bi bi-cash me-1"></i>Fine Paid
+                                </span>
+                                {% elif log.action == 'EBOOK_IMPORTED' %}
+                                <span class="badge rounded-pill" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
+                                    <i class="bi bi-cloud-arrow-down me-1"></i>E-Book Ingest
+                                </span>
+                                {% elif log.action == 'REVIEW_POSTED' %}
+                                <span class="badge rounded-pill" style="background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3);">
+                                    <i class="bi bi-star me-1"></i>Review
+                                </span>
+                                {% elif log.action == 'MEMBERSHIP_UPGRADED' %}
+                                <span class="badge rounded-pill" style="background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid rgba(234, 179, 8, 0.3);">
+                                    <i class="bi bi-award me-1"></i>Tier Upgrade
+                                </span>
+                                {% else %}
+                                <span class="badge rounded-pill bg-secondary text-light">
+                                    {{ log.get_action_display }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 small fw-medium" style="color: var(--text-primary);">
+                                {% if log.user %}
+                                <i class="bi bi-person me-1 text-muted"></i>{{ log.user.get_full_name|default:log.user.username }}
+                                {% else %}
+                                <span class="text-muted"><i class="bi bi-cpu me-1"></i>System</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 small" style="color: var(--text-primary);">
+                                {{ log.description }}
+                            </td>
+                            <td class="pe-3 py-3 text-end small font-monospace text-muted">
+                                {{ log.ip_address|default:"Local" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted small">
+                                <i class="bi bi-clock-history fs-3 d-block mb-2 opacity-50"></i>
+                                No system events recorded yet. Platform activities will automatically stream here.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
+

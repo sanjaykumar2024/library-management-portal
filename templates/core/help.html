@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Help & FAQ — LibrarySphere{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <div class="glass-card p-4 p-md-5">
+        <h2 class="h4 fw-bold mb-4" style="color: var(--text-primary);"><i class="bi bi-question-circle me-2 text-indigo"></i>Help & Frequently Asked Questions</h2>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        How do I register for a library membership?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">Click the <strong style="color: var(--text-primary);">Register</strong> button on the home page. Fill in your username, email, and password. Your membership will be activated immediately with a Standard tier and a unique membership card number.</div>
+                </div>
+            </div>
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        How many books can I borrow at once?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">Standard members can borrow up to <strong style="color: var(--text-primary);">3 books</strong> simultaneously. Premium Scholar members can borrow up to <strong style="color: var(--text-primary);">5 books</strong>. The loan period is 14 days per book with up to 2 renewals allowed.</div>
+                </div>
+            </div>
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        How do reservations work?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">If a book is checked out, click <strong style="color: var(--text-primary);">Join Waitlist</strong> on the book detail page. You'll be placed in a queue. When the book is returned, it's automatically held for the next person in line. You'll receive a notification and have <strong style="color: var(--text-primary);">2 days</strong> to pick it up.</div>
+                </div>
+            </div>
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        How do I read e-books?
+                    </button>
+                </h2>
+                <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">Browse <strong style="color: var(--text-primary);">Online E-Books</strong> or <strong style="color: var(--text-primary);">Free Classic Books</strong> from the navigation menu. Click on any title and press <strong style="color: var(--text-primary);">Read Online Now</strong> to open the reader.</div>
+                </div>
+            </div>
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        What happens if I return a book late?
+                    </button>
+                </h2>
+                <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">A fine of <strong style="color: var(--text-primary);">₹5 per day</strong> is calculated when you return an overdue book. You can view and pay fines through the Borrow & Return page or your dashboard.</div>
+                </div>
+            </div>
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq6" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        How do I update my contact information?
+                    </button>
+                </h2>
+                <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">Navigate to your <strong style="color: var(--text-primary);">My Profile</strong> page from the top-right menu. Click the <strong style="color: var(--text-primary);">Edit Profile</strong> button to update your details.</div>
+                </div>
+            </div>
+            <div class="accordion-item" style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; margin-bottom: 8px;">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq7" style="background: transparent; color: var(--text-primary); box-shadow: none;">
+                        How do I access my Digital Library Card?
+                    </button>
+                </h2>
+                <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body" style="font-size: 0.92rem; color: var(--text-secondary);">Go to your <strong style="color: var(--text-primary);">My Profile</strong> page. Your library card is displayed with your membership number, QR code, and tier. You can print it or scan it at the self-checkout kiosk.</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 p-3 rounded" style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25);">
+            <div class="small" style="color: var(--text-secondary);">
+                <i class="bi bi-info-circle text-indigo me-2"></i>
+                Still need help? Visit the library front desk or email <strong class="text-indigo">help@librarysphere.edu</strong> for assistance.
+            </div>
+        </div>
+        <a href="{% url 'core:home' %}" class="btn btn-outline-primary rounded-pill px-4 mt-4">
+            <i class="bi bi-arrow-left me-1"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

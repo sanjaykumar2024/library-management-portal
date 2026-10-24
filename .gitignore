@@ -49,3 +49,9 @@ backups/
 # =============================
 Thumbs.db
 .DS_Store
+
+# Temporary test files
+test_*.docx
+test_*.html
+*.bak
+test_db.sqlite3

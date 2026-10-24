@@ -1,0 +1,696 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Quick Self-Checkout Station{% endblock %}
+
+{% block content %}
+<!-- Include html5-qrcode library for camera barcode/QR scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<div class="kiosk-container py-3">
+    <!-- Top Kiosk Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <div class="badge rounded-pill bg-indigo text-uppercase px-3 py-1 mb-2" style="font-size: 0.75rem; letter-spacing: 1px;">
+                <i class="bi bi-broadcast me-1"></i> Quick Checkout Station #01
+            </div>
+            <h2 class="h3 mb-1 fw-bold" style="color: var(--text-primary);">
+                <i class="bi bi-qr-code-scan text-indigo me-2"></i>Quick Self-Checkout Station
+            </h2>
+            <p class="small text-muted mb-0">
+                Scan your library card QR code or enter your ID, scan book barcodes, and borrow books instantly.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="resetKiosk()">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Station
+            </button>
+            <a href="{% url 'circulation:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-door-open me-1"></i> Exit Checkout
+            </a>
+        </div>
+    </div>
+
+    <!-- Step Indicator Progress Bar -->
+    <div class="row g-2 mb-4 text-center">
+        <div class="col-4">
+            <div id="stepPill1" class="glass-card p-3 rounded-4 border-indigo active-pill" style="cursor: pointer;" onclick="if(currentMember) setStep(1)">
+                <div class="small text-uppercase fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 1px;">Step 1</div>
+                <div class="fw-semibold" style="color: var(--text-primary);"><i class="bi bi-person-badge me-1"></i> Member ID</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div id="stepPill2" class="glass-card p-3 rounded-4" style="opacity: 0.5; cursor: pointer;" onclick="if(currentMember) setStep(2)">
+                <div class="small text-uppercase fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 1px;">Step 2</div>
+                <div class="fw-semibold" style="color: var(--text-primary);"><i class="bi bi-upc-scan me-1"></i> Scan Books</div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div id="stepPill3" class="glass-card p-3 rounded-4" style="opacity: 0.5;">
+                <div class="small text-uppercase fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 1px;">Step 3</div>
+                <div class="fw-semibold" style="color: var(--text-primary);"><i class="bi bi-check2-circle me-1"></i> Borrow & Receipt</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN INTERACTIVE WORKSPACE -->
+    <div class="row g-4">
+        <!-- LEFT COLUMN: SCANNER & ACTIVE STAGE -->
+        <div class="col-lg-7">
+            <!-- STAGE 1: PATRON IDENTIFICATION -->
+            <div id="stagePatron" class="glass-card p-4 p-md-5 rounded-4 shadow-lg mb-4">
+                <div class="text-center mb-4">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px; background: rgba(99,102,241,0.2); border: 2px solid rgba(99,102,241,0.4);">
+                        <i class="bi bi-person-vcard fs-1 text-indigo"></i>
+                    </div>
+                    <h4 class="fw-bold mb-1" style="color: var(--text-primary);">Scan or Enter Library Card</h4>
+                    <p class="small text-muted mb-0">Show your library QR code to the camera, or enter your member number below.</p>
+                </div>
+
+                {% if current_user_profile %}
+                <!-- Logged In User 1-Click Fast Identification -->
+                <div class="p-3 mb-4 rounded-4 text-center" style="background: rgba(99,102,241,0.1); border: 1.5px dashed rgba(99,102,241,0.4);">
+                    <div class="small text-muted mb-2">You are currently logged in as:</div>
+                    <div class="fw-bold mb-2" style="color: var(--text-primary); font-size: 1.05rem;">
+                        {{ current_user_profile.user.get_full_name|default:current_user_profile.user.username }}
+                        <span class="badge bg-indigo ms-1 font-monospace">{{ current_user_profile.membership_number }}</span>
+                    </div>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="lookupMember('{{ current_user_profile.membership_number }}')">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Continue with My Account
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- Camera Scanner Toggle & Frame -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-semibold text-muted text-uppercase" style="letter-spacing: 0.5px;">Webcam Scanner</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="btnToggleCameraPatron" onclick="toggleCameraScanner('qrReaderPatron', 'btnToggleCameraPatron', handlePatronScanSuccess)">
+                            <i class="bi bi-camera me-1"></i> <span id="cameraBtnTextPatron">Start Camera</span>
+                        </button>
+                    </div>
+                    <div id="cameraContainerPatron" class="d-none position-relative overflow-hidden rounded-4 border mb-3" style="border-color: rgba(99,102,241,0.3); background: #0b0f19; min-height: 240px;">
+                        <div id="qrReaderPatron" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <!-- Manual Input -->
+                <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing: 0.5px;">Manual Member ID / Username</label>
+                <div class="input-group input-group-lg mb-3">
+                    <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-credit-card-2-front"></i></span>
+                    <input type="text" id="manualMemberInput" class="form-control border-start-0" placeholder="e.g. LIB-2026-56042 or member" onkeypress="if(event.key==='Enter') lookupMember(this.value)">
+                    <button class="btn btn-primary px-4" type="button" id="btnIdentify" onclick="lookupMember(document.getElementById('manualMemberInput').value)">
+                        Identify <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+
+                <!-- Quick Test Demo Chips -->
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="small text-muted">Quick Demo IDs:</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 font-monospace" style="font-size: 0.78rem;" onclick="lookupMember('member')">
+                        <i class="bi bi-person-fill text-indigo me-1"></i> member
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 font-monospace" style="font-size: 0.78rem;" onclick="lookupMember('alice_smith')">
+                        <i class="bi bi-person-fill text-info me-1"></i> alice_smith
+                    </button>
+                    {% if sample_members %}
+                        {% for sm in sample_members %}
+                            {% if sm.user.username != 'member' and sm.user.username != 'alice_smith' %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 font-monospace" style="font-size: 0.78rem;" onclick="lookupMember('{{ sm.membership_number }}')">
+                                <i class="bi bi-person-fill text-success me-1"></i> {{ sm.user.username }}
+                            </button>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div id="patronErrorAlert" class="alert alert-danger d-none rounded-3 small mt-3"></div>
+            </div>
+
+            <!-- STAGE 2: BOOK SCANNING -->
+            <div id="stageBooks" class="glass-card p-4 p-md-5 rounded-4 shadow-lg mb-4 d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color: var(--text-primary);">
+                            <i class="bi bi-upc-scan text-indigo me-2"></i>Scan Book Barcodes
+                        </h4>
+                        <div class="small text-muted">Scan or enter book accession barcode / ISBN</div>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" id="btnToggleCameraBook" onclick="toggleCameraScanner('qrReaderBook', 'btnToggleCameraBook', handleBookScanSuccess)">
+                        <i class="bi bi-camera me-1"></i> <span id="cameraBtnTextBook">Start Camera</span>
+                    </button>
+                </div>
+
+                <!-- Book Camera Scanner Box (Optional toggle) -->
+                <div id="cameraContainerBook" class="d-none position-relative mb-4 overflow-hidden rounded-4 border" style="border-color: rgba(99,102,241,0.3); background: #0b0f19; min-height: 220px;">
+                    <div id="qrReaderBook" style="width: 100%;"></div>
+                </div>
+
+                <!-- Manual Accession / ISBN Input -->
+                <div class="input-group input-group-lg mb-3">
+                    <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-upc"></i></span>
+                    <input type="text" id="manualBookInput" class="form-control border-start-0" placeholder="Enter Book Barcode (e.g. LIB-1002) or Title" onkeypress="if(event.key==='Enter') lookupBook(this.value)">
+                    <button class="btn btn-primary px-4" type="button" id="btnAddBook" onclick="lookupBook(document.getElementById('manualBookInput').value)">
+                        <i class="bi bi-plus-lg me-1"></i> Add Book
+                    </button>
+                </div>
+
+                <!-- Available Books Demo Quick Pick Chips -->
+                <div class="mb-3">
+                    <div class="small text-muted mb-2">Click to quickly add available test copies:</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 text-truncate" style="font-size: 0.78rem; max-width: 260px;" onclick="lookupBook('LIB-1002')">
+                            <i class="bi bi-plus-circle me-1"></i> LIB-1002 (Echoes of Antiquity)
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 text-truncate" style="font-size: 0.78rem; max-width: 260px;" onclick="lookupBook('LIB-1004')">
+                            <i class="bi bi-plus-circle me-1"></i> LIB-1004 (Pride and Prejudice)
+                        </button>
+                        {% for sc in sample_copies %}
+                            {% if sc.accession_number != 'LIB-1002' and sc.accession_number != 'LIB-1004' %}
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 text-truncate" style="font-size: 0.78rem; max-width: 260px;" onclick="lookupBook('{{ sc.accession_number }}')">
+                                <i class="bi bi-plus-circle me-1"></i> {{ sc.accession_number }} ({{ sc.book.title|truncatechars:18 }})
+                            </button>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div id="bookErrorAlert" class="alert alert-danger d-none rounded-3 small"></div>
+            </div>
+
+            <!-- STAGE 3: CHECKOUT SUCCESS -->
+            <div id="stageSuccess" class="glass-card p-4 p-md-5 rounded-4 shadow-lg text-center mb-4 d-none">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; background: rgba(16,185,129,0.2); border: 2px solid rgba(16,185,129,0.5);">
+                    <i class="bi bi-check-lg fs-1 text-success"></i>
+                </div>
+                <h3 class="fw-bold mb-2" style="color: var(--text-primary);">Books Borrowed Successfully!</h3>
+                <p class="text-muted mb-4">Books have been issued to your library account. Please return them on or before the due date.</p>
+
+                <div id="successLoansList" class="text-start mb-4"></div>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i> Print Receipt
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="resetKiosk()">
+                        <i class="bi bi-check-circle me-1"></i> Finish / Next Member
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: PATRON SUMMARY & CART -->
+        <div class="col-lg-5">
+            <!-- Patron Badge Card -->
+            <div class="glass-card p-4 rounded-4 mb-4" id="patronBadgeCard" style="border: 2px solid rgba(99,102,241,0.2);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-uppercase small fw-bold mb-0 text-muted" style="letter-spacing: 1px;">Member Details</h6>
+                    <span id="patronStatusBadge" class="badge bg-secondary">Awaiting Scan</span>
+                </div>
+
+                <div id="patronInfoEmpty" class="text-center py-4 text-muted">
+                    <i class="bi bi-person-x fs-2 d-block mb-2 opacity-50"></i>
+                    No member identified yet. Enter or scan card ID to begin.
+                </div>
+
+                <div id="patronInfoActive" class="d-none">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 text-white" style="width: 52px; height: 52px; background: linear-gradient(135deg, #4F46E5, #06B6D4);" id="patronAvatar">
+                            U
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold" style="color: var(--text-primary);" id="patronName">Member Name</h5>
+                            <div class="font-monospace small text-muted" id="patronId">LIB-2026-00000</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 text-center pt-3 border-top" style="border-color: var(--glass-border) !important;">
+                        <div class="col-4">
+                            <div class="small text-muted" style="font-size: 0.68rem;">TIER</div>
+                            <div class="small fw-bold" style="color: var(--text-primary);" id="patronTier">Student</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted" style="font-size: 0.68rem;">BORROWED</div>
+                            <div class="small fw-bold" style="color: var(--text-primary);" id="patronActiveLoans">0</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted" style="font-size: 0.68rem;">AVAILABLE</div>
+                            <div class="small fw-bold text-success" id="patronQuota">3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanned Books Cart Card -->
+            <div class="glass-card p-4 rounded-4" style="border: 2px solid rgba(99,102,241,0.2);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-uppercase small fw-bold mb-0 text-muted" style="letter-spacing: 1px;">
+                        Scanned Items (<span id="cartCount">0</span>)
+                    </h6>
+                    <button type="button" class="btn btn-link text-danger btn-sm p-0 text-decoration-none d-none" id="clearCartBtn" onclick="clearCart()">
+                        Clear All
+                    </button>
+                </div>
+
+                <!-- Empty Cart State -->
+                <div id="cartEmptyState" class="text-center py-4 text-muted">
+                    <i class="bi bi-cart-x fs-2 d-block mb-2 opacity-50"></i>
+                    No books scanned for checkout yet.
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cartItemsList" class="d-flex flex-column gap-2 mb-3"></div>
+
+                <!-- Checkout Action Button -->
+                <button type="button" id="btnCheckout" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3" onclick="submitCheckout()" disabled>
+                    <i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (<span id="checkoutTotalCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.active-pill {
+    border-color: #6366F1 !important;
+    background: rgba(99, 102, 241, 0.2) !important;
+    opacity: 1 !important;
+}
+</style>
+
+<script>
+// ── Web Audio API Feedback Sounds (Lazy Initialization) ──────────────────────────
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            return null;
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+}
+
+function playBeep(freq = 880, type = 'sine', duration = 0.12) {
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+}
+
+function playSuccessChime() {
+    playBeep(523.25, 'sine', 0.1);
+    setTimeout(() => playBeep(659.25, 'sine', 0.1), 100);
+    setTimeout(() => playBeep(783.99, 'sine', 0.2), 200);
+}
+
+function playErrorTone() {
+    playBeep(220, 'sawtooth', 0.25);
+}
+
+// ── State Management ─────────────────────────────────────────────────────────
+let currentMember = null;
+let scannedCopies = [];
+let html5QrCodeScanner = null;
+let currentScannerElement = null;
+
+// ── Step Navigation ──────────────────────────────────────────────────────────
+function setStep(step) {
+    document.getElementById('stepPill1').classList.toggle('active-pill', step >= 1);
+    document.getElementById('stepPill2').classList.toggle('active-pill', step >= 2);
+    document.getElementById('stepPill3').classList.toggle('active-pill', step >= 3);
+
+    document.getElementById('stagePatron').classList.toggle('d-none', step !== 1);
+    document.getElementById('stageBooks').classList.toggle('d-none', step !== 2);
+    document.getElementById('stageSuccess').classList.toggle('d-none', step !== 3);
+}
+
+// ── Camera Scanner ───────────────────────────────────────────────────────────
+function toggleCameraScanner(elementId, btnId, successCallback) {
+    if (html5QrCodeScanner && currentScannerElement === elementId) {
+        stopCameraScanner();
+        return;
+    }
+    startCameraScanner(elementId, successCallback);
+}
+
+function startCameraScanner(elementId, successCallback) {
+    stopCameraScanner();
+
+    if (typeof Html5Qrcode === 'undefined') {
+        alert("Camera scanner library is not loaded. Please enter barcode manually.");
+        return;
+    }
+
+    const containerId = elementId === 'qrReaderPatron' ? 'cameraContainerPatron' : 'cameraContainerBook';
+    const container = document.getElementById(containerId);
+    if (container) container.classList.remove('d-none');
+
+    const btnTextId = elementId === 'qrReaderPatron' ? 'cameraBtnTextPatron' : 'cameraBtnTextBook';
+    const btnText = document.getElementById(btnTextId);
+    if (btnText) btnText.textContent = "Stop Camera";
+
+    currentScannerElement = elementId;
+
+    try {
+        html5QrCodeScanner = new Html5Qrcode(elementId);
+        html5QrCodeScanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: { width: 250, height: 180 } },
+            (decodedText) => {
+                playBeep(1200, 'sine', 0.08);
+                successCallback(decodedText);
+            },
+            () => {}
+        ).catch(err => {
+            console.warn("Unable to access camera:", err);
+            stopCameraScanner();
+            const errorEl = document.getElementById(elementId === 'qrReaderPatron' ? 'patronErrorAlert' : 'bookErrorAlert');
+            if (errorEl) {
+                errorEl.textContent = "Webcam not available or permission denied. Please type barcode/ID manually below.";
+                errorEl.classList.remove('d-none');
+            }
+        });
+    } catch(err) {
+        console.warn("Camera init exception:", err);
+        stopCameraScanner();
+    }
+}
+
+function stopCameraScanner() {
+    if (html5QrCodeScanner) {
+        try {
+            html5QrCodeScanner.stop().then(() => {
+                try { html5QrCodeScanner.clear(); } catch(e) {}
+            }).catch(() => {});
+        } catch(e) {}
+        html5QrCodeScanner = null;
+    }
+    if (currentScannerElement) {
+        const containerId = currentScannerElement === 'qrReaderPatron' ? 'cameraContainerPatron' : 'cameraContainerBook';
+        const container = document.getElementById(containerId);
+        if (container) container.classList.add('d-none');
+
+        const btnTextId = currentScannerElement === 'qrReaderPatron' ? 'cameraBtnTextPatron' : 'cameraBtnTextBook';
+        const btnText = document.getElementById(btnTextId);
+        if (btnText) btnText.textContent = "Start Camera";
+
+        currentScannerElement = null;
+    }
+}
+
+// ── Member Identification ────────────────────────────────────────────────────
+function handlePatronScanSuccess(decodedText) {
+    let memberId = (decodedText || '').trim();
+    try {
+        const parsed = JSON.parse(decodedText);
+        if (parsed.membership_number) memberId = parsed.membership_number;
+    } catch(e) {}
+    lookupMember(memberId);
+}
+
+function lookupMember(query) {
+    query = (query || '').trim();
+    if (!query) return;
+
+    const errorEl = document.getElementById('patronErrorAlert');
+    errorEl.classList.add('d-none');
+
+    const btnIdentify = document.getElementById('btnIdentify');
+    btnIdentify.disabled = true;
+    btnIdentify.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Verifying...`;
+
+    fetch(`/circulation/api/kiosk/lookup-member/?q=${encodeURIComponent(query)}`)
+        .then(r => r.json())
+        .then(data => {
+            btnIdentify.disabled = false;
+            btnIdentify.innerHTML = `Identify <i class="bi bi-arrow-right ms-1"></i>`;
+
+            if (!data.success) {
+                playErrorTone();
+                errorEl.textContent = data.error;
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            if (!data.member.can_borrow) {
+                playErrorTone();
+                errorEl.textContent = `Borrowing Blocked: ${data.member.block_reason}`;
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            playSuccessChime();
+            currentMember = data.member;
+
+            // Update Patron Badge
+            document.getElementById('patronInfoEmpty').classList.add('d-none');
+            document.getElementById('patronInfoActive').classList.remove('d-none');
+            document.getElementById('patronName').textContent = currentMember.name;
+            document.getElementById('patronId').textContent = currentMember.membership_number;
+            document.getElementById('patronAvatar').textContent = currentMember.name.charAt(0).toUpperCase();
+            document.getElementById('patronTier').textContent = currentMember.tier;
+            document.getElementById('patronActiveLoans').textContent = currentMember.active_loans_count;
+            document.getElementById('patronQuota').textContent = currentMember.remaining_quota;
+            document.getElementById('patronStatusBadge').className = 'badge bg-success';
+            document.getElementById('patronStatusBadge').textContent = 'VERIFIED ACTIVE';
+
+            stopCameraScanner();
+            setStep(2);
+            document.getElementById('manualBookInput').focus();
+        })
+        .catch(() => {
+            btnIdentify.disabled = false;
+            btnIdentify.innerHTML = `Identify <i class="bi bi-arrow-right ms-1"></i>`;
+            playErrorTone();
+            errorEl.textContent = "Server communication error. Please try again.";
+            errorEl.classList.remove('d-none');
+        });
+}
+
+// ── Book Scanning ────────────────────────────────────────────────────────────
+function handleBookScanSuccess(barcode) {
+    barcode = (barcode || '').trim();
+    if (scannedCopies.some(c => c.accession_number.toLowerCase() === barcode.toLowerCase())) {
+        playBeep(440, 'triangle', 0.1);
+        return;
+    }
+    lookupBook(barcode);
+}
+
+function lookupBook(barcode) {
+    barcode = (barcode || '').trim();
+    if (!barcode) return;
+
+    const errorEl = document.getElementById('bookErrorAlert');
+    errorEl.classList.add('d-none');
+
+    if (!currentMember) {
+        alert("Please identify member first.");
+        setStep(1);
+        return;
+    }
+
+    // Check quota
+    if (scannedCopies.length >= currentMember.remaining_quota) {
+        playErrorTone();
+        errorEl.textContent = `You have reached your maximum borrowing allowance (${currentMember.remaining_quota} books remaining).`;
+        errorEl.classList.remove('d-none');
+        return;
+    }
+
+    // Check duplicate in cart
+    if (scannedCopies.some(c => c.accession_number.toLowerCase() === barcode.toLowerCase())) {
+        playErrorTone();
+        errorEl.textContent = `Book copy '${barcode}' is already in your checkout list.`;
+        errorEl.classList.remove('d-none');
+        return;
+    }
+
+    const btnAddBook = document.getElementById('btnAddBook');
+    btnAddBook.disabled = true;
+    btnAddBook.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Adding...`;
+
+    fetch(`/circulation/api/kiosk/lookup-book/?barcode=${encodeURIComponent(barcode)}`)
+        .then(r => r.json())
+        .then(data => {
+            btnAddBook.disabled = false;
+            btnAddBook.innerHTML = `<i class="bi bi-plus-lg me-1"></i> Add Book`;
+
+            if (!data.success) {
+                playErrorTone();
+                errorEl.textContent = data.error;
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            if (!data.copy.is_available) {
+                playErrorTone();
+                errorEl.textContent = `Book '${data.copy.title}' is not available (Status: ${data.copy.status}).`;
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            // Check if already in cart by accession
+            if (scannedCopies.some(c => c.accession_number.toLowerCase() === data.copy.accession_number.toLowerCase())) {
+                playErrorTone();
+                errorEl.textContent = `Book '${data.copy.title}' (${data.copy.accession_number}) is already added.`;
+                errorEl.classList.remove('d-none');
+                return;
+            }
+
+            playBeep(987.77, 'sine', 0.12);
+            scannedCopies.push(data.copy);
+            document.getElementById('manualBookInput').value = '';
+            renderCart();
+        })
+        .catch(() => {
+            btnAddBook.disabled = false;
+            btnAddBook.innerHTML = `<i class="bi bi-plus-lg me-1"></i> Add Book`;
+            playErrorTone();
+            errorEl.textContent = "Error scanning book barcode.";
+            errorEl.classList.remove('d-none');
+        });
+}
+
+function renderCart() {
+    const list = document.getElementById('cartItemsList');
+    const emptyState = document.getElementById('cartEmptyState');
+    const clearBtn = document.getElementById('clearCartBtn');
+    const checkoutBtn = document.getElementById('btnCheckout');
+    const count = scannedCopies.length;
+
+    document.getElementById('cartCount').textContent = count;
+    document.getElementById('checkoutTotalCount').textContent = count;
+
+    if (count === 0) {
+        list.innerHTML = '';
+        emptyState.classList.remove('d-none');
+        clearBtn.classList.add('d-none');
+        checkoutBtn.disabled = true;
+        return;
+    }
+
+    emptyState.classList.add('d-none');
+    clearBtn.classList.remove('d-none');
+    checkoutBtn.disabled = false;
+
+    list.innerHTML = scannedCopies.map((item, idx) => `
+        <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
+            <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 82%;">
+                <div class="rounded px-2 py-1 font-monospace small fw-bold" style="font-size: 0.72rem; background: var(--glass-border); color: var(--text-primary);">${item.accession_number}</div>
+                <div class="text-truncate">
+                    <div class="small fw-semibold text-truncate" style="color: var(--text-primary);">${item.title}</div>
+                    <div class="text-muted" style="font-size: 0.72rem;">${item.author}</div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-link text-danger p-0 ms-2" title="Remove" onclick="removeFromCart(${idx})">
+                <i class="bi bi-x-circle fs-5"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeFromCart(idx) {
+    scannedCopies.splice(idx, 1);
+    renderCart();
+}
+
+function clearCart() {
+    scannedCopies = [];
+    renderCart();
+}
+
+// ── Submit Checkout ──────────────────────────────────────────────────────────
+function submitCheckout() {
+    if (!currentMember || scannedCopies.length === 0) return;
+
+    const btn = document.getElementById('btnCheckout');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Processing Checkout...`;
+
+    stopCameraScanner();
+
+    fetch('/circulation/api/kiosk/checkout/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            membership_number: currentMember.membership_number,
+            accession_numbers: scannedCopies.map(c => c.accession_number)
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) {
+            playErrorTone();
+            alert("Checkout Error: " + data.error);
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${scannedCopies.length})`;
+            return;
+        }
+
+        playSuccessChime();
+        setStep(3);
+
+        const loansListEl = document.getElementById('successLoansList');
+        loansListEl.innerHTML = `
+            <h6 class="fw-bold mb-3" style="color: var(--text-primary);"><i class="bi bi-check-circle text-success me-2"></i>Issued to ${data.member_name}:</h6>
+            <div class="d-flex flex-column gap-2">
+                ${data.loans.map(l => `
+                    <div class="p-3 rounded-3 d-flex justify-content-between align-items-center" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
+                        <div>
+                            <div class="fw-semibold" style="color: var(--text-primary);">${l.title}</div>
+                            <div class="small text-muted">Accession: <code class="text-indigo">${l.accession_number}</code></div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-warning text-dark font-monospace">Due: ${l.due_date}</span>
+                            <div><a href="${l.receipt_url}" target="_blank" class="small text-indigo text-decoration-none"><i class="bi bi-receipt me-1"></i>Slip</a></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    })
+    .catch(() => {
+        playErrorTone();
+        alert("Failed to complete checkout transaction. Please call circulation staff.");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${scannedCopies.length})`;
+    });
+}
+
+// ── Reset Kiosk ──────────────────────────────────────────────────────────────
+function resetKiosk() {
+    stopCameraScanner();
+    currentMember = null;
+    scannedCopies = [];
+    document.getElementById('manualMemberInput').value = '';
+    document.getElementById('manualBookInput').value = '';
+    document.getElementById('patronErrorAlert').classList.add('d-none');
+    document.getElementById('bookErrorAlert').classList.add('d-none');
+    document.getElementById('patronInfoEmpty').classList.remove('d-none');
+    document.getElementById('patronInfoActive').classList.add('d-none');
+    document.getElementById('patronStatusBadge').className = 'badge bg-secondary';
+    document.getElementById('patronStatusBadge').textContent = 'Awaiting Scan';
+    renderCart();
+    setStep(1);
+}
+</script>
+{% endblock %}

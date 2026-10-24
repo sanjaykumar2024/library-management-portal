@@ -228,6 +228,41 @@ class ReservationServiceTests(BaseTestCase):
         self.assertEqual(res.status, 'ALLOCATED')
         self.assertEqual(res.allocated_copy, self.copy1)
 
+    def test_queue_position_calculation(self):
+        """Test real-time waitlist position tracking."""
+        self.copy1.status = 'ISSUED'
+        self.copy1.save()
+        self.copy2.status = 'ISSUED'
+        self.copy2.save()
+        
+        # User 1 reserves -> position #1
+        res1 = res_services.create_reservation(self.member_profile, self.book)
+        info1 = res_services.get_queue_info(res1)
+        self.assertEqual(info1['position'], 1)
+        self.assertEqual(info1['ahead_count'], 0)
+        
+        # User 2 reserves -> position #2
+        res2 = res_services.create_reservation(self.member_profile2, self.book)
+        info2 = res_services.get_queue_info(res2)
+        self.assertEqual(info2['position'], 2)
+        self.assertEqual(info2['ahead_count'], 1)
+
+    def test_extend_reservation_hold(self):
+        """Test extending the hold window for an allocated reservation."""
+        self.copy1.status = 'AVAILABLE'
+        self.copy1.save()
+        self.copy2.status = 'ISSUED'
+        self.copy2.save()
+        res = res_services.create_reservation(self.member_profile, self.book)
+        self.assertEqual(res.status, 'ALLOCATED')
+        old_expiry = res.expiry_date
+        
+        res_services.extend_reservation_hold(res, days=2, user=self.librarian_user)
+        res.refresh_from_db()
+        self.assertGreater(res.expiry_date, old_expiry)
+
+
+
 
 class NotificationServiceTests(BaseTestCase):
     """Tests for the notification service."""

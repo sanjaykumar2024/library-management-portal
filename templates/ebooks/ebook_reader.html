@@ -3,56 +3,579 @@
 {% block page_title %}Online Reader — {{ ebook.book.title }}{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
     <div>
-        <a href="{% url 'ebooks:detail' ebook.id %}" class="text-decoration-none" style="color: var(--text-secondary);">
+        <a href="{% url 'ebooks:detail' ebook.id %}" class="text-decoration-none small" style="color: var(--text-secondary); font-weight: 500;">
             <i class="bi bi-arrow-left me-1"></i> Back to Details
         </a>
-        <h3 class="h5 mb-0 mt-2" style="color: var(--text-primary); font-weight: 600;">
+        <h3 class="h5 mb-0 mt-1" style="color: var(--text-primary); font-weight: 700;">
             <i class="bi bi-book-half me-2" style="color: var(--accent-primary-hover);"></i>{{ ebook.book.title }}
         </h3>
         <p class="small mb-0" style="color: var(--text-muted);">
-            By {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-            &bull; {{ ebook.page_count|default:"--" }} pages &bull; {{ ebook.get_rights_status_display }}
+            By {{ ebook.book.author }} &bull; {{ ebook.page_count|default:"--" }} pages &bull; 
+            <span class="badge rounded-pill" style="background: rgba(16,185,129,0.15); color: #10B981; font-weight: 600; font-size: 0.72rem;">{{ ebook.get_rights_status_display }}</span>
         </p>
     </div>
-    <div class="d-flex gap-2">
-        <button type="button" onclick="toggleFullscreen()" class="btn btn-sm btn-outline-secondary" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);" title="Toggle Fullscreen">
-            <i class="bi bi-arrows-fullscreen me-1"></i> Fullscreen
+
+    <!-- Reader Control Bar -->
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- TTS Audio Player Controls -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Audio Narration">
+            <button type="button" class="btn reader-audio-btn d-flex align-items-center gap-1" id="ttsPlayBtn" onclick="toggleTTS()" title="Play / Pause Audio Narration">
+                <i class="bi bi-play-fill" id="ttsPlayIcon"></i> <span id="ttsPlayText">Listen</span>
+            </button>
+            <button type="button" class="btn reader-audio-split-btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="Narration Speed">
+                <span class="visually-hidden">Toggle Speed</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg reader-dropdown-menu">
+                <li><h6 class="dropdown-header small text-uppercase">Narration Speed</h6></li>
+                <li><button class="dropdown-item" onclick="setTTSSpeed(0.75)">0.75x Slow</button></li>
+                <li><button class="dropdown-item active" onclick="setTTSSpeed(1.0)">1.0x Normal</button></li>
+                <li><button class="dropdown-item" onclick="setTTSSpeed(1.25)">1.25x Fast</button></li>
+                <li><button class="dropdown-item" onclick="setTTSSpeed(1.5)">1.5x Turbo</button></li>
+            </ul>
+        </div>
+
+        <!-- Notes & Highlights Drawer Button -->
+        <button type="button" class="btn btn-sm reader-notes-btn d-flex align-items-center gap-1" data-bs-toggle="offcanvas" data-bs-target="#annotationsDrawer" onclick="loadAnnotations()" title="View Saved Notes & Highlights">
+            <i class="bi bi-pen me-1"></i> Notes (<span id="annotationCountBadge">0</span>)
         </button>
+
+        <!-- Font Sizing -->
+        <div class="btn-group btn-group-sm reader-zoom-btn-group" role="group" aria-label="Font Sizing">
+            <button type="button" class="btn" onclick="adjustFontSize(-1)" title="Decrease Font Size (Zoom Out)">A-</button>
+            <button type="button" class="btn" onclick="resetFontSize()" title="Reset Font Size (100%)" id="fontSizeDisplay">100%</button>
+            <button type="button" class="btn" onclick="adjustFontSize(1)" title="Increase Font Size (Zoom In)">A+</button>
+        </div>
+
+        <!-- Theme Switcher Dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-sm reader-ctrl-btn dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="themeDropdownBtn" title="Change Reading Theme">
+                <i class="bi bi-palette me-1 text-primary"></i> <span id="currentThemeLabel">Theme</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg reader-dropdown-menu">
+                <li><h6 class="dropdown-header small text-uppercase">Page Background</h6></li>
+                <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('day')"><span class="rounded-circle p-1" style="background:#ffffff; border:1px solid #94a3b8; width: 14px; height: 14px;"></span> Day (Paper White)</button></li>
+                <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('sepia')"><span class="rounded-circle p-1" style="background:#fbf0d9; border:1px solid #d4c4a8; width: 14px; height: 14px;"></span> Warm Sepia</button></li>
+                <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('night')"><span class="rounded-circle p-1" style="background:#1e293b; border:1px solid #475569; width: 14px; height: 14px;"></span> Night Slate</button></li>
+                <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('oled')"><span class="rounded-circle p-1" style="background:#000000; border:1px solid #555; width: 14px; height: 14px;"></span> OLED Pure Black</button></li>
+            </ul>
+        </div>
+
+        <!-- Session Reading Time -->
+        <div class="reader-timer-pill" title="Session Reading Time">
+            <i class="bi bi-stopwatch text-primary"></i>
+            <span id="readingTimer">00:00</span>
+        </div>
+
+        <!-- Fullscreen Button -->
+        <button type="button" onclick="toggleFullscreen()" class="btn btn-sm reader-fullscreen-btn" id="mainFullscreenBtn" title="Toggle Fullscreen (Key: F)">
+            <i class="bi bi-arrows-fullscreen text-primary" id="mainFullscreenIcon"></i>
+            <span id="mainFullscreenLabel">Fullscreen</span>
+        </button>
+
         {% if ebook.access_mode == 'READ_AND_DOWNLOAD' %}
-        <a href="{% url 'ebooks:download' ebook.id %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);">
-            <i class="bi bi-download me-1"></i> Download PDF
+        <a href="{% url 'ebooks:download' ebook.id %}" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold" style="font-size: 0.8125rem;">
+            <i class="bi bi-download me-1"></i> Download
         </a>
         {% endif %}
     </div>
 </div>
 
-<!-- Embedded PDF Reader Container -->
-<div id="readerContainer" class="glass-card p-2 mb-4 overflow-hidden position-relative" style="background: rgba(15, 23, 42, 0.95); border-color: rgba(99, 102, 241, 0.3);">
-    <div class="ratio ratio-16x9 position-relative" style="min-height: 80vh;">
-        <iframe id="pdfFrame" src="{{ stream_url }}#toolbar=1&navpanes=0" title="{{ ebook.book.title }}" class="w-100 h-100" style="border: none; border-radius: var(--radius-sm); background: #ffffff;"></iframe>
+<!-- Reader Container with Live Reading Progress Bar -->
+<div id="readerContainer" class="reader-card-container p-0 mb-3 overflow-hidden position-relative">
+    <!-- Fullscreen Floating / Sticky Control Bar (Visible in Fullscreen Only) -->
+    <div id="readerFullscreenBar" class="reader-fullscreen-bar">
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-book-half text-info me-2 fs-5"></i>
+                <div>
+                    <span class="text-white fw-bold">{{ ebook.book.title }}</span>
+                    <span class="text-white-50 small ms-2 d-none d-md-inline">&bull; {{ ebook.book.author }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <!-- Fullscreen Font Sizing -->
+            <div class="btn-group btn-group-sm reader-zoom-btn-group" role="group">
+                <button type="button" class="btn reader-btn-fs" onclick="adjustFontSize(-1)" title="Zoom Out">A-</button>
+                <button type="button" class="btn reader-btn-fs" onclick="resetFontSize()" id="fsZoomDisplay" title="Reset Zoom">100%</button>
+                <button type="button" class="btn reader-btn-fs" onclick="adjustFontSize(1)" title="Zoom In">A+</button>
+            </div>
+
+            <!-- Fullscreen Theme Picker -->
+            <div class="dropdown">
+                <button class="btn btn-sm reader-btn-fs dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-palette me-1"></i> <span id="fsThemeLabel">Theme</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg reader-dropdown-menu">
+                    <li><h6 class="dropdown-header small text-uppercase">Page Background</h6></li>
+                    <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('day')"><span class="rounded-circle p-1" style="background:#ffffff; border:1px solid #94a3b8; width: 14px; height: 14px;"></span> Day</button></li>
+                    <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('sepia')"><span class="rounded-circle p-1" style="background:#fbf0d9; border:1px solid #d4c4a8; width: 14px; height: 14px;"></span> Sepia</button></li>
+                    <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('night')"><span class="rounded-circle p-1" style="background:#1e293b; border:1px solid #475569; width: 14px; height: 14px;"></span> Night</button></li>
+                    <li><button class="dropdown-item d-flex align-items-center gap-2" onclick="setReaderTheme('oled')"><span class="rounded-circle p-1" style="background:#000000; border:1px solid #555; width: 14px; height: 14px;"></span> OLED Black</button></li>
+                </ul>
+            </div>
+
+            <!-- Fullscreen Audio Listen -->
+            <button type="button" class="btn btn-sm reader-btn-fs d-flex align-items-center gap-1" id="fsTtsBtn" onclick="toggleTTS()" title="Audio Narration">
+                <i class="bi bi-play-fill" id="fsTtsIcon"></i> <span id="fsTtsText">Listen</span>
+            </button>
+
+            <!-- Fullscreen Timer Badge -->
+            <span class="reader-btn-fs d-none d-sm-inline-flex align-items-center gap-1" id="fsReadingTimer">
+                <i class="bi bi-stopwatch text-info"></i> 00:00
+            </span>
+
+            <!-- Prominent Exit Fullscreen Button -->
+            <button type="button" onclick="toggleFullscreen()" class="btn btn-sm reader-exit-fs-btn d-flex align-items-center gap-2" title="Exit Fullscreen (Key: Esc or F)">
+                <i class="bi bi-fullscreen-exit fs-6"></i> <span>Exit Fullscreen</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Reading Progress Bar -->
+    <div class="progress" style="height: 3px; border-radius: 0; background: rgba(0,0,0,0.06);">
+        <div id="readingProgressBar" class="progress-bar" role="progressbar" style="width: 5%; background: linear-gradient(90deg, #6366F1, #EC4899);" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <!-- Embedded Reader Frame -->
+    <div class="reader-frame-wrapper">
+        <iframe id="pdfFrame" src="{{ stream_url }}{% if ebook.format == 'PDF' %}#toolbar=1&navpanes=0{% endif %}" title="{{ ebook.book.title }}" class="w-100 h-100" style="border: none; background: #ffffff; transition: all 0.2s;"></iframe>
     </div>
 </div>
 
 <!-- Reader Footer Notice -->
-<div class="p-3 glass-card d-flex align-items-center justify-content-between">
-    <div class="small" style="color: var(--text-muted);">
-        <i class="bi bi-shield-check me-1" style="color: var(--accent-primary-hover);"></i>
-        Protected Digital Stream &bull; Licence: {{ ebook.get_rights_status_display }}
+<div class="p-3 reader-footer-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    <div class="small d-flex align-items-center gap-2" style="color: var(--text-secondary); font-weight: 500;">
+        <i class="bi bi-shield-check" style="color: var(--accent-success); font-size: 1.1rem;"></i>
+        <span>Protected Digital Stream &bull; Format: <strong>{{ ebook.format }}</strong> &bull; Press <kbd class="reader-kbd">F</kbd> for Fullscreen</span>
     </div>
-    <a href="{% url 'ebooks:catalog' %}" class="btn btn-sm btn-outline-secondary" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);">Close Reader</a>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <button type="button" class="btn btn-sm reader-notes-btn d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newNoteModal">
+            <i class="bi bi-plus-lg"></i> Add Note/Quote
+        </button>
+        <a href="{% url 'ebooks:commons' %}" class="btn btn-sm reader-ctrl-btn">
+            <i class="bi bi-clouds-fill me-1" style="color: var(--accent-success);"></i> Explore Classics
+        </a>
+        <a href="{% url 'ebooks:catalog' %}" class="btn btn-sm reader-ctrl-btn">
+            <i class="bi bi-x-circle me-1"></i> Close Reader
+        </a>
+    </div>
+</div>
+
+<!-- Offcanvas Sidebar: Patron Highlights & Notes -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="annotationsDrawer" style="background: var(--card-bg); color: var(--text-primary); border-left: 1px solid var(--glass-border); width: 380px;">
+    <div class="offcanvas-header border-bottom" style="border-color: var(--glass-border) !important;">
+        <h5 class="offcanvas-title fw-bold" style="color: var(--text-primary);">
+            <i class="bi bi-bookmarks text-warning me-2"></i>My Highlights & Notes
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="small" style="color: var(--text-muted);" id="drawerNotesCount">0 saved notes</span>
+            <button type="button" class="btn reader-notes-btn btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newNoteModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Note
+            </button>
+        </div>
+
+        <div id="annotationsListContainer" class="d-flex flex-column gap-3">
+            <!-- Dynamically populated via AJAX -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New Note/Quote -->
+<div class="modal fade" id="newNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--glass-border); box-shadow: var(--shadow-float);">
+            <div class="modal-header border-bottom" style="border-color: var(--glass-border);">
+                <h5 class="modal-title fw-bold" style="color: var(--text-primary);">
+                    <i class="bi bi-pen text-warning me-2"></i>Add Reading Note or Highlight
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold" style="color: var(--text-secondary);">Passage / Quote <span class="text-danger">*</span></label>
+                    <textarea id="noteSelectedText" class="form-control" rows="3" placeholder="Paste or type the quote or passage..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold" style="color: var(--text-secondary);">Personal Reflection / Note</label>
+                    <textarea id="noteText" class="form-control" rows="2" placeholder="Your thoughts, analysis, or bookmarks..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold" style="color: var(--text-secondary);">Highlight Color</label>
+                    <div class="d-flex gap-2">
+                        <label class="btn btn-sm btn-outline-warning active" style="font-size: 0.75rem;">
+                            <input type="radio" name="noteColor" value="yellow" checked class="me-1"> Amber
+                        </label>
+                        <label class="btn btn-sm btn-outline-success" style="font-size: 0.75rem;">
+                            <input type="radio" name="noteColor" value="green" class="me-1"> Emerald
+                        </label>
+                        <label class="btn btn-sm btn-outline-danger" style="font-size: 0.75rem;">
+                            <input type="radio" name="noteColor" value="pink" class="me-1"> Rose
+                        </label>
+                        <label class="btn btn-sm btn-outline-info" style="font-size: 0.75rem;">
+                            <input type="radio" name="noteColor" value="blue" class="me-1"> Cyan
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top" style="border-color: var(--glass-border);">
+                <button type="button" class="btn reader-ctrl-btn btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning btn-sm rounded-pill px-4 fw-semibold shadow-sm" onclick="saveAnnotation()">
+                    <i class="bi bi-check-lg me-1"></i>Save Highlight
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-function toggleFullscreen() {
-    const elem = document.getElementById("readerContainer");
-    if (!document.fullscreenElement) {
-        if (elem.requestFullscreen) elem.requestFullscreen();
-        else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-    } else {
-        if (document.exitFullscreen) document.exitFullscreen();
+const EBOOK_ID = {{ ebook.id }};
+const CSRF_TOKEN = '{{ csrf_token }}';
+
+// ── Session Reading Stopwatch ────────────────────────────────────────────────
+let secondsRead = 0;
+setInterval(function() {
+    secondsRead++;
+    const mins = String(Math.floor(secondsRead / 60)).padStart(2, '0');
+    const secs = String(secondsRead % 60).padStart(2, '0');
+    const timerText = `${mins}:${secs}`;
+    
+    const timerEl = document.getElementById('readingTimer');
+    if (timerEl) timerEl.textContent = timerText;
+    
+    const fsTimerEl = document.getElementById('fsReadingTimer');
+    if (fsTimerEl) fsTimerEl.innerHTML = `<i class="bi bi-stopwatch text-info"></i> ${timerText}`;
+    
+    const progressEl = document.getElementById('readingProgressBar');
+    if (progressEl) {
+        const estProgress = Math.min(100, Math.floor(secondsRead / 6) + 5);
+        progressEl.style.width = `${estProgress}%`;
+    }
+}, 1000);
+
+// ── Typography Scaling ───────────────────────────────────────────────────────
+let currentZoom = 100;
+function adjustFontSize(delta) {
+    currentZoom = Math.min(150, Math.max(75, currentZoom + (delta * 10)));
+    applyZoom();
+}
+
+function resetFontSize() {
+    currentZoom = 100;
+    applyZoom();
+}
+
+function applyZoom() {
+    const frame = document.getElementById('pdfFrame');
+    const display = document.getElementById('fontSizeDisplay');
+    const fsDisplay = document.getElementById('fsZoomDisplay');
+    const zoomText = `${currentZoom}%`;
+    
+    if (display) display.textContent = zoomText;
+    if (fsDisplay) fsDisplay.textContent = zoomText;
+    
+    try {
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        if (frameDoc && frameDoc.body) {
+            frameDoc.body.style.fontSize = `${(currentZoom / 100) * 1.05}rem`;
+        }
+    } catch(e) {
+        frame.style.zoom = currentZoom / 100;
     }
 }
+
+// ── Reading Themes ───────────────────────────────────────────────────────────
+function setReaderTheme(theme) {
+    const frame = document.getElementById('pdfFrame');
+    const label = document.getElementById('currentThemeLabel');
+    const fsLabel = document.getElementById('fsThemeLabel');
+
+    let themeName = 'Theme';
+    if (theme === 'day') {
+        frame.style.background = '#ffffff';
+        frame.style.filter = 'none';
+        themeName = 'Day';
+    } else if (theme === 'sepia') {
+        frame.style.background = '#fbf0d9';
+        frame.style.filter = 'sepia(0.65) contrast(0.95)';
+        themeName = 'Sepia';
+    } else if (theme === 'night') {
+        frame.style.background = '#1e293b';
+        frame.style.filter = 'invert(0.9) hue-rotate(180deg)';
+        themeName = 'Night';
+    } else if (theme === 'oled') {
+        frame.style.background = '#000000';
+        frame.style.filter = 'invert(1) contrast(1.1)';
+        themeName = 'OLED Black';
+    }
+    
+    if (label) label.textContent = themeName;
+    if (fsLabel) fsLabel.textContent = themeName;
+}
+
+// ── Fullscreen Experience Engine ─────────────────────────────────────────────
+function isFullscreenActive() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+}
+
+function updateFullscreenUI() {
+    const elem = document.getElementById("readerContainer");
+    const isFS = isFullscreenActive() || (elem && elem.classList.contains("is-pseudo-fullscreen"));
+    const mainIcon = document.getElementById("mainFullscreenIcon");
+    const mainLabel = document.getElementById("mainFullscreenLabel");
+    const mainBtn = document.getElementById("mainFullscreenBtn");
+
+    if (isFS) {
+        if (mainIcon) mainIcon.className = "bi bi-fullscreen-exit text-danger";
+        if (mainLabel) mainLabel.textContent = "Exit Fullscreen";
+        if (mainBtn) mainBtn.classList.add("active");
+    } else {
+        if (elem) elem.classList.remove("is-pseudo-fullscreen");
+        if (mainIcon) mainIcon.className = "bi bi-arrows-fullscreen text-primary";
+        if (mainLabel) mainLabel.textContent = "Fullscreen";
+        if (mainBtn) mainBtn.classList.remove("active");
+    }
+}
+
+function toggleFullscreen() {
+    const elem = document.getElementById("readerContainer");
+    const isFS = isFullscreenActive() || elem.classList.contains("is-pseudo-fullscreen");
+
+    if (!isFS) {
+        try {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().then(updateFullscreenUI).catch(function(err) {
+                    console.warn("Native fullscreen denied, activating pseudo-fullscreen fallback:", err);
+                    elem.classList.add("is-pseudo-fullscreen");
+                    updateFullscreenUI();
+                });
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+                updateFullscreenUI();
+            } else {
+                elem.classList.add("is-pseudo-fullscreen");
+                updateFullscreenUI();
+            }
+        } catch(e) {
+            elem.classList.add("is-pseudo-fullscreen");
+            updateFullscreenUI();
+        }
+    } else {
+        if (isFullscreenActive()) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().then(updateFullscreenUI).catch(updateFullscreenUI);
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+                updateFullscreenUI();
+            }
+        } else {
+            elem.classList.remove("is-pseudo-fullscreen");
+            updateFullscreenUI();
+        }
+    }
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenUI);
+document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
+document.addEventListener('mozfullscreenchange', updateFullscreenUI);
+document.addEventListener('MSFullscreenChange', updateFullscreenUI);
+
+document.addEventListener('keydown', function(e) {
+    if ((e.key === 'f' || e.key === 'F') && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+        e.preventDefault();
+        toggleFullscreen();
+    } else if (e.key === 'Escape') {
+        const elem = document.getElementById("readerContainer");
+        if (elem && elem.classList.contains("is-pseudo-fullscreen")) {
+            elem.classList.remove("is-pseudo-fullscreen");
+            updateFullscreenUI();
+        }
+    }
+});
+
+// ── Web Speech API: Text-to-Speech (TTS) Narration ───────────────────────────
+let synth = window.speechSynthesis;
+let isSpeaking = false;
+let speechRate = 1.0;
+
+function setTTSSpeed(rate) {
+    speechRate = rate;
+    if (isSpeaking) {
+        synth.cancel();
+        startNarration();
+    }
+}
+
+function toggleTTS() {
+    if (!synth) {
+        alert("Text-to-Speech is not supported in your browser.");
+        return;
+    }
+
+    if (isSpeaking) {
+        synth.cancel();
+        isSpeaking = false;
+        updateTTSUI(false);
+    } else {
+        startNarration();
+    }
+}
+
+function startNarration() {
+    let textToRead = "";
+    try {
+        const frame = document.getElementById('pdfFrame');
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        if (frameDoc && frameDoc.body) {
+            textToRead = frameDoc.body.innerText;
+        }
+    } catch(e) {}
+
+    if (!textToRead || textToRead.length < 20) {
+        textToRead = "{{ ebook.book.title }}. By {{ ebook.book.author }}. {{ ebook.book.description|escapejs }}";
+    }
+
+    const utterance = new SpeechSynthesisUtterance(textToRead.slice(0, 4000));
+    utterance.rate = speechRate;
+    utterance.pitch = 1.0;
+
+    utterance.onend = function() {
+        isSpeaking = false;
+        updateTTSUI(false);
+    };
+
+    utterance.onerror = function() {
+        isSpeaking = false;
+        updateTTSUI(false);
+    };
+
+    synth.speak(utterance);
+    isSpeaking = true;
+    updateTTSUI(true);
+}
+
+function updateTTSUI(playing) {
+    const btn = document.getElementById('ttsPlayBtn');
+    const icon = document.getElementById('ttsPlayIcon');
+    const text = document.getElementById('ttsPlayText');
+    const fsBtn = document.getElementById('fsTtsBtn');
+    const fsIcon = document.getElementById('fsTtsIcon');
+    const fsText = document.getElementById('fsTtsText');
+
+    if (playing) {
+        if (btn) btn.classList.add('is-playing');
+        if (icon) icon.className = 'bi bi-pause-fill';
+        if (text) text.textContent = 'Pause';
+        
+        if (fsBtn) fsBtn.classList.add('bg-success', 'text-white');
+        if (fsIcon) fsIcon.className = 'bi bi-pause-fill';
+        if (fsText) fsText.textContent = 'Pause';
+    } else {
+        if (btn) btn.classList.remove('is-playing');
+        if (icon) icon.className = 'bi bi-play-fill';
+        if (text) text.textContent = 'Listen';
+        
+        if (fsBtn) fsBtn.classList.remove('bg-success', 'text-white');
+        if (fsIcon) fsIcon.className = 'bi bi-play-fill';
+        if (fsText) fsText.textContent = 'Listen';
+    }
+}
+
+// ── In-Reader Highlights & Notes ─────────────────────────────────────────────
+function loadAnnotations() {
+    fetch(`/ebooks/api/${EBOOK_ID}/annotations/list/`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const container = document.getElementById('annotationsListContainer');
+            const badge = document.getElementById('annotationCountBadge');
+            const drawerCount = document.getElementById('drawerNotesCount');
+            const count = data.annotations.length;
+
+            if (badge) badge.textContent = count;
+            if (drawerCount) drawerCount.textContent = `${count} saved note${count === 1 ? '' : 's'}`;
+
+            if (count === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-pen fs-2 d-block mb-2 opacity-50"></i>
+                        No highlights saved yet. Click "Add Note/Quote" to save your favorite passages.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.annotations.map(a => `
+                <div class="p-3 rounded-3" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border); border-left: 4px solid var(--bs-${a.color === 'yellow' ? 'warning' : a.color === 'green' ? 'success' : a.color === 'pink' ? 'danger' : 'info'});">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge rounded-pill bg-dark font-monospace text-uppercase" style="font-size: 0.65rem;">${a.color}</span>
+                        <button type="button" class="btn btn-link text-danger p-0" onclick="deleteAnnotation(${a.id})" title="Delete Highlight">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <blockquote class="mb-2 fst-italic small" style="line-height: 1.5; color: var(--text-primary); font-weight: 500;">"${a.selected_text}"</blockquote>
+                    ${a.note ? `<div class="small mb-2" style="color: var(--text-secondary);"><i class="bi bi-chat-left-text me-1"></i>${a.note}</div>` : ''}
+                    <div style="font-size: 0.68rem; color: var(--text-muted);">${a.created_at}</div>
+                </div>
+            `).join('');
+        });
+}
+
+function saveAnnotation() {
+    const selectedText = document.getElementById('noteSelectedText').value.trim();
+    const note = document.getElementById('noteText').value.trim();
+    const colorEl = document.querySelector('input[name="noteColor"]:checked');
+    const color = colorEl ? colorEl.value : 'yellow';
+
+    if (!selectedText) {
+        alert("Please enter a quote or selected passage.");
+        return;
+    }
+
+    fetch(`/ebooks/api/${EBOOK_ID}/annotations/add/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CSRF_TOKEN
+        },
+        body: JSON.stringify({
+            selected_text: selectedText,
+            note: note,
+            color: color
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) {
+            alert("Error: " + data.error);
+            return;
+        }
+
+        document.getElementById('noteSelectedText').value = '';
+        document.getElementById('noteText').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('newNoteModal')).hide();
+        loadAnnotations();
+    });
+}
+
+function deleteAnnotation(id) {
+    if (!confirm("Remove this highlight?")) return;
+    fetch(`/ebooks/api/annotations/${id}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF_TOKEN }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) loadAnnotations();
+    });
+}
+
+// Initial fetch of annotation count
+document.addEventListener('DOMContentLoaded', loadAnnotations);
 </script>
 {% endblock %}

@@ -1,0 +1,11 @@
+<div class="col-12 py-5 text-center">
+    <div class="glass-card p-5 mx-auto" style="max-width: 480px; border-radius: 16px;">
+        <i class="bi bi-bookmarks fs-1 text-muted d-block mb-3"></i>
+        <h5 class="h6 mb-1" style="color: var(--text-primary);">Your {{ label }} list is empty</h5>
+        <p class="small mb-4" style="color: var(--text-secondary);">Browse our collection of books and online e-books to save them to your shelf.</p>
+        <div class="d-flex justify-content-center gap-2">
+            <a href="{% url 'catalog:list' %}" class="btn btn-sm btn-primary rounded-pill px-4">Search Books</a>
+            <a href="{% url 'ebooks:commons' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-4">Free Classic Books</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — LibrarySphere{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <div class="glass-card p-5">
+        <h2 class="h4 fw-bold mb-4" style="color: var(--text-primary);"><i class="bi bi-shield-check me-2 text-indigo"></i>Privacy Policy</h2>
+        <div class="lh-lg" style="font-size: 0.95rem; color: var(--text-secondary);">
+            <p><strong style="color: var(--text-primary);">Last Updated:</strong> September 2026</p>
+            <h5 class="mt-4 mb-2" style="color: var(--text-primary);">1. Information We Collect</h5>
+            <p>LibrarySphere collects your name, email address, phone number, and address for membership management purposes. Borrowing and reading activity is logged to provide personalized services and generate usage reports.</p>
+            <h5 class="mt-4 mb-2" style="color: var(--text-primary);">2. How We Use Your Information</h5>
+            <p>Your data is used exclusively for library services including membership management, book circulation tracking, reservation processing, fine management, and e-book access control. We do not sell or share personal data with third parties.</p>
+            <h5 class="mt-4 mb-2" style="color: var(--text-primary);">3. Data Retention</h5>
+            <p>Membership data is retained for the duration of your active membership plus 2 years. Loan and reservation records are kept for 5 years for audit purposes. E-book access logs are retained for 1 year.</p>
+            <h5 class="mt-4 mb-2" style="color: var(--text-primary);">4. Your Rights</h5>
+            <p>You may request access to, correction of, or deletion of your personal data by contacting the library administration. Members can update their contact information directly through their profile page.</p>
+            <h5 class="mt-4 mb-2" style="color: var(--text-primary);">5. Security</h5>
+            <p>All data is stored securely with role-based access controls. Passwords are hashed using industry-standard algorithms. Staff access to member data is limited to authorized librarians and administrators.</p>
+            <h5 class="mt-4 mb-2" style="color: var(--text-primary);">6. Contact</h5>
+            <p>For privacy-related inquiries, please contact the Library Administration at the front desk or email <strong class="text-indigo">privacy@librarysphere.edu</strong>.</p>
+        </div>
+        <a href="{% url 'core:home' %}" class="btn btn-outline-primary rounded-pill px-4 mt-4">
+            <i class="bi bi-arrow-left me-1"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

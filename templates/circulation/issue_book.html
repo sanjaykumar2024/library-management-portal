@@ -1,57 +1,253 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Issue Book{% endblock %}
+{% block page_title %}Lend Book{% endblock %}
 
 {% block content %}
 <div class="mb-4">
-    <a href="{% url 'circulation:dashboard' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Circulation Desk</a>
+    <a href="{% url 'circulation:dashboard' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to Borrow & Return
+    </a>
 </div>
 
-<div class="row justify-content-center">
+<div class="row g-4">
+    <!-- Left Column: Issue Form -->
     <div class="col-lg-6">
         <div class="glass-card mb-4">
-            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
-                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Issue a Book</h5>
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--glass-border) !important;">
+                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">
+                    <i class="bi bi-journal-plus text-indigo me-2"></i>Lend Physical Book Copy
+                </h5>
+                <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">
+                    Standard 14-Day Loan
+                </span>
             </div>
             
             <div class="p-4 p-md-5">
-                <form method="post" novalidate>
+                <form method="post" novalidate id="issueBookForm">
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
-                    <div class="alert alert-danger" style="background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
-                        {{ form.non_field_errors }}
+                    <div class="alert alert-danger mb-4" style="background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <i class="bi bi-exclamation-octagon me-2"></i>{{ form.non_field_errors }}
                     </div>
                     {% endif %}
                     
                     <div class="mb-4">
-                        <label for="{{ form.membership_number.id_for_label }}" class="form-label" style="color: var(--text-secondary);">Member ID</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="{{ form.membership_number.id_for_label }}" class="form-label text-uppercase small mb-0 fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">
+                                Member Library ID <span class="text-danger">*</span>
+                            </label>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 rounded-pill" onclick="openCameraScanModal('id_membership_number', 'Scan Member Library Card QR')">
+                                <i class="bi bi-camera me-1"></i> Scan Card QR
+                            </button>
+                        </div>
                         {{ form.membership_number }}
-                        {% if form.membership_number.errors %}<div class="small mt-1" style="color: var(--accent-danger);">{{ form.membership_number.errors }}</div>{% endif %}
+                        <div class="form-text small" style="color: var(--text-muted);">
+                            Enter library card number (e.g. <code>LIB-2026-10001</code>) or click a member on the right.
+                        </div>
+                        {% if form.membership_number.errors %}
+                        <div class="small mt-1 text-danger fw-semibold">{{ form.membership_number.errors }}</div>
+                        {% endif %}
                     </div>
                     
                     <div class="mb-4">
-                        <label for="{{ form.accession_number.id_for_label }}" class="form-label" style="color: var(--text-secondary);">Book Accession Number</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="{{ form.accession_number.id_for_label }}" class="form-label text-uppercase small mb-0 fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">
+                                Book Barcode / Copy Number <span class="text-danger">*</span>
+                            </label>
+                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 rounded-pill" onclick="openCameraScanModal('id_accession_number', 'Scan Book Barcode')">
+                                <i class="bi bi-upc-scan me-1"></i> Scan Barcode
+                            </button>
+                        </div>
                         {{ form.accession_number }}
-                        {% if form.accession_number.errors %}<div class="small mt-1" style="color: var(--accent-danger);">{{ form.accession_number.errors }}</div>{% endif %}
+                        <div class="form-text small" style="color: var(--text-muted);">
+                            Scan barcode or enter book code (e.g. <code>BOK-1001</code>) or click an available copy on the right.
+                        </div>
+                        {% if form.accession_number.errors %}
+                        <div class="small mt-1 text-danger fw-semibold">{{ form.accession_number.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-3 mb-4 rounded" style="background: rgba(99, 102, 241, 0.05); border: 1px solid var(--glass-border);">
+                        <div class="small fw-semibold mb-1" style="color: var(--text-primary);"><i class="bi bi-shield-check text-success me-1"></i> Lending Rules & Policy:</div>
+                        <ul class="list-unstyled mb-0 small" style="color: var(--text-secondary); font-size: 0.82rem; line-height: 1.6;">
+                            <li>&bull; Maximum 5 active loans per member.</li>
+                            <li>&bull; Loan period: 14 days (up to 2 renewals allowed).</li>
+                            <li>&bull; Late fee: ₹5.00 per late day.</li>
+                        </ul>
                     </div>
                     
-                    <div class="d-flex justify-content-end gap-3 mt-4 pt-4" style="border-top: 1px solid var(--glass-border);">
-                        <a href="{% url 'circulation:dashboard' %}" class="btn btn-outline-secondary" style="color: var(--text-secondary); border-color: rgba(255,255,255,0.2);">Cancel</a>
-                        <button type="submit" class="btn btn-primary px-4">Issue Book</button>
+                    <div class="d-flex justify-content-end gap-3 pt-3" style="border-top: 1px solid var(--glass-border);">
+                        <a href="{% url 'circulation:dashboard' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5">
+                            <i class="bi bi-check2-circle me-1"></i> Lend Book
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- Right Column: Quick Pickers -->
+    <div class="col-lg-6">
+        <!-- Available Shelf Copies -->
+        <div class="glass-card mb-4">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--glass-border) !important;">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">
+                    <i class="bi bi-book-half text-success me-2"></i>Available Shelf Copies (Click to Select)
+                </h6>
+                <span class="badge bg-success" style="font-size: 0.72rem;">On Shelf</span>
+            </div>
+            <div class="p-3" style="max-height: 300px; overflow-y: auto;">
+                <div class="d-flex flex-column gap-2">
+                    {% for copy in available_copies %}
+                    <div class="p-2 rounded d-flex justify-content-between align-items-center hover-lift" 
+                         style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer;"
+                         onclick="selectCopy('{{ copy.accession_number }}')">
+                        <div>
+                            <div class="fw-semibold small" style="color: var(--text-primary);">{{ copy.book.title }}</div>
+                            <div class="small font-monospace" style="color: var(--accent-primary-hover);">Barcode: {{ copy.accession_number }}</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success); font-size: 0.72rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                {{ copy.shelf_location|default:"Main Stack" }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="small text-center my-3" style="color: var(--text-muted);">No available physical copies found on shelf.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Members -->
+        <div class="glass-card">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--glass-border) !important;">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">
+                    <i class="bi bi-people text-indigo me-2"></i>Active Members (Click to Select)
+                </h6>
+                <span class="badge bg-primary" style="font-size: 0.72rem;">Eligible</span>
+            </div>
+            <div class="p-3" style="max-height: 280px; overflow-y: auto;">
+                <div class="d-flex flex-column gap-2">
+                    {% for member in active_members %}
+                    <div class="p-2 rounded d-flex justify-content-between align-items-center hover-lift" 
+                         style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); cursor: pointer;"
+                         onclick="selectMember('{{ member.membership_number }}')">
+                        <div>
+                            <div class="fw-semibold small" style="color: var(--text-primary);">{{ member.user.get_full_name|default:member.user.username }}</div>
+                            <div class="small font-monospace" style="color: var(--text-muted);">{{ member.membership_number }}</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary-hover); font-size: 0.72rem; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                Active Member
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="small text-center my-3" style="color: var(--text-muted);">No active members found.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
+<!-- Camera Scanner Modal -->
+<div class="modal fade" id="cameraScanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--glass-border);">
+            <div class="modal-header border-bottom" style="border-color: var(--glass-border) !important;">
+                <h5 class="modal-title fw-bold" style="color: var(--text-primary);" id="cameraScanModalTitle">
+                    <i class="bi bi-camera text-indigo me-2"></i>Scan Barcode / QR Code
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopIssueScanner()"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="issueQrReader" style="width: 100%; min-height: 250px; background: #0b0f19; border-radius: 12px; overflow: hidden;"></div>
+                <p class="small mt-3 mb-0" style="color: var(--text-muted);">Point your camera at the barcode or member card QR code.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal" onclick="stopIssueScanner()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        let inputs = document.querySelectorAll('.glass-card input');
+        let inputs = document.querySelectorAll('#issueBookForm input');
         inputs.forEach(input => {
             input.classList.add('form-control');
         });
     });
+
+    function selectCopy(accNum) {
+        const input = document.getElementById('id_accession_number');
+        if (input) {
+            input.value = accNum;
+            input.focus();
+        }
+    }
+
+    function selectMember(memNum) {
+        const input = document.getElementById('id_membership_number');
+        if (input) {
+            input.value = memNum;
+            input.focus();
+        }
+    }
+
+    let activeTargetInputId = null;
+    let issueScanner = null;
+
+    function openCameraScanModal(targetInputId, title) {
+        activeTargetInputId = targetInputId;
+        document.getElementById('cameraScanModalTitle').innerHTML = `<i class="bi bi-camera text-indigo me-2"></i>${title}`;
+        const modal = new bootstrap.Modal(document.getElementById('cameraScanModal'));
+        modal.show();
+
+        setTimeout(() => {
+            if (issueScanner) {
+                try { issueScanner.stop(); } catch(e) {}
+            }
+            issueScanner = new Html5Qrcode("issueQrReader");
+            issueScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 180 } },
+                (decodedText) => {
+                    let val = decodedText.trim();
+                    try {
+                        const parsed = JSON.parse(decodedText);
+                        if (parsed.membership_number) val = parsed.membership_number;
+                    } catch(e) {}
+
+                    const target = document.getElementById(activeTargetInputId);
+                    if (target) {
+                        target.value = val;
+                        target.focus();
+                    }
+
+                    stopIssueScanner();
+                    bootstrap.Modal.getInstance(document.getElementById('cameraScanModal')).hide();
+                },
+                () => {}
+            ).catch(err => {
+                alert("Camera error: " + err);
+            });
+        }, 300);
+    }
+
+    function stopIssueScanner() {
+        if (issueScanner) {
+            try {
+                issueScanner.stop().then(() => issueScanner.clear());
+            } catch(e) {}
+            issueScanner = null;
+        }
+    }
 </script>
 {% endblock %}
+

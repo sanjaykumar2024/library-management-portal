@@ -1,14 +1,14 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}System Reports & Analytics{% endblock %}
+{% block page_title %}Library Reports{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
-            <i class="bi bi-bar-chart-line me-2"></i>System Reports & Analytics
+            <i class="bi bi-bar-chart-line me-2"></i>Library Reports
         </h3>
-        <p class="small mb-0" style="color: var(--text-muted);">Comprehensive reports, system analytics, and CSV data export.</p>
+        <p class="small mb-0" style="color: var(--text-muted);">View library statistics, circulation charts, and export data.</p>
     </div>
 </div>
 
@@ -34,11 +34,68 @@
     </div>
     <div class="col-6 col-lg-3">
         <div class="glass-card p-4 text-center">
-            <div class="fs-2 fw-bold" style="color: var(--accent-success);">${{ total_fines|floatformat:2 }}</div>
+            <div class="fs-2 fw-bold" style="color: var(--accent-success);">₹{{ total_fines|floatformat:2 }}</div>
             <div class="small" style="color: var(--text-muted);">Pending Fines</div>
         </div>
     </div>
 </div>
+
+<!-- Interactive Visual Analytics Charts -->
+<div class="mb-5">
+    <h4 class="h6 text-uppercase mb-3" style="color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">
+        <i class="bi bi-pie-chart-fill me-2" style="color: var(--accent-primary-hover);"></i>Visual Charts &amp; Trends
+    </h4>
+    <div class="row g-4">
+        <!-- Monthly Circulation Trend -->
+        <div class="col-lg-8">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="h6 mb-3" style="color: var(--text-primary); font-weight: 600;">
+                    <i class="bi bi-graph-up-arrow me-2 text-indigo" style="color: var(--accent-primary-hover);"></i>Monthly Circulation Activity
+                </h5>
+                <div style="position: relative; height: 260px;">
+                    <canvas id="circulationTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Distribution -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="h6 mb-3" style="color: var(--text-primary); font-weight: 600;">
+                    <i class="bi bi-pie-chart me-2" style="color: var(--accent-secondary);"></i>Category Distribution
+                </h5>
+                <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Physical vs Digital Activity -->
+        <div class="col-lg-6">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="h6 mb-3" style="color: var(--text-primary); font-weight: 600;">
+                    <i class="bi bi-layers me-2 text-info"></i>Physical Loans vs E-Book Activity
+                </h5>
+                <div style="position: relative; height: 220px;">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fines Revenue Status -->
+        <div class="col-lg-6">
+            <div class="glass-panel p-4 h-100">
+                <h5 class="h6 mb-3" style="color: var(--text-primary); font-weight: 600;">
+                    <i class="bi bi-currency-rupee me-2 text-warning"></i>Fines Collected vs Pending (₹)
+                </h5>
+                <div style="position: relative; height: 220px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="finesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Reports Grid -->
 <div class="row g-4">
@@ -56,8 +113,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Detailed list of members with filters by status (Active/Expired/Suspended) and joining date ranges.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:membership' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:membership_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:membership' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:membership_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -76,8 +133,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Inventory log of physical copies, accession numbers, shelf locations, and availability statuses.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:inventory' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:inventory_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:inventory' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:inventory_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -96,8 +153,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Complete circulation log with issue dates, due dates, return dates, and member activity.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:loans' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:loans_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:loans' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:loans_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -116,8 +173,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Focus list of overdue loans with member contact numbers and overdue duration.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:overdue' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:overdue_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:overdue' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:overdue_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -136,8 +193,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Summary of outstanding and collected overdue fines by member.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:fines' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:fines_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:fines' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:fines_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -156,8 +213,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Track reservation queue positions, allocated books ready for pickup, and expired holds.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:reservations' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:reservations_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:reservations' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:reservations_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -176,8 +233,8 @@
             </div>
             <p class="small mb-4 flex-grow-1" style="color: var(--text-secondary);">Access history logs for online e-book reading and PDF file downloads.</p>
             <div class="d-flex gap-2">
-                <a href="{% url 'reports:ebook_usage' %}" class="btn btn-sm btn-primary flex-grow-1"><i class="bi bi-eye me-1"></i> View Report</a>
-                <a href="{% url 'reports:ebook_usage_csv' %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(99,102,241,0.5);" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
+                <a href="{% url 'reports:ebook_usage' %}" class="btn btn-sm btn-primary flex-grow-1 rounded-pill"><i class="bi bi-eye me-1"></i> View Report</a>
+                <a href="{% url 'reports:ebook_usage_csv' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Export CSV"><i class="bi bi-download"></i> CSV</a>
             </div>
         </div>
     </div>
@@ -202,3 +259,124 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart Default Formatting
+    Chart.defaults.color = '#94A3B8';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+
+    // 1. Monthly Circulation Trend Chart (Line)
+    const ctxTrend = document.getElementById('circulationTrendChart').getContext('2d');
+    new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: {{ months_labels_json|safe }},
+            datasets: [
+                {
+                    label: 'Loans Issued',
+                    data: {{ loans_per_month_json|safe }},
+                    borderColor: '#818CF8',
+                    backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                },
+                {
+                    label: 'Books Returned',
+                    data: {{ returns_per_month_json|safe }},
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { boxWidth: 12 } }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, beginAtZero: true }
+            }
+        }
+    });
+
+    // 2. Category Distribution (Doughnut)
+    const ctxCat = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+            labels: {{ chart_categories_json|safe }},
+            datasets: [{
+                data: {{ chart_category_data_json|safe }},
+                backgroundColor: [
+                    '#6366F1', '#8B5CF6', '#38BDF8', '#10B981', '#F59E0B', '#EF4444'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // 3. Physical vs Digital Activity (Bar)
+    const ctxAct = document.getElementById('activityChart').getContext('2d');
+    new Chart(ctxAct, {
+        type: 'bar',
+        data: {
+            labels: ['Physical Loans', 'E-Book Reads', 'E-Book Downloads'],
+            datasets: [{
+                label: 'Total Operations',
+                data: {{ activity_data_json|safe }},
+                backgroundColor: ['#6366F1', '#38BDF8', '#10B981'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, beginAtZero: true }
+            }
+        }
+    });
+
+    // 4. Fines Collected vs Pending (Doughnut/Pie)
+    const ctxFines = document.getElementById('finesChart').getContext('2d');
+    new Chart(ctxFines, {
+        type: 'pie',
+        data: {
+            labels: ['Collected Revenue (₹)', 'Pending Fines (₹)'],
+            datasets: [{
+                data: {{ fines_data_json|safe }},
+                backgroundColor: ['#10B981', '#F59E0B'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+

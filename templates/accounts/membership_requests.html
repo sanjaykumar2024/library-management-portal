@@ -1,0 +1,136 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Membership Requests{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1" style="font-size: 0.82rem;">
+                <li class="breadcrumb-item"><a href="{% url 'accounts:member_list' %}" style="color: var(--text-secondary); text-decoration: none;">Members List</a></li>
+                <li class="breadcrumb-item active" style="color: var(--accent-primary-hover);">Membership Requests</li>
+            </ol>
+        </nav>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-person-lines-fill me-2" style="color: var(--accent-primary-hover);"></i>Membership Requests
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">Review and process member renewal requests and membership tier upgrade applications.</p>
+    </div>
+    <div>
+        <span class="badge rounded-pill px-3 py-2" style="background: rgba(99,102,241,0.15); color: var(--accent-primary-hover); font-size: 0.85rem; border: 1px solid rgba(99,102,241,0.3);">
+            <i class="bi bi-hourglass-split me-1"></i>{{ total_pending }} Pending Review{{ total_pending|pluralize }}
+        </span>
+    </div>
+</div>
+
+<!-- Pending Requests Table -->
+<div class="glass-card p-4 mb-4">
+    <h5 class="h6 fw-bold mb-3 d-flex align-items-center gap-2" style="color: var(--text-primary);">
+        <i class="bi bi-clock-history text-warning"></i> Pending Requests Awaiting Action
+    </h5>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border); font-size: 0.88rem;">
+            <thead>
+                <tr class="text-muted small border-bottom" style="border-color: var(--glass-border) !important;">
+                    <th>Member</th>
+                    <th>Current Status & Tier</th>
+                    <th>Request Type</th>
+                    <th>Details / Notes</th>
+                    <th>Submitted</th>
+                    <th class="text-end">Review Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in pending_requests %}
+                <tr class="border-bottom" style="border-color: var(--glass-border) !important;">
+                    <td>
+                        <a href="{% url 'accounts:member_detail' req.user.profile.id %}" class="fw-semibold text-decoration-none hover-underline" style="color: var(--text-primary);">
+                            {{ req.user.get_full_name|default:req.user.username }}
+                        </a>
+                        <div class="small font-monospace" style="color: var(--text-muted);">{{ req.user.profile.membership_number }}</div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill {% if req.user.profile.membership_status == 'ACTIVE' %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %}">
+                            {{ req.user.profile.get_membership_status_display }}
+                        </span>
+                        <div class="small mt-1" style="color: var(--text-secondary);">{{ req.user.profile.get_tier_display }}</div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background: rgba(99,102,241,0.2); color: var(--accent-primary-hover);">
+                            {{ req.get_request_type_display }}
+                        </span>
+                        {% if req.request_type == 'UPGRADE_TIER' and req.requested_tier %}
+                        <div class="small mt-1" style="color: var(--accent-primary-hover);">To: <strong>{{ req.get_requested_tier_display }}</strong></div>
+                        {% endif %}
+                    </td>
+                    <td style="max-width: 250px;">
+                        <span class="small" style="color: var(--text-secondary);">{{ req.reason|default:"No notes provided." }}</span>
+                    </td>
+                    <td>
+                        <span class="small" style="color: var(--text-secondary);">{{ req.submitted_at|date:"M d, Y" }}</span>
+                        <div class="small" style="color: var(--text-muted); font-size: 0.72rem;">{{ req.submitted_at|time:"H:i" }}</div>
+                    </td>
+                    <td class="text-end">
+                        <form method="post" action="{% url 'accounts:manage_requests' %}" class="d-inline-flex gap-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="request_id" value="{{ req.id }}">
+                            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success rounded-pill px-3" style="font-size: 0.78rem;">
+                                <i class="bi bi-check-lg me-1"></i> Approve
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-sm btn-outline-danger rounded-pill px-2" style="font-size: 0.78rem;" title="Reject Request">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 small" style="color: var(--text-muted);">
+                        <i class="bi bi-check2-all fs-4 d-block mb-1 text-success"></i>
+                        No pending membership requests! All caught up.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Processed History Table -->
+<div class="glass-card p-4">
+    <h5 class="h6 fw-bold mb-3" style="color: var(--text-secondary);">Recently Processed Requests</h5>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border); font-size: 0.82rem;">
+            <thead>
+                <tr class="small" style="color: var(--text-muted);">
+                    <th>Member</th>
+                    <th>Type</th>
+                    <th>Result</th>
+                    <th>Processed By</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in processed_requests %}
+                <tr class="border-bottom" style="border-color: var(--glass-border) !important;">
+                    <td style="color: var(--text-primary);">{{ req.user.username }}</td>
+                    <td style="color: var(--text-secondary);">{{ req.get_request_type_display }}</td>
+                    <td>
+                        <span class="badge {% if req.status == 'APPROVED' %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                            {{ req.get_status_display }}
+                        </span>
+                    </td>
+                    <td style="color: var(--text-muted);">{{ req.reviewed_by.username|default:"System" }}</td>
+                    <td style="color: var(--text-muted);">{{ req.reviewed_at|date:"M d, Y"|default:"--" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-3" style="color: var(--text-muted);">No processed requests yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

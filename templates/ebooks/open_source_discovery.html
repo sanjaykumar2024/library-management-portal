@@ -1,0 +1,195 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Add Web Books{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1" style="font-size: 0.82rem;">
+                <li class="breadcrumb-item"><a href="{% url 'ebooks:manage' %}" style="color: var(--text-secondary); text-decoration: none;">Manage E-Books</a></li>
+                <li class="breadcrumb-item active" style="color: var(--accent-primary-hover);">Add Web Books</li>
+            </ol>
+        </nav>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-globe-americas me-2" style="color: var(--accent-primary-hover);"></i>Add Free Web Books
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Find and add classic public-domain books directly into your library in 1 click.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" onclick="batchImportCurated()" class="btn btn-primary rounded-pill px-3 shadow-sm d-flex align-items-center gap-2">
+            <i class="bi bi-cloud-arrow-down-fill"></i>
+            <span>Add All Featured Classics</span>
+        </button>
+        <a href="{% url 'ebooks:commons' %}" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-eye me-1"></i> View Free Classics
+        </a>
+    </div>
+</div>
+
+<!-- Search & Source Filters -->
+<div class="glass-card p-3 mb-4">
+    <form method="get" action="{% url 'ebooks:open_source_discovery' %}" class="row g-2 align-items-center">
+        <div class="col-md-7">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--glass-border); color: var(--text-muted);">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text" name="q" value="{{ q }}" class="form-control border-start-0" placeholder="Search by title, author, or keyword...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="topic" class="form-select">
+                <option value="">All Subjects & Topics</option>
+                <option value="Fiction" {% if selected_topic == 'Fiction' %}selected{% endif %}>Fiction & Literature</option>
+                <option value="Science Fiction" {% if selected_topic == 'Science Fiction' %}selected{% endif %}>Science Fiction</option>
+                <option value="Mystery" {% if selected_topic == 'Mystery' %}selected{% endif %}>Mystery & Detective</option>
+                <option value="Gothic" {% if selected_topic == 'Gothic' %}selected{% endif %}>Gothic & Horror</option>
+                <option value="Philosophy" {% if selected_topic == 'Philosophy' %}selected{% endif %}>Philosophy & Essays</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100 rounded-pill">Search</button>
+            {% if q or selected_topic %}
+            <a href="{% url 'ebooks:open_source_discovery' %}" class="btn btn-outline-secondary rounded-pill" title="Reset"><i class="bi bi-x"></i></a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Results Grid -->
+<div class="row g-4" id="openSourceGrid">
+    {% for b in books %}
+    <div class="col-md-6 col-lg-4" id="card-{{ b.gutenberg_id }}">
+        <div class="glass-card h-100 d-flex flex-column justify-content-between p-4 hover-lift" style="position: relative; overflow: hidden; border-color: rgba(99,102,241,0.25);">
+            <!-- Top Gradient Accent -->
+            <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: {{ b.cover_gradient|default:'linear-gradient(135deg, #4f46e5, #ec4899)' }};"></div>
+            
+            <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge rounded-pill" style="background: rgba(99,102,241,0.15); color: #C4B5FD; font-size: 0.72rem; border: 1px solid rgba(99,102,241,0.3);">
+                        <i class="bi bi-patch-check-fill me-1"></i>Public Domain
+                    </span>
+                    {% if b.is_imported %}
+                    <span class="badge rounded-pill bg-success-subtle text-success" style="font-size: 0.72rem; border: 1px solid rgba(16,185,129,0.3);">
+                        <i class="bi bi-check-circle-fill me-1"></i>In Library
+                    </span>
+                    {% else %}
+                    <span class="badge rounded-pill bg-secondary-subtle text-secondary" style="font-size: 0.72rem;">
+                        Ready to Add
+                    </span>
+                    {% endif %}
+                </div>
+
+                <h5 class="h6 fw-bold mb-1" style="color: var(--text-primary); line-height: 1.35;">{{ b.title }}</h5>
+                <p class="small mb-2" style="color: var(--accent-primary-hover); font-weight: 500;">
+                    by {{ b.author }}
+                </p>
+                <div class="mb-3 small text-truncate-3" style="color: var(--text-muted); font-size: 0.82rem; line-height: 1.5;">
+                    {{ b.description }}
+                </div>
+            </div>
+
+            <div class="pt-3 border-top d-flex align-items-center justify-content-between" style="border-color: var(--glass-border) !important;">
+                <span class="small text-muted" style="font-size: 0.75rem;">
+                    <i class="bi bi-book me-1"></i>{{ b.category|truncatechars:20 }}
+                </span>
+                
+                <div class="d-flex gap-2">
+                    {% if b.is_imported %}
+                    <button class="btn btn-sm btn-outline-success rounded-pill px-3" disabled style="font-size: 0.78rem;">
+                        <i class="bi bi-check2 me-1"></i>Added
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 import-btn" 
+                            onclick="importSingleBook({{ b.gutenberg_id }}, this)" style="font-size: 0.78rem;">
+                        <i class="bi bi-cloud-arrow-down me-1"></i>Add Book
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 py-5 text-center">
+        <div class="glass-card p-5 mx-auto" style="max-width: 500px;">
+            <i class="bi bi-book-half fs-1 text-muted d-block mb-3"></i>
+            <h5 class="h6" style="color: var(--text-primary);">No Free Books Found</h5>
+            <p class="text-muted small">Try searching for other keywords like "Austen", "Shelley", "Holmes", or "Science Fiction".</p>
+            <a href="{% url 'ebooks:open_source_discovery' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View Featured Classics</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Notification Toast Container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+    <div id="importToast" class="toast align-items-center text-bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage">Book imported successfully!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showToast(msg, isError=false) {
+    const toastEl = document.getElementById('importToast');
+    const toastMsg = document.getElementById('toastMessage');
+    toastMsg.textContent = msg;
+    if (isError) {
+        toastEl.className = 'toast align-items-center text-bg-danger border-0';
+    } else {
+        toastEl.className = 'toast align-items-center text-bg-success border-0';
+    }
+    const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+    toast.show();
+}
+
+async function importSingleBook(gutenbergId, btn) {
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Importing...';
+
+    try {
+        const response = await fetch("{% url 'ebooks:api_import_open_source' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ gutenberg_id: gutenbergId })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            btn.className = 'btn btn-sm btn-outline-success rounded-pill px-3';
+            btn.innerHTML = '<i class="bi bi-check2 me-1"></i> Imported';
+            showToast(data.message || 'Book imported into library catalog!');
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast(data.error || 'Failed to import book.', true);
+        }
+    } catch(err) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showToast('Network error during import.', true);
+    }
+}
+
+async function batchImportCurated() {
+    const buttons = document.querySelectorAll('.import-btn:not(:disabled)');
+    if (!buttons.length) {
+        showToast('All featured classics are already imported!');
+        return;
+    }
+    for (let btn of buttons) {
+        btn.click();
+        await new Promise(r => setTimeout(r, 600));
+    }
+}
+</script>
+{% endblock %}

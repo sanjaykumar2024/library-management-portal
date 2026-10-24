@@ -1,0 +1,233 @@
+{% load static %}
+<!-- Global Semantic Search Modal -->
+<div class="modal fade" id="semanticSearchModal" tabindex="-1" aria-labelledby="semanticSearchLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" style="margin-top: 80px;">
+        <div class="modal-content" style="background: var(--bg-surface); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: var(--shadow-float);">
+            <!-- Modal Header with search input -->
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <div class="d-flex align-items-center w-100 gap-3">
+                    <i class="bi bi-stars fs-4 text-warning"></i>
+                    <input type="text" id="semanticModalInput" class="form-control border-0 bg-transparent fs-5" placeholder="Search with AI... books, authors, topics" autocomplete="off"
+                           style="color: var(--text-primary); box-shadow: none; padding: 0.5rem 0;">
+                    <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <hr class="mx-4 my-2" style="border-color: var(--glass-border);">
+
+            <!-- Modal Body -->
+            <div class="modal-body px-4 py-3" style="max-height: 520px; overflow-y: auto;">
+                <!-- Suggestion Chips -->
+                <div id="semanticSuggestions" class="d-flex flex-wrap gap-2 mb-3">
+                    <button type="button" class="btn btn-sm rounded-pill semantic-chip" onclick="semanticPrompt('What books are available on Technology or AI?')" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 0.8rem;">
+                        <i class="bi bi-cpu me-1 text-primary"></i> Technology Books
+                    </button>
+                    <button type="button" class="btn btn-sm rounded-pill semantic-chip" onclick="semanticPrompt('Which e-books can I read online immediately?')" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 0.8rem;">
+                        <i class="bi bi-book-half me-1 text-success"></i> Instant E-Books
+                    </button>
+                    <button type="button" class="btn btn-sm rounded-pill semantic-chip" onclick="semanticPrompt('Recommend books about science fiction')" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 0.8rem;">
+                        <i class="bi bi-lightbulb me-1 text-warning"></i> Sci-Fi Picks
+                    </button>
+                    <button type="button" class="btn btn-sm rounded-pill semantic-chip" onclick="semanticPrompt('What physical books are on the shelf right now?')" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border); color: var(--text-primary); font-size: 0.8rem;">
+                        <i class="bi bi-box-seam me-1 text-info"></i> On-Shelf Now
+                    </button>
+                </div>
+
+                <!-- AI Answer Box -->
+                <div id="semanticAnswerBox" class="d-none mb-3 p-3 rounded-3" style="background: rgba(2, 89, 156, 0.08); border: 1px solid rgba(2, 89, 156, 0.2);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-robot text-primary"></i>
+                        <strong style="color: var(--accent-primary); font-size: 0.85rem;">AI Assistant Summary</strong>
+                    </div>
+                    <p id="semanticAnswerText" class="m-0" style="color: var(--text-primary); font-size: 0.9rem; line-height: 1.55;"></p>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div id="semanticLoading" class="d-none text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted small">Searching catalog with AI...</p>
+                </div>
+
+                <!-- Results Container -->
+                <div id="semanticResults" class="d-flex flex-column gap-2"></div>
+
+                <!-- Empty State -->
+                <div id="semanticEmpty" class="text-center py-4 d-none">
+                    <i class="bi bi-search fs-2 d-block mb-2 text-muted"></i>
+                    <p class="text-muted small m-0">No matches found. Try different keywords or a broader topic.</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer border-0 px-4 py-2">
+                <div class="d-flex justify-content-between w-100 align-items-center">
+                    <span class="small text-muted">
+                        <kbd style="font-size: 0.65rem; background: var(--glass-border); color: var(--text-secondary); border: none; padding: 2px 6px; border-radius: 4px;">Esc</kbd> to close
+                        &nbsp;·&nbsp;
+                        <kbd style="font-size: 0.65rem; background: var(--glass-border); color: var(--text-secondary); border: none; padding: 2px 6px; border-radius: 4px;">Enter</kbd> to search
+                    </span>
+                    <a href="{% url 'catalog:ai_assistant' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 0.78rem;">
+                        <i class="bi bi-robot me-1"></i> Open Full AI Assistant
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ── ⌘K / Ctrl+K / "/" Keyboard Shortcut ──
+    document.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            e.preventDefault();
+            const modalEl = document.getElementById('semanticSearchModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        }
+        if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) && !document.activeElement.isContentEditable) {
+            e.preventDefault();
+            const modalEl = document.getElementById('semanticSearchModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        }
+    });
+
+    // ── Auto-focus input on modal open ──
+    const semanticModal = document.getElementById('semanticSearchModal');
+    if (semanticModal) {
+        semanticModal.addEventListener('shown.bs.modal', function() {
+            const input = document.getElementById('semanticModalInput');
+            if (input) input.focus();
+        });
+        semanticModal.addEventListener('hidden.bs.modal', function() {
+            const input = document.getElementById('semanticModalInput');
+            if (input) input.value = '';
+            const res = document.getElementById('semanticResults');
+            if (res) res.innerHTML = '';
+            const ans = document.getElementById('semanticAnswerBox');
+            if (ans) ans.classList.add('d-none');
+            const emp = document.getElementById('semanticEmpty');
+            if (emp) emp.classList.add('d-none');
+            const sug = document.getElementById('semanticSuggestions');
+            if (sug) sug.classList.remove('d-none');
+        });
+    }
+
+    // ── Debounced Search ──
+    let debounceTimer = null;
+    const searchInput = document.getElementById('semanticModalInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const q = this.value.trim();
+            if (q.length < 2) {
+                document.getElementById('semanticResults').innerHTML = '';
+                document.getElementById('semanticAnswerBox').classList.add('d-none');
+                document.getElementById('semanticEmpty').classList.add('d-none');
+                document.getElementById('semanticSuggestions').classList.remove('d-none');
+                return;
+            }
+            debounceTimer = setTimeout(() => performSemanticSearch(q), 350);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(debounceTimer);
+                const q = this.value.trim();
+                if (q.length >= 2) performSemanticSearch(q);
+            }
+        });
+    }
+
+    window.semanticPrompt = function(text) {
+        const input = document.getElementById('semanticModalInput');
+        if (input) {
+            input.value = text;
+            performSemanticSearch(text);
+        }
+    };
+
+    async function performSemanticSearch(query) {
+        const resultsContainer = document.getElementById('semanticResults');
+        const answerBox = document.getElementById('semanticAnswerBox');
+        const answerText = document.getElementById('semanticAnswerText');
+        const loading = document.getElementById('semanticLoading');
+        const emptyState = document.getElementById('semanticEmpty');
+        const suggestions = document.getElementById('semanticSuggestions');
+
+        if (!resultsContainer) return;
+
+        if (suggestions) suggestions.classList.add('d-none');
+        if (answerBox) answerBox.classList.add('d-none');
+        if (emptyState) emptyState.classList.add('d-none');
+        resultsContainer.innerHTML = '';
+        if (loading) loading.classList.remove('d-none');
+
+        try {
+            const response = await fetch(`/catalog/api/semantic-search/?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            if (loading) loading.classList.add('d-none');
+
+            // Show AI answer
+            if (data.answer && answerBox && answerText) {
+                answerText.textContent = data.answer;
+                answerBox.classList.remove('d-none');
+            }
+
+            // Render citation cards
+            if (data.citations && data.citations.length > 0) {
+                data.citations.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'p-3 rounded-3 hover-lift';
+                    card.style.cssText = 'background: var(--bg-surface); border: 1px solid var(--glass-border); cursor: pointer; transition: all 0.2s;';
+
+                    let matchBadge = c.match_score ? `<span class="badge" style="background: rgba(2,89,156,0.15); color: #02599C; font-size: 0.68rem; border: 1px solid rgba(2,89,156,0.3);"><i class="bi bi-stars me-1"></i>${c.match_score}% Match</span>` : '';
+                    let availBadge = c.available_copies > 0
+                        ? `<span class="badge" style="background: rgba(16,185,129,0.15); color: #059669; font-size: 0.68rem;">${c.available_copies} On Shelf</span>`
+                        : (c.has_ebook ? `<span class="badge" style="background: rgba(99,102,241,0.15); color: #4F46E5; font-size: 0.68rem;">E-Book</span>` : `<span class="badge" style="background: rgba(245,158,11,0.15); color: #D97706; font-size: 0.68rem;">On Loan</span>`);
+
+                    let passageHtml = c.passage ? `<div class="mt-1" style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; border-left: 2px solid var(--accent-primary); padding-left: 8px;">${escapeHtmlModal(c.passage)}</div>` : '';
+
+                    let actions = `<a href="/catalog/book/${c.id}/" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0" style="font-size: 0.72rem;">Details</a>`;
+                    if (c.has_ebook) {
+                        actions += ` <a href="/ebooks/${c.ebook_id}/read/" class="btn btn-sm btn-primary rounded-pill px-2 py-0" style="font-size: 0.72rem; background: #02599C; border: none;">Read Online</a>`;
+                    } else if (c.available_copies > 0) {
+                        actions += ` <a href="/catalog/book/${c.id}/" class="btn btn-sm btn-success rounded-pill px-2 py-0" style="font-size: 0.72rem;">Reserve</a>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1 me-2">
+                                <a href="/catalog/book/${c.id}/" class="fw-semibold text-decoration-none d-block mb-1" style="color: var(--text-primary); font-size: 0.9rem;">${escapeHtmlModal(c.title)}</a>
+                                <div style="font-size: 0.78rem; color: var(--text-muted);">by ${escapeHtmlModal(c.authors || 'Unknown')} · ${escapeHtmlModal(c.category || 'General')}</div>
+                            </div>
+                            <div class="d-flex gap-1 flex-shrink-0">${matchBadge} ${availBadge}</div>
+                        </div>
+                        ${passageHtml}
+                        <div class="mt-2 d-flex gap-1">${actions}</div>
+                    `;
+                    resultsContainer.appendChild(card);
+                });
+            } else if (emptyState) {
+                emptyState.classList.remove('d-none');
+            }
+        } catch(err) {
+            if (loading) loading.classList.add('d-none');
+            if (answerBox && answerText) {
+                answerText.textContent = 'Search failed. Please try again.';
+                answerBox.classList.remove('d-none');
+            }
+        }
+    }
+
+    function escapeHtmlModal(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+})();
+</script>

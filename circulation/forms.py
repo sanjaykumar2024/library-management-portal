@@ -27,13 +27,16 @@ class IssueBookForm(forms.Form):
         if member.membership_status != 'ACTIVE':
             raise forms.ValidationError(f'Cannot issue to member. Status is {member.get_membership_status_display()}.')
 
-        # Check active loan limit (max 5 books at a time)
+        # Check active loan limit based on member tier
+        limit = getattr(member, 'max_books_allowed', 5)
         active_loans = Loan.objects.filter(member=member, status='ISSUED').count()
-        if active_loans >= 5:
+        if active_loans >= limit:
+            tier_name = getattr(member, 'get_tier_display', lambda: 'Standard')()
             raise forms.ValidationError(
                 f'This member already has {active_loans} active loans. '
-                f'Maximum 5 books can be issued at a time.'
+                f'Maximum {limit} books can be issued at a time for {tier_name} tier.'
             )
+
 
         return member
 

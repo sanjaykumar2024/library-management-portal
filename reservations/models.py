@@ -34,6 +34,13 @@ class Reservation(models.Model):
 
     class Meta:
         ordering = ['reservation_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['member', 'book'],
+                condition=models.Q(status__in=['PENDING', 'ALLOCATED']),
+                name='unique_active_reservation_per_member_book'
+            ),
+        ]
 
     def __str__(self):
         return f"Reservation: {self.book.title} for {self.member.user.username}"

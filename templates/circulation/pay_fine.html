@@ -1,59 +1,79 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Collect Fine Payment{% endblock %}
+{% block page_title %}{% if is_librarian %}Collect Fine Payment{% else %}Pay Overdue Fine{% endif %}{% endblock %}
 
 {% block content %}
 <div class="mb-4">
-    <a href="{% url 'circulation:fine_list' %}" class="btn btn-sm btn-outline-secondary" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);">
+    {% if is_librarian %}
+    <a href="{% url 'circulation:fine_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
         <i class="bi bi-arrow-left me-1"></i> Back to Fine List
     </a>
+    {% else %}
+    <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-left me-1"></i> Back to My Profile
+    </a>
+    {% endif %}
 </div>
 
-<div class="glass-card p-5" style="max-width: 600px; margin: 0 auto;">
-    <h4 class="h5 mb-3" style="color: var(--text-primary); font-weight: 700;">
-        <i class="bi bi-cash-coin me-2"></i>Collect Fine Payment
-    </h4>
+<div class="glass-card p-4 p-md-5" style="max-width: 600px; margin: 0 auto;">
+    <div class="text-center mb-4">
+        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 56px; height: 56px; background: rgba(245, 158, 11, 0.15); color: var(--accent-warning);">
+            <i class="bi bi-cash-coin fs-2"></i>
+        </div>
+        <h4 class="h5 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            {% if is_librarian %}Collect Fine Payment at Desk{% else %}Pay Overdue Fine Online{% endif %}
+        </h4>
+        <p class="small text-muted mb-0">
+            {% if is_librarian %}Record payment for late book return.{% else %}Pay fine now to keep your borrowing privileges active.{% endif %}
+        </p>
+    </div>
 
-    <div class="p-3 mb-4 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);">
+    <div class="p-3 mb-4 rounded" style="background: rgba(0,0,0,0.05); border: 1px solid var(--glass-border);">
         <div class="d-flex justify-content-between mb-2">
             <span style="color: var(--text-muted);">Member Name:</span>
-            <span class="fw-semibold">{{ fine.loan.member.user.get_full_name|default:fine.loan.member.user.username }}</span>
+            <span class="fw-semibold" style="color: var(--text-primary);">{{ fine.loan.member.user.get_full_name|default:fine.loan.member.user.username }}</span>
         </div>
         <div class="d-flex justify-content-between mb-2">
             <span style="color: var(--text-muted);">Membership #:</span>
-            <span class="font-monospace">{{ fine.loan.member.membership_number }}</span>
+            <span class="font-monospace text-indigo">{{ fine.loan.member.membership_number }}</span>
         </div>
         <div class="d-flex justify-content-between mb-2">
             <span style="color: var(--text-muted);">Book Title:</span>
-            <span>{{ fine.loan.book_copy.book.title }}</span>
+            <span style="color: var(--text-primary);">{{ fine.loan.book_copy.book.title }}</span>
         </div>
         <div class="d-flex justify-content-between mb-2">
             <span style="color: var(--text-muted);">Overdue Days:</span>
-            <span class="font-monospace">{{ fine.overdue_days }} days</span>
+            <span class="font-monospace text-warning">{{ fine.overdue_days }} days overdue</span>
         </div>
-        <hr style="border-color: rgba(255,255,255,0.1);">
+        <hr style="border-color: var(--glass-border);">
         <div class="d-flex justify-content-between align-items-center">
-            <span class="fw-bold" style="color: var(--text-primary);">Total Fine Amount:</span>
-            <span class="fs-4 font-monospace fw-bold" style="color: var(--accent-warning);">${{ fine.amount }}</span>
+            <span class="fw-bold" style="color: var(--text-primary);">Total Fine Due:</span>
+            <span class="fs-4 font-monospace fw-bold" style="color: var(--accent-warning);">₹{{ fine.amount|floatformat:2 }}</span>
         </div>
     </div>
 
     <form method="POST">
         {% csrf_token %}
         <div class="mb-3">
-            <label class="form-label small text-uppercase" style="color: var(--text-muted);">Payment Method</label>
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-muted);">Payment Method</label>
             <select name="payment_method" class="form-select">
-                <option value="CASH">Cash</option>
-                <option value="CARD">Credit / Debit Card</option>
+                {% if is_librarian %}
+                <option value="CASH">Cash at Desk</option>
+                <option value="CARD">Credit / Debit Card (POS)</option>
                 <option value="UPI">UPI / Digital Transfer</option>
+                {% else %}
+                <option value="UPI">UPI Instant Pay (Google Pay / PhonePe / Paytm)</option>
+                <option value="CARD">Debit / Credit Card</option>
+                <option value="NETBANKING">Net Banking</option>
+                {% endif %}
             </select>
         </div>
         <div class="mb-4">
-            <label class="form-label small text-uppercase" style="color: var(--text-muted);">Notes / Reference # (Optional)</label>
-            <input type="text" name="notes" class="form-control" placeholder="e.g. Receipt #1042">
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-muted);">Transaction Reference / Receipt Note (Optional)</label>
+            <input type="text" name="notes" class="form-control" placeholder="e.g. UPI Ref #98721 or Desk Receipt">
         </div>
-        <button type="submit" class="btn btn-primary w-100 py-2">
-            <i class="bi bi-check-circle me-1"></i> Confirm Payment of ${{ fine.amount }}
+        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold rounded-pill shadow-sm">
+            <i class="bi bi-check-circle me-1"></i> Confirm &amp; Settle Fine (₹{{ fine.amount|floatformat:2 }})
         </button>
     </form>
 </div>

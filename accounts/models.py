@@ -18,8 +18,22 @@ class UserProfile(models.Model):
         ('SUSPENDED', 'Suspended'),
     )
 
+    TIER_CHOICES = (
+        ('STUDENT', 'Student Scholar (Max 3 Books)'),
+        ('STANDARD', 'Standard Patron (Max 5 Books)'),
+        ('PREMIUM_SCHOLAR', 'Premium Scholar (Max 10 Books & Unlimited Holds)'),
+    )
+
+    THEME_CHOICES = (
+        ('light', 'Normal Mode (Light)'),
+        ('dark', 'Dark Mode'),
+    )
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='MEMBER')
+    tier = models.CharField(max_length=20, choices=TIER_CHOICES, default='STUDENT')
+    theme_preference = models.CharField(max_length=10, choices=THEME_CHOICES, default='light')
+
     
     # Contact Info
     phone_number = models.CharField(max_length=20, blank=True, null=True)
@@ -39,6 +53,14 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.get_role_display()}"
 
+    @property
+    def max_books_allowed(self):
+        if self.tier == 'STUDENT':
+            return 3
+        elif self.tier == 'PREMIUM_SCHOLAR':
+            return 10
+        return 5
+
     def is_admin(self):
         return self.role == 'ADMIN' or self.user.is_superuser
 
@@ -47,6 +69,38 @@ class UserProfile(models.Model):
 
     def is_member(self):
         return self.role == 'MEMBER'
+
+
+class MembershipRequest(models.Model):
+    """Patron self-service request for membership renewal or tier upgrade."""
+    REQUEST_TYPE_CHOICES = (
+        ('RENEWAL', 'Membership Renewal (1-Year Extension)'),
+        ('UPGRADE_TIER', 'Membership Tier Upgrade'),
+    )
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending Review'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='membership_requests')
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='RENEWAL')
+    requested_tier = models.CharField(max_length=20, choices=UserProfile.TIER_CHOICES, blank=True, null=True)
+    reason = models.TextField(blank=True, help_text="Note from patron (student ID, justification, etc.)")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    admin_notes = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_membership_requests')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = 'Membership Request'
+        verbose_name_plural = 'Membership Requests'
+
+    def __str__(self):
+        return f"{self.get_request_type_display()} from {self.user.username} ({self.get_status_display()})"
+
 
 
 def generate_membership_number():

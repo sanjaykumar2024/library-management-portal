@@ -1,0 +1,109 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Saved Books{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-bookmark-heart-fill me-2" style="color: #ec4899;"></i>Saved Books
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Track books you want to read, books you are reading now, and your all-time favorites.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'catalog:list' %}" class="btn btn-outline-secondary rounded-pill px-3" style="font-size: 0.82rem;">
+            <i class="bi bi-search me-1"></i> Search Books
+        </a>
+        <a href="{% url 'ebooks:commons' %}" class="btn btn-outline-primary rounded-pill px-3" style="font-size: 0.82rem;">
+            <i class="bi bi-clouds me-1"></i> Free Classic Books
+        </a>
+    </div>
+</div>
+
+<!-- Bookshelf Navigation Pills -->
+<ul class="nav nav-pills gap-2 mb-4 p-1 glass-card" style="border-radius: 50rem; width: fit-content;">
+    <li class="nav-item">
+        <a class="nav-link rounded-pill px-4 py-2 {% if active_tab == 'WANT_TO_READ' %}active{% endif %}" href="?tab=WANT_TO_READ" style="font-size: 0.85rem; font-weight: 500;">
+            <i class="bi bi-bookmark me-1"></i> Want to Read ({{ shelves.WANT_TO_READ|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link rounded-pill px-4 py-2 {% if active_tab == 'CURRENTLY_READING' %}active{% endif %}" href="?tab=CURRENTLY_READING" style="font-size: 0.85rem; font-weight: 500;">
+            <i class="bi bi-book-half me-1"></i> Currently Reading ({{ shelves.CURRENTLY_READING|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link rounded-pill px-4 py-2 {% if active_tab == 'FAVORITES' %}active{% endif %}" href="?tab=FAVORITES" style="font-size: 0.85rem; font-weight: 500;">
+            <i class="bi bi-heart-fill me-1 text-danger"></i> Favorites ({{ shelves.FAVORITES|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link rounded-pill px-4 py-2 {% if active_tab == 'COMPLETED' %}active{% endif %}" href="?tab=COMPLETED" style="font-size: 0.85rem; font-weight: 500;">
+            <i class="bi bi-check2-circle me-1 text-success"></i> Finished ({{ shelves.COMPLETED|length }})
+        </a>
+    </li>
+</ul>
+
+<!-- Book Grid for Active Tab -->
+<div class="row g-4">
+    {# Render entries for active_tab #}
+
+    {% if active_tab == 'WANT_TO_READ' %}
+        {% for item in shelves.WANT_TO_READ %}
+            {% include "catalog/_bookshelf_card.html" with entry=item %}
+        {% empty %}
+            {% include "catalog/_bookshelf_empty.html" with label="Want to Read" %}
+        {% endfor %}
+    {% elif active_tab == 'CURRENTLY_READING' %}
+        {% for item in shelves.CURRENTLY_READING %}
+            {% include "catalog/_bookshelf_card.html" with entry=item %}
+        {% empty %}
+            {% include "catalog/_bookshelf_empty.html" with label="Currently Reading" %}
+        {% endfor %}
+    {% elif active_tab == 'FAVORITES' %}
+        {% for item in shelves.FAVORITES %}
+            {% include "catalog/_bookshelf_card.html" with entry=item %}
+        {% empty %}
+            {% include "catalog/_bookshelf_empty.html" with label="Favorites" %}
+        {% endfor %}
+    {% elif active_tab == 'COMPLETED' %}
+        {% for item in shelves.COMPLETED %}
+            {% include "catalog/_bookshelf_card.html" with entry=item %}
+        {% empty %}
+            {% include "catalog/_bookshelf_empty.html" with label="Finished Reading" %}
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function removeFromShelf(bookId, shelfType, elemId) {
+    if (!confirm('Remove this book from your reading shelf?')) return;
+    try {
+        const res = await fetch("{% url 'catalog:api_toggle_bookshelf' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ book_id: bookId, shelf_type: shelfType })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const card = document.getElementById(elemId);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.95)';
+                card.style.transition = 'all 0.3s ease';
+                setTimeout(() => card.remove(), 300);
+            }
+        }
+    } catch(e) {
+        alert('Failed to update shelf.');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Add Kaggle Books{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1" style="font-size: 0.82rem;">
+                <li class="breadcrumb-item"><a href="{% url 'ebooks:manage' %}" style="color: var(--text-secondary); text-decoration: none;">Manage E-Books</a></li>
+                <li class="breadcrumb-item active" style="color: var(--accent-primary-hover);">Add Kaggle Books</li>
+            </ol>
+        </nav>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-database-fill-check me-2" style="color: #38bdf8;"></i>Add Kaggle Books
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Add digital books from Kaggle book collections (7k Books, Goodreads 10k, Book-Crossing, and custom CSV files).
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'ebooks:catalog' %}" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-book me-1"></i> Online E-Books
+        </a>
+        <a href="{% url 'ebooks:manage' %}" class="btn btn-outline-primary rounded-pill px-3">
+            <i class="bi bi-gear me-1"></i> Manage E-Books
+        </a>
+    </div>
+</div>
+
+<!-- Metrics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: #38bdf8;">{{ total_kaggle }}</div>
+            <div class="small" style="color: var(--text-muted);">Kaggle Books Added</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: var(--accent-success);">{{ categories_count }}</div>
+            <div class="small" style="color: var(--text-muted);">Genres & Categories</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: var(--accent-primary-hover);">{{ total_ebooks }}</div>
+            <div class="small" style="color: var(--text-muted);">Total Active E-Books</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="glass-card p-4 text-center">
+            <div class="fs-2 fw-bold" style="color: #f59e0b;">100%</div>
+            <div class="small" style="color: var(--text-muted);">Ready to Read</div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions Row -->
+<div class="row g-4 mb-4">
+    <!-- Action 1: Curated Add -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden" style="border-top: 3px solid #38bdf8;">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge rounded-pill" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-size: 0.75rem;">
+                        <i class="bi bi-lightning-charge-fill me-1"></i>Curated Collection
+                    </span>
+                    <span class="small text-muted">data/kaggle_books.csv</span>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--text-primary);">1-Click Add Popular Books</h5>
+                <p class="small text-muted mb-3" style="line-height: 1.6;">
+                    Instantly add or update 90+ top-rated books from Kaggle across Computer Science, Artificial Intelligence, Science Fiction, Literature, Psychology, and Economics. Automatically creates covers and full readable chapters.
+                </p>
+                <div class="p-3 mb-3" style="background: rgba(0,0,0,0.05); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+                    <div class="small fw-semibold mb-1" style="color: var(--text-primary);"><i class="bi bi-check-circle text-success me-1"></i> Included Highlights:</div>
+                    <div class="small text-muted">
+                        • <em>Designing Data-Intensive Applications</em> &bull; <em>Structure &amp; Interpretation of Computer Programs</em> &bull; <em>Design Patterns</em><br>
+                        • <em>Clean Code</em> &bull; <em>The Hobbit</em> &bull; <em>Dune</em> &bull; <em>1984</em> &bull; <em>Crime and Punishment</em> &bull; <em>Atomic Habits</em> &bull; <em>Sapiens</em>
+                    </div>
+                </div>
+            </div>
+            <form method="POST" action="{% url 'ebooks:kaggle_import' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="import_curated">
+                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-cloud-arrow-down-fill"></i>
+                    <span>Add / Update Popular Books</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Action 2: Custom CSV Upload -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between position-relative overflow-hidden" style="border-top: 3px solid var(--accent-primary-hover);">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="badge rounded-pill" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); font-size: 0.75rem;">
+                        <i class="bi bi-filetype-csv me-1"></i>Custom Spreadsheet
+                    </span>
+                    <span class="small text-muted">Any Kaggle .csv file</span>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: var(--text-primary);">Upload Kaggle Book File</h5>
+                <p class="small text-muted mb-3" style="line-height: 1.6;">
+                    Upload any book spreadsheet downloaded from Kaggle. Automatically matches book details (title, author, ISBN, category).
+                </p>
+
+                <form method="POST" action="{% url 'ebooks:kaggle_import' %}" enctype="multipart/form-data" id="kaggleUploadForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload_csv">
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Select CSV File</label>
+                        <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Reading Permission</label>
+                            <select name="access_mode" class="form-select form-select-sm">
+                                <option value="READ_AND_DOWNLOAD" selected>Read & Download</option>
+                                <option value="READ_ONLY">Read Only</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted">Book License</label>
+                            <select name="rights_status" class="form-select form-select-sm">
+                                <option value="LIBRARY_LICENSED" selected>Library Licensed</option>
+                                <option value="OPEN_LICENSE">Open License</option>
+                                <option value="PUBLIC_DOMAIN">Public Domain</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="overwrite" id="overwriteCheck">
+                        <label class="form-check-label small text-muted" for="overwriteCheck">
+                            Update existing books if ISBN matches
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-primary w-100 rounded-pill py-2 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-upload"></i>
+                        <span>Upload & Add Books</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Terminal Tip -->
+<div class="glass-card p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-terminal fs-3" style="color: #38bdf8;"></i>
+        <div>
+            <div class="small fw-semibold" style="color: var(--text-primary);">Terminal / Admin Command Available</div>
+            <div class="small text-muted">Run directly in terminal: <code class="px-2 py-1 rounded" style="background: rgba(0,0,0,0.1); color: #38bdf8;">python manage.py import_kaggle_ebooks --file data/kaggle_books.csv</code></div>
+        </div>
+    </div>
+    <span class="badge rounded-pill" style="background: rgba(56,189,248,0.15); color: #38bdf8; font-size: 0.75rem;">Command Ready</span>
+</div>
+
+<!-- Ingested Kaggle E-Books Table -->
+<div class="glass-card overflow-hidden">
+    <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--glass-border) !important;">
+        <h6 class="mb-0 fw-bold" style="color: var(--text-primary);"><i class="bi bi-bookshelf me-2" style="color: #38bdf8;"></i>Added Kaggle Books ({{ total_kaggle }} Books)</h6>
+        <span class="small text-muted">Showing latest records</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle" style="color: var(--text-primary);">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--glass-border); font-size: 0.78rem;">
+                    <th class="px-4 py-3 text-uppercase text-muted">Book Title & Cover</th>
+                    <th class="px-3 py-3 text-uppercase text-muted">Author(s)</th>
+                    <th class="px-3 py-3 text-uppercase text-muted">Category</th>
+                    <th class="px-3 py-3 text-uppercase text-muted">ISBN-13</th>
+                    <th class="px-3 py-3 text-uppercase text-muted">Year / Pages</th>
+                    <th class="px-3 py-3 text-uppercase text-muted">Format</th>
+                    <th class="px-4 py-3 text-uppercase text-muted text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eb in kaggle_ebooks %}
+                <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <td class="px-4 py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div style="width: 42px; height: 60px; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,0.1); flex-shrink: 0;">
+                                {% if eb.book.cover_image %}
+                                    <img src="{{ eb.book.cover_image.url }}" alt="{{ eb.book.title }}" class="w-100 h-100 object-fit-cover">
+                                {% else %}
+                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="background: rgba(99,102,241,0.15);">
+                                        <i class="bi bi-book"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <a href="{% url 'ebooks:detail' eb.id %}" class="fw-semibold text-decoration-none d-block" style="font-size: 0.92rem; color: var(--text-primary);">
+                                    {{ eb.book.title }}
+                                </a>
+                                <span class="small text-muted">{{ eb.book.publisher|default:"Library Edition" }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 small text-muted">
+                        {% for a in eb.book.authors.all %}{{ a.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </td>
+                    <td class="px-3 py-3">
+                        <span class="badge rounded-pill" style="background: rgba(99,102,241,0.15); color: var(--accent-primary-hover); font-size: 0.72rem;">
+                            {{ eb.book.category.name|default:"General" }}
+                        </span>
+                    </td>
+                    <td class="px-3 py-3 small font-monospace text-muted">{{ eb.book.isbn }}</td>
+                    <td class="px-3 py-3 small text-muted">
+                        {{ eb.book.publication_year|default:"--" }} &bull; {{ eb.page_count|default:"--" }} pp
+                    </td>
+                    <td class="px-3 py-3">
+                        <span class="badge" style="background: rgba(16,185,129,0.15); color: #34d399; font-size: 0.72rem;">
+                            <i class="bi bi-file-code me-1"></i>{{ eb.format }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-end">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'ebooks:read' eb.id %}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.76rem;" title="Read Book in Browser">
+                                <i class="bi bi-book me-1"></i> Read
+                            </a>
+                            <a href="{% url 'ebooks:detail' eb.id %}" class="btn btn-sm btn-outline-secondary rounded-pill" style="font-size: 0.76rem;" title="View Details">
+                                <i class="bi bi-info-circle"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 text-muted"></i>
+                        No Kaggle e-books added yet. Click "Add / Update Popular Books" above to get started!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

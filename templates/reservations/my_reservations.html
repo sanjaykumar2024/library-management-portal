@@ -1,59 +1,313 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}My Reservations{% endblock %}
+{% block page_title %}Reserved Books{% endblock %}
 
 {% block content %}
-<div class="mb-4 d-flex justify-content-between align-items-center">
-    <h3 class="h5 mb-0" style="color: var(--text-primary); font-weight: 600;">Active Reservations</h3>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-bookmark-heart text-indigo me-2"></i>Reserved Books
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Track your waiting list, expected dates, and book pickup passes.
+        </p>
+    </div>
+    <a href="{% url 'catalog:list' %}" class="btn btn-primary btn-sm px-3 rounded-pill shadow-sm">
+        <i class="bi bi-search me-1"></i> Search Books
+    </a>
 </div>
 
-<div class="glass-card overflow-hidden">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
-            <thead style="border-bottom: 2px solid var(--glass-border);">
-                <tr class="text-uppercase small" style="color: var(--text-secondary); letter-spacing: 1px;">
-                    <th class="ps-4 py-3 border-0">Book</th>
-                    <th class="py-3 border-0">Date Reserved</th>
-                    <th class="py-3 border-0">Status</th>
-                    <th class="pe-4 py-3 text-end border-0">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reservation in reservations %}
-                <tr style="border-bottom: 1px solid var(--glass-border);">
-                    <td class="ps-4 py-3">
-                        <div class="fw-medium">{{ reservation.book.title }}</div>
-                        <div class="small" style="color: var(--text-muted);">{{ reservation.book.author }}</div>
-                    </td>
-                    <td class="py-3">
-                        <div>{{ reservation.reservation_date|date:"M j, Y" }}</div>
-                    </td>
-                    <td class="py-3">
-                        {% if reservation.status == 'PENDING' %}
-                            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Pending</span>
-                            <div class="small mt-1" style="color: var(--text-muted);">Waiting for copy</div>
-                        {% elif reservation.status == 'ALLOCATED' %}
-                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Ready for Pickup</span>
-                            <div class="small mt-1" style="color: var(--text-muted);">Hold expires {{ reservation.expiry_date|date:"M j" }}</div>
+<!-- Tabs Navigation -->
+<ul class="nav nav-pills mb-4 gap-2" id="reservationTabs">
+    <li class="nav-item">
+        <a class="nav-link rounded-pill px-4 py-2 fw-semibold {% if current_tab != 'history' %}active{% endif %}" 
+           href="?tab=active" style="transition: all 0.2s;">
+            <i class="bi bi-hourglass-split me-1"></i> Active Holds
+            <span class="badge rounded-pill bg-dark ms-2">{{ total_active }}</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link rounded-pill px-4 py-2 fw-semibold {% if current_tab == 'history' %}active{% endif %}" 
+           href="?tab=history" style="transition: all 0.2s;">
+            <i class="bi bi-clock-history me-1"></i> Hold History
+            <span class="badge rounded-pill bg-dark ms-2">{{ total_past }}</span>
+        </a>
+    </li>
+</ul>
+
+{% if current_tab != 'history' %}
+    <!-- ACTIVE RESERVATIONS VIEW -->
+    {% if active_reservations %}
+    <div class="row g-4">
+        {% for res in active_reservations %}
+        <div class="col-12">
+            <div class="glass-card p-4 p-md-5 position-relative overflow-hidden" 
+                 style="border-left: 4px solid {% if res.status == 'ALLOCATED' %}var(--accent-success){% else %}var(--accent-primary){% endif %};">
+                
+                <div class="row align-items-center g-4">
+                    <!-- Book Info -->
+                    <div class="col-lg-4">
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="book-cover-wrapper flex-shrink-0" style="width: 70px;">
+                                {% if res.book.cover_image %}
+                                <img src="{{ res.book.cover_image.url }}" alt="{{ res.book.title }}" class="book-cover">
+                                {% else %}
+                                <div class="book-cover-fallback p-1">
+                                    <div class="fallback-body p-0">
+                                        <div class="fallback-title" style="font-size: 0.65rem; -webkit-line-clamp: 3;">{{ res.book.title }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="badge mb-2" style="background: rgba(99, 102, 241, 0.15); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3); font-size: 0.75rem;">
+                                    {{ res.book.category.name|default:"General" }}
+                                </span>
+                                <h5 class="mb-1" style="font-weight: 700; color: var(--text-primary);">
+                                    <a href="{% url 'catalog:detail' res.book.id %}" class="text-decoration-none hover-indigo" style="color: var(--text-primary);">
+                                         {{ res.book.title }}
+                                     </a>
+                                 </h5>
+                                 <div class="small" style="color: var(--text-secondary);">
+                                     By {% for a in res.book.authors.all %}{{ a.full_name }}{% if not forloop.last %}, {% endif %}{% empty %}Unknown Author{% endfor %}
+                                 </div>
+                                 <div class="small font-monospace mt-2" style="color: var(--text-muted); font-size: 0.78rem;">
+                                     Reserved: {{ res.reservation_date|date:"M j, Y — g:i A" }}
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Queue / Hold Status Tracker -->
+                    <div class="col-lg-5">
+                        {% if res.status == 'ALLOCATED' %}
+                        <!-- ALLOCATED STATUS -->
+                        <div class="p-3 rounded" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-success px-3 py-1 fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Ready for Pickup
+                                </span>
+                                <span class="small fw-semibold {% if res.queue_info.is_expiring_soon %}text-danger{% else %}text-warning{% endif %}">
+                                    <i class="bi bi-clock-history me-1"></i> {{ res.queue_info.hours_left }}h {{ res.queue_info.mins_left }}m left
+                                </span>
+                            </div>
+                            <div class="small mb-1" style="color: var(--text-primary);">
+                                <strong>Location:</strong> <span class="text-indigo">{{ res.queue_info.shelf_location }}</span>
+                            </div>
+                            <div class="small" style="color: var(--text-muted);">
+                                <strong>Copy Barcode:</strong> <span class="font-monospace fw-semibold" style="color: var(--text-primary);">{{ res.queue_info.accession_number }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- PENDING QUEUE TRACKER -->
+                        <div class="p-3 rounded" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <span class="badge bg-primary px-3 py-1 fw-bold" style="font-size: 0.8rem;">
+                                        <i class="bi bi-people-fill me-1"></i> Queue Position: #{{ res.queue_info.position }}
+                                    </span>
+                                    {% if res.queue_info.ahead_count == 0 %}
+                                    <span class="badge bg-success ms-1" style="font-size: 0.7rem;">Next In Line!</span>
+                                    {% else %}
+                                    <span class="small ms-2" style="color: var(--text-secondary);">({{ res.queue_info.ahead_count }} ahead of you)</span>
+                                    {% endif %}
+                                </div>
+                                <span class="small font-monospace" style="color: var(--text-muted);">Total: {{ res.queue_info.total_queue }} holds</span>
+                            </div>
+                            
+                            <!-- Queue Progress Bar -->
+                            <div class="progress mb-2" style="height: 6px; background: rgba(0,0,0,0.1);">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-indigo" 
+                                     role="progressbar" style="width: {{ res.queue_info.progress_pct }}%;" 
+                                     aria-valuenow="{{ res.queue_info.progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            
+                            <div class="small" style="color: var(--text-secondary);">
+                                {% if res.queue_info.estimated_date %}
+                                <i class="bi bi-calendar-event text-indigo me-1"></i> Est. Availability: <strong>{{ res.queue_info.estimated_date|date:"M j, Y" }}</strong>
+                                {% else %}
+                                <i class="bi bi-hourglass text-muted me-1"></i> Waiting for physical copy return
+                                {% endif %}
+                            </div>
+                        </div>
                         {% endif %}
-                    </td>
-                    <td class="pe-4 py-3 text-end">
-                        <form method="post" action="{% url 'reservations:cancel_reservation' reservation.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger" style="border-color: rgba(239, 68, 68, 0.3);">Cancel</button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center py-5" style="color: var(--text-muted); border: none;">
-                        <i class="bi bi-journal-x fs-1 d-block mb-3" style="opacity: 0.5;"></i>
-                        You have no active reservations.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+                        <!-- 4-Stage Mini Stepper -->
+                        <div class="d-flex justify-content-between mt-3 px-2 position-relative">
+                            <div class="text-center" style="font-size: 0.72rem; color: {% if res.queue_info.stage >= 1 %}var(--accent-success){% else %}var(--text-muted){% endif %};">
+                                <i class="bi bi-check-circle-fill d-block mb-1"></i> Requested
+                            </div>
+                            <div class="text-center" style="font-size: 0.72rem; color: {% if res.queue_info.stage >= 2 %}var(--accent-primary-hover){% else %}var(--text-muted){% endif %};">
+                                <i class="bi {% if res.queue_info.stage >= 2 %}bi-hourglass-split{% else %}bi-circle{% endif %} d-block mb-1"></i> Waitlist
+                            </div>
+                            <div class="text-center" style="font-size: 0.72rem; color: {% if res.queue_info.stage >= 3 %}var(--accent-success){% else %}var(--text-muted){% endif %};">
+                                <i class="bi {% if res.queue_info.stage >= 3 %}bi-box-seam-fill{% else %}bi-circle{% endif %} d-block mb-1"></i> Hold Shelf
+                            </div>
+                            <div class="text-center" style="font-size: 0.72rem; color: {% if res.queue_info.stage >= 4 %}var(--accent-success){% else %}var(--text-muted){% endif %};">
+                                <i class="bi {% if res.queue_info.stage >= 4 %}bi-bag-check-fill{% else %}bi-circle{% endif %} d-block mb-1"></i> Picked Up
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="col-lg-3 text-lg-end">
+                        <div class="d-flex flex-column gap-2">
+                            {% if res.status == 'ALLOCATED' %}
+                            <button type="button" class="btn btn-success btn-sm py-2 px-3 fw-semibold rounded-pill shadow-sm" 
+                                    data-bs-toggle="modal" data-bs-target="#pickupPassModal{{ res.id }}">
+                                <i class="bi bi-qr-code me-1"></i> View Pickup Pass
+                            </button>
+                            <form method="post" action="{% url 'reservations:extend_reservation' res.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-warning btn-sm py-2 px-3 w-100 rounded-pill">
+                                    <i class="bi bi-calendar-plus me-1"></i> Extend Hold (+2 Days)
+                                </button>
+                            </form>
+                            {% endif %}
+
+                            <form method="post" action="{% url 'reservations:cancel_reservation' res.id %}" 
+                                  onsubmit="return confirm('Are you sure you want to cancel this reservation? If a copy is held, it will be offered to the next reader.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm py-2 px-3 w-100 rounded-pill">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel Hold
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DIGITAL HOLD PICKUP PASS MODAL -->
+        {% if res.status == 'ALLOCATED' %}
+        <div class="modal fade" id="pickupPassModal{{ res.id }}" tabindex="-1" aria-labelledby="pickupPassLabel{{ res.id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content glass-card border-indigo p-4 text-center" style="background: #0B0E14; border: 2px solid var(--accent-primary);">
+                    <div class="modal-header border-0 pb-0 justify-content-center">
+                        <span class="badge bg-success text-uppercase px-3 py-1 mb-2">Digital Hold Pickup Pass</span>
+                    </div>
+                    <div class="modal-body py-3">
+                        <h4 class="h5 mb-1" style="color: var(--text-primary); font-weight: 700;">{{ res.book.title }}</h4>
+                        <div class="small mb-3" style="color: var(--text-secondary);">Pass #HOLD-{{ res.id|stringformat:"05d" }}</div>
+
+                        <!-- Barcode Simulation -->
+                        <div class="p-3 my-3 rounded" style="background: #ffffff; color: #000000;">
+                            <div class="fs-6 fw-bold letter-spacing-1 font-monospace mb-1">{{ res.allocated_copy.accession_number }}</div>
+                            <div style="font-family: monospace; letter-spacing: 4px; font-size: 1.6rem; font-weight: 900;">
+                                ||| | | |||| || | |||| | ||| |
+                            </div>
+                            <div class="small text-muted" style="font-size: 0.65rem;">Scan at Borrow & Return Desk to collect book</div>
+                        </div>
+
+                        <!-- Location & Pickup Details -->
+                        <div class="glass-panel p-3 text-start mb-3" style="background: rgba(255,255,255,0.03);">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small text-muted">Pickup Location:</span>
+                                <span class="small fw-bold" style="color: var(--text-primary);">{{ res.queue_info.shelf_location }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small text-muted">Member Name:</span>
+                                <span class="small fw-bold" style="color: var(--text-primary);">{{ res.member.user.get_full_name|default:res.member.user.username }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="small text-muted">Membership #:</span>
+                                <span class="small font-monospace text-indigo">{{ res.member.membership_number }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="small text-muted">Collect Before:</span>
+                                <span class="small fw-bold text-warning">{{ res.expiry_date|date:"M j, Y — g:i A" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="small" style="color: var(--text-muted); font-size: 0.78rem;">
+                            <i class="bi bi-info-circle me-1 text-info"></i> Present this pass or your membership card at the front desk.
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-4 rounded-pill" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary btn-sm px-4 rounded-pill" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print Pass</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
     </div>
-</div>
+    {% else %}
+    <!-- Empty Active State -->
+    <div class="glass-card text-center py-5 p-4">
+        <div class="mb-3">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center" 
+                 style="width: 80px; height: 80px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);">
+                <i class="bi bi-bookmark-plus text-indigo fs-1"></i>
+            </div>
+        </div>
+        <h4 class="h5 mb-2" style="color: var(--text-primary); font-weight: 600;">No Active Reservations</h4>
+        <p class="small mb-4 mx-auto" style="max-width: 450px; color: var(--text-secondary);">
+            When a popular book is checked out, you can reserve it to join the queue and track your position in real-time.
+        </p>
+        <a href="{% url 'catalog:list' %}" class="btn btn-primary rounded-pill px-4 py-2">
+            <i class="bi bi-search me-1"></i> Explore Book Catalog
+        </a>
+    </div>
+    {% endif %}
+
+{% else %}
+    <!-- RESERVATION HISTORY VIEW -->
+    {% if past_reservations %}
+    <div class="glass-card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
+                <thead style="border-bottom: 2px solid var(--glass-border);">
+                    <tr class="text-uppercase small" style="color: var(--text-secondary); letter-spacing: 1px;">
+                        <th class="ps-4 py-3 border-0">Book Title</th>
+                        <th class="py-3 border-0">Reserved Date</th>
+                        <th class="py-3 border-0">Final Status</th>
+                        <th class="pe-4 py-3 text-end border-0">Catalogue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in past_reservations %}
+                    <tr style="border-bottom: 1px solid var(--glass-border);">
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold" style="color: var(--text-primary);">{{ res.book.title }}</div>
+                            <div class="small" style="color: var(--text-muted);">{{ res.book.category.name|default:"General" }}</div>
+                        </td>
+                        <td class="py-3">
+                            <div class="small" style="color: var(--text-secondary);">{{ res.reservation_date|date:"M j, Y" }}</div>
+                        </td>
+                        <td class="py-3">
+                            {% if res.status == 'FULFILLED' %}
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <i class="bi bi-check-circle me-1"></i> Fulfilled & Checked Out
+                            </span>
+                            {% elif res.status == 'CANCELLED' %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                                <i class="bi bi-x-circle me-1"></i> Cancelled
+                            </span>
+                            {% elif res.status == 'EXPIRED' %}
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                                <i class="bi bi-clock-history me-1"></i> Unclaimed / Expired
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 py-3 text-end">
+                            <a href="{% url 'catalog:detail' res.book.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                View Book
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="glass-card text-center py-5 p-4">
+        <i class="bi bi-clock-history fs-1 text-muted mb-3 d-block"></i>
+        <h5 class="mb-1" style="color: var(--text-primary);">No Reservation History</h5>
+        <p class="small text-muted">Past completed, cancelled, or expired holds will appear here.</p>
+    </div>
+    {% endif %}
+{% endif %}
 {% endblock %}

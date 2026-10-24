@@ -1,16 +1,16 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Member Dashboard{% endblock %}
+{% block page_title %}Member Home{% endblock %}
 
 {% block content %}
 <!-- Welcome Banner & Membership Info -->
-<div class="glass-card mb-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2)); border: 1px solid rgba(255, 255, 255, 0.1);">
+<div class="glass-card mb-4 position-relative overflow-hidden" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15)); border: 1px solid var(--glass-border);">
     <div class="card-body p-4 p-md-5 position-relative" style="z-index: 1;">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
             <div>
-                <h2 class="mb-2" style="font-size: 2.2rem; font-weight: 700;">Welcome, {{ user.first_name|default:user.username }}!</h2>
+                <h2 class="mb-2" style="font-size: 2.2rem; font-weight: 700; color: var(--text-primary);">Welcome, {{ user.first_name|default:user.username }}!</h2>
                 <p class="mb-0" style="color: var(--text-secondary); max-width: 600px; font-size: 1.05rem;">
-                    Member #: <span class="font-monospace text-white fw-bold">{{ profile.membership_number|default:"N/A" }}</span> &bull; Status: 
+                    Member #: <span class="font-monospace fw-bold" style="color: var(--text-primary);">{{ profile.membership_number|default:"N/A" }}</span> &bull; Status: 
                     {% if profile.membership_status == 'ACTIVE' %}
                     <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">Active</span>
                     {% elif profile.membership_status == 'EXPIRED' %}
@@ -22,8 +22,66 @@
                 <small style="color: var(--text-muted);">Membership expires on: {{ profile.membership_expiry_date|date:"F d, Y"|default:"N/A" }}</small>
             </div>
             <div>
-                <a href="{% url 'catalog:list' %}" class="btn btn-primary rounded-pill px-4 me-2">Browse Catalogue</a>
-                <a href="{% url 'ebooks:catalog' %}" class="btn btn-outline-primary rounded-pill px-4" style="border-color: rgba(99,102,241,0.5);">E-Book Library</a>
+                <a href="{% url 'catalog:list' %}" class="btn btn-primary rounded-pill px-4 me-2">Browse Books</a>
+                <a href="{% url 'ebooks:catalog' %}" class="btn btn-outline-primary rounded-pill px-4">Online E-Books</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reading Challenge & Badges Bar -->
+<div class="row g-4 mb-4">
+    <!-- Reading Challenge Card -->
+    <div class="col-lg-5">
+        <div class="glass-card p-4 h-100 position-relative overflow-hidden" style="border: 2px solid rgba(245, 158, 11, 0.3);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-fire fs-4 text-warning"></i>
+                    <div>
+                        <h6 class="mb-0 fw-bold" style="color: var(--text-primary);">{{ reading_challenge.year }} Reading Challenge</h6>
+                        <div class="small text-muted">Yearly Reading Goal</div>
+                    </div>
+                </div>
+                <span class="badge bg-warning text-dark font-monospace fw-bold">{{ reading_challenge.completed_count }} / {{ reading_challenge.target_books }} Books</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress mb-2" style="height: 10px; background: rgba(0,0,0,0.06); border-radius: 999px;">
+                <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ reading_challenge.progress_pct }}%;" aria-valuenow="{{ reading_challenge.progress_pct }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted">
+                <span>{{ reading_challenge.progress_pct }}% of challenge completed</span>
+                <span>Target: {{ reading_challenge.target_books }} books</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Badges Showcase -->
+    <div class="col-lg-7">
+        <div class="glass-card p-4 h-100" style="border: 2px solid rgba(99, 102, 241, 0.3);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-uppercase small fw-bold mb-0" style="color: var(--text-primary); letter-spacing: 1px;">
+                    <i class="bi bi-award-fill text-indigo me-2"></i>My Badges
+                </h6>
+                <span class="badge rounded-pill bg-indigo">{{ badges|length }} Unlocked</span>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                {% for b in all_badge_types %}
+                <div class="p-2 px-3 rounded-pill d-flex align-items-center gap-2" 
+                     style="background: var(--glass-bg-hover); border: 1px solid {% if b.unlocked %}{{ b.color }}{% else %}var(--glass-border){% endif %}; opacity: {% if b.unlocked %}1{% else %}0.55{% endif %};"
+                     title="{{ b.title }}: {{ b.desc }} {% if b.unlocked %}(Unlocked!){% else %}(Locked){% endif %}">
+                    <i class="bi {{ b.icon }}" style="color: {% if b.unlocked %}{{ b.color }}{% else %}#64748B{% endif %}; font-size: 1.1rem;"></i>
+                    <div>
+                        <div class="small fw-semibold" style="font-size: 0.78rem; color: var(--text-primary);">{{ b.title }}</div>
+                    </div>
+                    {% if b.unlocked %}
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 0.75rem;"></i>
+                    {% else %}
+                    <i class="bi bi-lock-fill text-muted" style="font-size: 0.75rem;"></i>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -58,10 +116,10 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <div class="fw-semibold" style="color: var(--text-primary);">{{ loan.book_copy.book.title }}</div>
-                            <div class="small" style="color: var(--text-muted);">Accession: <span class="font-monospace text-white">{{ loan.book_copy.accession_number }}</span> &bull; Issued: {{ loan.issue_date }}</div>
+                            <div class="small" style="color: var(--text-muted);">Accession: <span class="font-monospace" style="color: var(--text-primary);">{{ loan.book_copy.accession_number }}</span> &bull; Issued: {{ loan.issue_date }}</div>
                         </div>
                         <div class="text-end">
-                            <div class="small font-monospace {% if loan.due_date < today %}text-danger fw-bold{% else %}text-white{% endif %}">Due: {{ loan.due_date }}</div>
+                            <div class="small font-monospace {% if loan.due_date < today %}text-danger fw-bold{% endif %}" style="{% if loan.due_date >= today %}color: var(--text-primary);{% endif %}">Due: {{ loan.due_date }}</div>
                             {% if loan.due_date < today %}
                             <span class="badge bg-danger mt-1">OVERDUE</span>
                             {% endif %}
@@ -94,13 +152,23 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="fw-semibold" style="color: var(--text-primary);">{{ res.book.title }}</div>
-                            <div class="small" style="color: var(--text-muted);">Requested: {{ res.reservation_date|date:"M d, Y" }}</div>
+                            <div class="small text-muted">
+                                {% if res.status == 'ALLOCATED' %}
+                                <span class="text-success"><i class="bi bi-geo-alt me-1"></i>{{ res.queue_info.shelf_location }}</span>
+                                {% else %}
+                                <span>Requested: {{ res.reservation_date|date:"M d" }} &bull; {{ res.queue_info.ahead_count }} ahead</span>
+                                {% endif %}
+                            </div>
                         </div>
                         <div>
                             {% if res.status == 'ALLOCATED' %}
-                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);"><i class="bi bi-check-circle me-1"></i>Ready for Pickup</span>
+                            <a href="{% url 'reservations:my_reservations' %}" class="badge text-decoration-none" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <i class="bi bi-check-circle-fill me-1"></i> Ready for Pickup
+                            </a>
                             {% else %}
-                            <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: var(--accent-info); border: 1px solid rgba(139, 92, 246, 0.3);"><i class="bi bi-hourglass-split me-1"></i>In Queue</span>
+                            <a href="{% url 'reservations:my_reservations' %}" class="badge text-decoration-none" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">
+                                <i class="bi bi-hourglass-split me-1"></i> Queue #{{ res.queue_info.position }}
+                            </a>
                             {% endif %}
                         </div>
                     </div>
@@ -113,6 +181,7 @@
                 <p class="small mb-0">No active book reservations in queue.</p>
             </div>
             {% endif %}
+
         </div>
     </div>
 </div>
@@ -153,7 +222,7 @@
             <div class="list-group list-group-flush" style="background: transparent;">
                 {% for notif in recent_notifications %}
                 <div class="list-group-item bg-transparent px-0 py-2 border-bottom d-flex justify-content-between align-items-center" style="border-color: var(--glass-border) !important;">
-                    <span class="small {% if not notif.is_read %}fw-bold text-white{% else %}text-muted{% endif %}">{{ notif.title }}</span>
+                    <span class="small {% if not notif.is_read %}fw-bold{% else %}text-muted{% endif %}" style="{% if not notif.is_read %}color: var(--text-primary);{% endif %}">{{ notif.title }}</span>
                     <span class="small" style="color: var(--text-muted);">{{ notif.created_at|timesince }} ago</span>
                 </div>
                 {% endfor %}

@@ -1,0 +1,268 @@
+{% extends 'portal_base.html' %}
+{% load static %}
+
+{% block title %}AI Knowledge Assistant — LibrarySphere{% endblock %}
+{% block page_title %}AI Knowledge Assistant{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Left Column: Chat Container -->
+    <div class="col-lg-8">
+        <div class="glass-panel p-4 d-flex flex-column" style="min-height: 600px; max-height: 750px;">
+            <!-- Header -->
+            <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom" style="border-color: var(--glass-border) !important;">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon me-3" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">
+                        <i class="bi bi-robot fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 font-weight-bold" style="color: var(--text-primary);">LibrarySphere AI Assistant </h5>
+                        <small style="color: var(--text-muted);">RAG-Powered Semantic Book & E-Book Discovery</small>
+                    </div>
+                </div>
+                <span class="status-badge badge-active">
+                    <i class="bi bi-cpu-fill me-1"></i> RAG Engine Online
+                </span>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="chatMessages" class="flex-grow-1 overflow-auto pe-2 mb-3" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <!-- Initial Welcome Message -->
+                <div class="d-flex gap-3 animate-fade-in">
+                    <div class="user-avatar" style="width: 38px; height: 38px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); font-size: 1rem;">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div class="glass-card p-3" style="max-width: 85%; border-left: 4px solid var(--accent-primary);">
+                        <p class="m-0" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5;">
+                            Hello, <strong>{{ user.first_name|default:user.username }}</strong>! I am your AI Knowledge Assistant. 
+                            Ask me any question about topics, authors, recommendations, or e-books in our library collection.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suggestion Chips -->
+            <div class="mb-3 d-flex flex-wrap gap-2" id="suggestionChips">
+                <button type="button" class="btn btn-outline-primary btn-sm chip-btn" onclick="sendPrompt('What books are available on Technology or AI?')">
+                    <i class="bi bi-cpu me-1"></i> Technology Books
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm chip-btn" onclick="sendPrompt('Which e-books can I read online immediately?')">
+                    <i class="bi bi-book-half me-1"></i> Instant E-Books
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm chip-btn" onclick="sendPrompt('How do I reserve a physical book on loan?')">
+                    <i class="bi bi-bookmark-plus me-1"></i> How Holds Work
+                </button>
+            </div>
+
+            <!-- Input Form -->
+            <form id="aiChatForm" class="d-flex gap-2">
+                {% csrf_token %}
+                <input type="text" id="userQueryInput" class="form-control flex-grow-1" placeholder="Ask anything about our library collection..." autocomplete="off" required style="border-radius: var(--radius-pill) !important;">
+                <button type="submit" id="sendBtn" class="btn btn-primary d-flex align-items-center gap-2">
+                    <span>Ask AI</span>
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Citation Preview & Capability Card -->
+    <div class="col-lg-4">
+        <div class="glass-panel p-4 mb-4">
+            <h6 class="text-uppercase mb-3" style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;">
+                <i class="bi bi-stars me-1" style="color: var(--accent-warning);"></i> RAG Engine Capabilities
+            </h6>
+            <ul class="list-unstyled d-flex flex-direction-column gap-3 m-0" style="font-size: 0.88rem; color: var(--text-secondary);">
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                    <span><strong>Semantic Content Matching:</strong> Deep indexing across book descriptions, categories, and full PDF texts.</span>
+                </li>
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                    <span><strong>Real-Time Availability:</strong> Live lookup of physical copy counts and active hold queues.</span>
+                </li>
+                <li class="d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill text-success mt-1"></i>
+                    <span><strong>Direct Reader Launch:</strong> Instant one-click launch of protected online e-book streaming viewer.</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Dynamic Citation Panel -->
+        <div class="glass-panel p-4" id="citationPanel">
+            <h6 class="text-uppercase mb-3" style="color: var(--text-muted); font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;">
+                <i class="bi bi-bookmark-star me-1" style="color: var(--accent-primary-hover);"></i> Relevant Citations
+            </h6>
+            <div id="citationList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <p class="text-muted m-0 text-center py-4" style="font-size: 0.85rem;">
+                    Ask a question to see matching book citations here.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatMessages = document.getElementById('chatMessages');
+        const aiChatForm = document.getElementById('aiChatForm');
+        const userQueryInput = document.getElementById('userQueryInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const citationList = document.getElementById('citationList');
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        window.sendPrompt = function(text) {
+            userQueryInput.value = text;
+            aiChatForm.dispatchEvent(new Event('submit'));
+        };
+
+        aiChatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = userQueryInput.value.trim();
+            if (!query) return;
+
+            // Render User Message
+            appendUserMessage(query);
+            userQueryInput.value = '';
+            userQueryInput.focus();
+
+            // Render Loading Indicator
+            const loadingId = appendLoadingIndicator();
+
+            try {
+                const response = await fetch("{% url 'catalog:ai_assistant_api' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                removeLoadingIndicator(loadingId);
+
+                // Render AI Response
+                appendAIMessage(data.answer);
+
+                // Render Citations
+                renderCitations(data.citations);
+            } catch (err) {
+                removeLoadingIndicator(loadingId);
+                appendAIMessage("Sorry, I encountered an error searching the library repository. Please try again.");
+            }
+        });
+
+        function appendUserMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'd-flex gap-3 justify-content-end animate-fade-in';
+            msgDiv.innerHTML = `
+                <div class="glass-card p-3" style="max-width: 85%; background: rgba(99, 102, 241, 0.15); border-right: 4px solid var(--accent-primary-hover);">
+                    <p class="m-0" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5;">${escapeHtml(text)}</p>
+                </div>
+                <div class="user-avatar" style="width: 38px; height: 38px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-secondary), #38BDF8); font-size: 0.9rem;">
+                    {{ user.username.0|upper }}
+                </div>
+            `;
+            chatMessages.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function appendAIMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'd-flex gap-3 animate-fade-in';
+            msgDiv.innerHTML = `
+                <div class="user-avatar" style="width: 38px; height: 38px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); font-size: 1rem;">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="glass-card p-3" style="max-width: 85%; border-left: 4px solid var(--accent-primary);">
+                    <p class="m-0" style="color: var(--text-primary); font-size: 0.95rem; line-height: 1.5;">${escapeHtml(text)}</p>
+                </div>
+            `;
+            chatMessages.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function appendLoadingIndicator() {
+            const id = 'loading-' + Date.now();
+            const msgDiv = document.createElement('div');
+            msgDiv.id = id;
+            msgDiv.className = 'd-flex gap-3 animate-fade-in';
+            msgDiv.innerHTML = `
+                <div class="user-avatar" style="width: 38px; height: 38px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); font-size: 1rem;">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="glass-card p-3 d-flex align-items-center gap-2" style="max-width: 85%;">
+                    <div class="spinner-border spinner-border-sm text-indigo" role="status" style="color: var(--accent-primary-hover);"></div>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">Searching RAG vector repository...</span>
+                </div>
+            `;
+            chatMessages.appendChild(msgDiv);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeLoadingIndicator(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function renderCitations(citations) {
+            citationList.innerHTML = '';
+            if (!citations || citations.length === 0) {
+                citationList.innerHTML = '<p class="text-muted m-0 text-center py-3" style="font-size: 0.85rem;">No direct book citations found for this query.</p>';
+                return;
+            }
+
+            citations.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-3 hover-lift';
+                card.style.fontSize = '0.85rem';
+
+                let ebookBtn = '';
+                if (c.has_ebook) {
+                    ebookBtn = `<a href="/ebooks/${c.ebook_id}/read/" class="btn btn-sm btn-outline-primary mt-2 w-100" style="font-size: 0.75rem;"><i class="bi bi-book-half me-1"></i> Read E-Book Online</a>`;
+                }
+
+                let matchBadge = '';
+                if (c.match_score) {
+                    matchBadge = `<span class="badge" style="background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; font-size: 0.65rem; padding: 0.3em 0.55em;"><i class="bi bi-stars me-1"></i>${c.match_score}% Match</span>`;
+                }
+
+                let passageSnippet = '';
+                if (c.passage) {
+                    passageSnippet = `<div class="mt-2 p-2 rounded" style="background: rgba(99,102,241,0.08); border-left: 3px solid #6366F1; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;"><i class="bi bi-quote" style="color: var(--accent-primary-hover); font-size: 0.7rem;"></i> ${escapeHtml(c.passage)}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <a href="/catalog/book/${c.id}/" class="fw-bold text-decoration-none" style="color: var(--accent-primary-hover);">${escapeHtml(c.title)}</a>
+                        <div class="d-flex gap-1 flex-shrink-0 ms-2">
+                            ${matchBadge}
+                            <span class="badge bg-secondary" style="font-size: 0.65rem;">${escapeHtml(c.book_type)}</span>
+                        </div>
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 0.8rem;">By ${escapeHtml(c.authors || 'Unknown')}</div>
+                    ${passageSnippet}
+                    <div class="mt-2 d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
+                        <span>Category: ${escapeHtml(c.category || 'General')}</span>
+                        <span class="${c.available_copies > 0 ? 'text-success' : 'text-warning'}">${c.available_copies}/${c.total_copies} Copies</span>
+                    </div>
+                    ${ebookBtn}
+                `;
+                citationList.appendChild(card);
+            });
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    });
+</script>
+{% endblock %}

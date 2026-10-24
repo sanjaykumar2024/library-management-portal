@@ -45,7 +45,8 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False').lower() in ('true', '1', 'yes')
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-    X_FRAME_OPTIONS = 'DENY'
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
+
     HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))
     if HSTS_SECONDS > 0:
         SECURE_HSTS_SECONDS = HSTS_SECONDS
@@ -114,6 +115,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'core.context_processors.notification_count',
+                'core.context_processors.theme_context',
             ],
         },
     },
@@ -122,12 +124,27 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # ---------------------------------------------------------------------------
-# Database — MySQL or SQLite fallback
+# Database — PostgreSQL, MySQL, or SQLite
 # ---------------------------------------------------------------------------
 
+DATABASE_URL = os.getenv('DATABASE_URL')
 USE_SQLITE = os.getenv('USE_SQLITE', 'True').lower() in ('true', '1', 'yes')
 
-if USE_SQLITE:
+if DATABASE_URL:
+    import urllib.parse
+    url = urllib.parse.urlparse(DATABASE_URL)
+    is_postgres = 'postgres' in url.scheme
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql' if is_postgres else 'django.db.backends.mysql',
+            'NAME': url.path[1:],
+            'USER': url.username or '',
+            'PASSWORD': url.password or '',
+            'HOST': url.hostname or '',
+            'PORT': url.port or (5432 if is_postgres else 3306),
+        }
+    }
+elif USE_SQLITE:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -184,12 +201,18 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 if DEBUG:
     STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
         'staticfiles': {
             'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
         },
     }
 else:
     STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
         'staticfiles': {
             'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
         },

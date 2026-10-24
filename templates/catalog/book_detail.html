@@ -1,109 +1,529 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Book Details{% endblock %}
+{% block page_title %}{{ book.title }} — Book Details & Availability{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="{% url 'catalog:list' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Catalogue</a>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <a href="{% url 'catalog:list' %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Back to Search Books
+    </a>
+    {% if user.is_authenticated and user.profile.is_librarian %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'catalog:book_edit' book_id=book.id %}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+            <i class="bi bi-pencil me-1"></i> Edit Book
+        </a>
+        <a href="{% url 'catalog:add_book_copy' book_id=book.id %}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+            <i class="bi bi-plus-lg me-1"></i> Add Copy
+        </a>
+    </div>
+    {% endif %}
 </div>
 
-<div class="row">
-    <div class="col-md-4 col-lg-3 mb-4">
-        <div class="book-cover-wrapper" style="border-radius: var(--radius-md); box-shadow: var(--shadow-float); height: auto; aspect-ratio: 2/3;">
-            {% if book.cover_image %}
-                <img src="{{ book.cover_image.url }}" class="book-cover w-100 h-100 object-fit-cover" alt="{{ book.title }}">
-            {% else %}
-                <div class="book-cover-fallback">
-                    <div class="fallback-title fs-4">{{ book.title }}</div>
-                    <div class="fallback-author fs-6">
-                        {% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+<div class="row g-4 mb-5">
+    <!-- Book Cover Column -->
+    <div class="col-md-4 col-lg-3">
+        <div class="position-sticky" style="top: 20px;">
+            <!-- Book Cover -->
+            <div class="book-cover-wrapper mb-3 shadow-lg" style="width: 100%;">
+                {% if book.cover_image %}
+                    <img src="{{ book.cover_image.url }}" class="book-cover" alt="{{ book.title }}">
+                {% else %}
+                    <div class="book-cover-fallback">
+                        <div class="fallback-header">{{ book.category.name|default:"Heritage Edition" }}</div>
+                        <div class="fallback-body">
+                            <div class="fallback-title fs-4">{{ book.title }}</div>
+                            <div class="fallback-divider"></div>
+                            <div class="fallback-author">
+                                {% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% empty %}Library Classic{% endfor %}
+                            </div>
+                        </div>
+                        <div class="fallback-footer">LibrarySphere Edition</div>
                     </div>
+                {% endif %}
+            </div>
+
+            <!-- Format Badges Card -->
+            <div class="glass-card p-3 text-center">
+                <div class="small text-muted text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 1px;">Formats Available</div>
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    {% if book.book_type == 'PHYSICAL' or book.book_type == 'BOTH' %}
+                    <span class="badge bg-primary px-3 py-2"><i class="bi bi-book me-1"></i> Physical Book</span>
+                    {% endif %}
+                    {% if book.book_type == 'EBOOK' or book.book_type == 'BOTH' %}
+                    <span class="badge bg-success px-3 py-2"><i class="bi bi-file-earmark-pdf me-1"></i> Online E-Book</span>
+                    {% endif %}
                 </div>
-            {% endif %}
+            </div>
         </div>
     </div>
+
     
+    <!-- Details Column -->
     <div class="col-md-8 col-lg-9">
-        <div class="glass-card h-100 p-4 p-lg-5">
-            <div class="mb-3">
-                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">{{ book.category.name }}</span>
+        <div class="glass-card p-4 p-lg-5 mb-4">
+            <!-- Header Badges -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">
+                    {{ book.category.name }}
+                </span>
+                {% if available_physical_copies > 0 %}
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                    <i class="bi bi-check-circle-fill me-1"></i> {{ available_physical_copies }} Copy On Shelf
+                </span>
+                {% elif total_physical_copies > 0 %}
+                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <i class="bi bi-hourglass-split me-1"></i> All Copies Checked Out
+                </span>
+                {% endif %}
             </div>
-            <h2 class="mb-2" style="font-size: 2rem;">{{ book.title }}</h2>
-            <h4 class="h5 mb-4" style="color: var(--text-secondary); font-weight: 400;">
-                By {% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+
+            <!-- Title & Authors -->
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+                <h2 class="display-6 fw-bold mb-0" style="color: var(--text-primary);">{{ book.title }}</h2>
+                {% if book.average_rating %}
+                <span class="badge rounded-pill d-flex align-items-center gap-1 px-3 py-2" style="background: rgba(234,179,8,0.15); color: #FBBF24; border: 1px solid rgba(234,179,8,0.3); font-size: 0.9rem;">
+                    <i class="bi bi-star-fill text-warning"></i>
+                    <strong>{{ book.average_rating }}</strong>
+                    <span class="text-muted" style="font-size: 0.75rem;">({{ total_reviews }})</span>
+                </span>
+                {% endif %}
+            </div>
+            <h4 class="h5 mb-4 text-muted fw-normal">
+                By {% for author in book.authors.all %}<span class="text-indigo">{{ author.full_name }}</span>{% if not forloop.last %}, {% endif %}{% endfor %}
             </h4>
             
-            <p class="mb-5 lh-lg" style="color: var(--text-primary); opacity: 0.9;">{{ book.description }}</p>
+            <p class="mb-4 lh-lg" style="color: var(--text-primary); font-size: 1.05rem;">{{ book.description }}</p>
             
-            <div class="row mb-5">
-                <div class="col-sm-6 mb-4 mb-sm-0">
-                    <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Metadata</h6>
-                    <ul class="list-unstyled mb-0 small" style="color: var(--text-muted);">
-                        <li class="mb-2"><span class="d-inline-block" style="width: 80px;">ISBN:</span> <span style="color: var(--text-primary);">{{ book.isbn }}</span></li>
-                        <li class="mb-2"><span class="d-inline-block" style="width: 80px;">Publisher:</span> <span style="color: var(--text-primary);">{{ book.publisher|default:"N/A" }}</span></li>
-                        <li class="mb-2"><span class="d-inline-block" style="width: 80px;">Published:</span> <span style="color: var(--text-primary);">{{ book.publication_year|default:"N/A" }}</span></li>
-                        <li><span class="d-inline-block" style="width: 80px;">Language:</span> <span style="color: var(--text-primary);">{{ book.language }}</span></li>
+            <!-- Metadata & Technical Specs -->
+            <div class="row g-4 mb-4 pb-4 border-bottom" style="border-color: var(--glass-border) !important;">
+                <div class="col-sm-6">
+                    <h6 class="text-uppercase small fw-bold mb-3 text-muted" style="letter-spacing: 1px;">Book Details</h6>
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="mb-2 d-flex"><span class="text-muted" style="width: 100px;">ISBN:</span> <span class="font-monospace" style="color: var(--text-primary);">{{ book.isbn }}</span></li>
+                        <li class="mb-2 d-flex"><span class="text-muted" style="width: 100px;">Publisher:</span> <span style="color: var(--text-primary);">{{ book.publisher|default:"Library Edition" }}</span></li>
+                        <li class="mb-2 d-flex"><span class="text-muted" style="width: 100px;">Published:</span> <span style="color: var(--text-primary);">{{ book.publication_year|default:"--" }}</span></li>
+                        <li class="d-flex"><span class="text-muted" style="width: 100px;">Language:</span> <span style="color: var(--text-primary);">{{ book.language }}</span></li>
                     </ul>
                 </div>
                 
                 <div class="col-sm-6" style="border-left: 1px solid var(--glass-border); padding-left: 1.5rem;">
-                    <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Availability</h6>
-                    
+                    <h6 class="text-uppercase small fw-bold mb-3 text-muted" style="letter-spacing: 1px;">Availability Status</h6>
                     {% if book.book_type == 'PHYSICAL' or book.book_type == 'BOTH' %}
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="d-flex align-items-center mb-1">
-                            <i class="bi bi-book me-2" style="color: var(--text-primary);"></i> 
-                            <span class="fw-medium">Physical Copies</span>
+                            <i class="bi bi-building-check me-2 text-indigo"></i> 
+                            <span class="fw-bold" style="color: var(--text-primary);">Physical Copies</span>
                         </div>
-                        <span class="small {% if available_physical_copies > 0 %}fw-semibold{% endif %}" style="color: {% if available_physical_copies > 0 %}var(--accent-success){% else %}var(--accent-danger){% endif %};">
-                            {{ available_physical_copies }} of {{ total_physical_copies }} available on shelf
-                        </span>
+                        <div class="small {% if available_physical_copies > 0 %}text-success fw-bold{% else %}text-warning{% endif %}">
+                            {{ avail_info.message }}
+                        </div>
+                        {% if avail_info.earliest_return_date %}
+                        <div class="small text-muted mt-1">
+                            <i class="bi bi-calendar-event me-1"></i> Earliest copy return due: <strong>{{ avail_info.earliest_return_date|date:"M j, Y" }}</strong>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
-                    
+
                     {% if book.book_type == 'EBOOK' or book.book_type == 'BOTH' %}
                     <div>
                         <div class="d-flex align-items-center mb-1">
-                            <i class="bi bi-laptop me-2" style="color: var(--text-primary);"></i> 
-                            <span class="fw-medium">Digital Edition</span>
+                            <i class="bi bi-laptop me-2 text-success"></i> 
+                            <span class="fw-bold" style="color: var(--text-primary);">Online E-Book</span>
                         </div>
-                        <span class="small fw-semibold" style="color: var(--accent-primary-hover);">
-                            <i class="bi bi-check-circle"></i> Available to read online
-                        </span>
+                        <div class="small text-indigo">
+                            <i class="bi bi-unlock-fill me-1"></i> Instant online reading access
+                        </div>
                     </div>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Call to Action Area -->
-            <div class="d-flex flex-wrap gap-3 pt-4" style="border-top: 1px solid var(--glass-border);">
+
+            <!-- REAL-TIME PHYSICAL COPIES MATRIX -->
+            {% if copies %}
+            <div class="mb-4">
+                <h6 class="text-uppercase small fw-bold mb-3 text-muted" style="letter-spacing: 1px;">
+                    <i class="bi bi-upc-scan me-1 text-indigo"></i> Physical Shelf Location & Copies
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; font-size: 0.85rem;">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>Accession Barcode</th>
+                                <th>Shelf Location</th>
+                                <th>Condition</th>
+                                <th>Status</th>
+                                {% if user.is_authenticated and user.profile.is_librarian %}
+                                <th class="text-end">Desk Action</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for copy in copies %}
+                            <tr style="border-bottom: 1px solid var(--glass-border);">
+                                <td class="font-monospace text-indigo fw-bold">{{ copy.accession_number }}</td>
+                                <td>{{ copy.shelf_location|default:"Main Stacks Section A" }}</td>
+                                <td><span class="badge bg-secondary-subtle text-secondary">{{ copy.get_condition_display }}</span></td>
+                                <td>
+                                    {% if copy.status == 'AVAILABLE' %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> Available</span>
+                                    {% elif copy.status == 'BORROWED' %}
+                                    <span class="badge bg-warning"><i class="bi bi-book-half me-1"></i> Checked Out</span>
+                                    {% elif copy.status == 'RESERVED' %}
+                                    <span class="badge bg-info"><i class="bi bi-box-seam-fill me-1"></i> On Hold Shelf</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ copy.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                {% if user.is_authenticated and user.profile.is_librarian %}
+                                <td class="text-end">
+                                    {% if copy.status == 'AVAILABLE' %}
+                                    <a href="{% url 'circulation:issue_book' %}?copy={{ copy.accession_number }}" class="btn btn-sm btn-outline-success rounded-pill px-2 py-0" title="Issue this copy to a patron">
+                                        <i class="bi bi-journal-plus me-1"></i> Issue
+                                    </a>
+                                    {% elif copy.status == 'BORROWED' %}
+                                    <a href="{% url 'circulation:return_list' %}?q={{ copy.accession_number }}" class="btn btn-sm btn-outline-warning rounded-pill px-2 py-0" title="View loan & process return">
+                                        <i class="bi bi-journal-check me-1"></i> Loan
+                                    </a>
+                                    {% endif %}
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- DYNAMIC CONTEXTUAL ACTION BAR -->
+            <div class="d-flex flex-wrap gap-3 pt-3">
                 {% if book.book_type == 'PHYSICAL' or book.book_type == 'BOTH' %}
                     {% if user.is_authenticated and not user.profile.is_librarian and not user.profile.is_admin %}
-                    <form method="post" action="{% url 'reservations:reserve_book' book.id %}" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="bi bi-bookmark-plus me-1"></i> Reserve Physical Copy
-                        </button>
-                    </form>
+                        {% if user_has_loan %}
+                            <button class="btn btn-outline-info rounded-pill px-4" disabled>
+                                <i class="bi bi-check2-circle me-1"></i> You Currently Have This Book Borrowed
+                            </button>
+                        {% elif user_reservation %}
+                            <a href="{% url 'reservations:my_reservations' %}" class="btn btn-warning rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-bookmark-check-fill me-1"></i> 
+                                {% if user_reservation.status == 'ALLOCATED' %}
+                                Ready on Shelf! View Pickup Pass
+                                {% else %}
+                                Active Hold (#{{ user_reservation.queue_info.position }} in Queue)
+                                {% endif %}
+                            </a>
+                        {% elif available_physical_copies > 0 %}
+                            <form method="post" action="{% url 'reservations:reserve_book' book.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                                    <i class="bi bi-bookmark-plus me-1"></i> Hold Book for Pickup
+                                </button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="{% url 'reservations:reserve_book' book.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-warning rounded-pill px-4 py-2 fw-semibold">
+                                    <i class="bi bi-people-fill me-1"></i> Join Waitlist ({{ avail_info.pending_holds }} Ahead)
+                                </button>
+                            </form>
+                        {% endif %}
                     {% elif user.is_authenticated %}
-                    <button class="btn btn-outline-primary" disabled title="Librarians and admins cannot reserve books.">
-                        <i class="bi bi-bookmark-plus me-1"></i> Reserve Physical Copy
-                    </button>
+                        <!-- Librarian / Admin Direct Desk Shortcuts -->
+                        {% if available_physical_copies > 0 %}
+                        <a href="{% url 'circulation:issue_book' %}?copy={{ copies.0.accession_number }}" class="btn btn-success rounded-pill px-4 py-2 fw-semibold shadow-sm">
+                            <i class="bi bi-journal-plus me-1"></i> Issue Available Copy
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'circulation:dashboard' %}" class="btn btn-outline-primary rounded-pill px-3 py-2">
+                            <i class="bi bi-journal-album me-1"></i> Borrow &amp; Return Desk
+                        </a>
+                        <a href="/admin/catalog/book/{{ book.id }}/change/" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 py-2">
+                            <i class="bi bi-gear me-1"></i> Edit in Admin
+                        </a>
                     {% else %}
-                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> Login to Reserve
-                    </a>
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary rounded-pill px-4 py-2">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Login to Reserve or Borrow
+                        </a>
                     {% endif %}
                 {% endif %}
                 
-                {% if book.book_type == 'EBOOK' or book.book_type == 'BOTH' %}
-                <button class="btn btn-primary" disabled title="E-books are coming in a future update.">
-                    <i class="bi bi-book-half me-1"></i> Read Online Now
-                </button>
+                <!-- Digital E-Book Reader CTA -->
+                {% if book.ebook_metadata and book.ebook_metadata.is_active %}
+                <a href="{% url 'ebooks:read' book.ebook_metadata.id %}" class="btn btn-primary rounded-pill px-4 py-2">
+                    <i class="bi bi-book me-1"></i> Read Online Now
+                </a>
+                <a href="{% url 'ebooks:detail' book.ebook_metadata.id %}" class="btn btn-outline-primary rounded-pill px-3 py-2">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> E-Book Details
+                </a>
+                {% endif %}
+
+                <!-- Bookshelf Dropdown (For Logged In Users) -->
+                {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle rounded-pill px-3 py-2 d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-bookmark-heart text-indigo"></i>
+                        <span>Saved Books</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="min-width: 220px;">
+                        <li>
+                            <button type="button" class="dropdown-item d-flex justify-content-between align-items-center py-2" onclick="toggleShelf({{ book.id }}, 'WANT_TO_READ', this)">
+                                <span><i class="bi bi-bookmark me-2 text-primary"></i>Want to Read</span>
+                                <i class="bi {% if 'WANT_TO_READ' in user_shelves %}bi-check-circle-fill text-success{% else %}bi-circle text-muted{% endif %} check-icon"></i>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item d-flex justify-content-between align-items-center py-2" onclick="toggleShelf({{ book.id }}, 'CURRENTLY_READING', this)">
+                                <span><i class="bi bi-book-half me-2 text-info"></i>Currently Reading</span>
+                                <i class="bi {% if 'CURRENTLY_READING' in user_shelves %}bi-check-circle-fill text-success{% else %}bi-circle text-muted{% endif %} check-icon"></i>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item d-flex justify-content-between align-items-center py-2" onclick="toggleShelf({{ book.id }}, 'FAVORITES', this)">
+                                <span><i class="bi bi-heart-fill me-2 text-danger"></i>Favorites</span>
+                                <i class="bi {% if 'FAVORITES' in user_shelves %}bi-check-circle-fill text-success{% else %}bi-circle text-muted{% endif %} check-icon"></i>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item d-flex justify-content-between align-items-center py-2" onclick="toggleShelf({{ book.id }}, 'COMPLETED', this)">
+                                <span><i class="bi bi-check2-circle me-2 text-success"></i>Finished Reading</span>
+                                <i class="bi {% if 'COMPLETED' in user_shelves %}bi-check-circle-fill text-success{% else %}bi-circle text-muted{% endif %} check-icon"></i>
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-muted small" href="{% url 'catalog:my_bookshelf' %}"><i class="bi bi-box-arrow-up-right me-1"></i> Open Saved Books</a></li>
+                    </ul>
+                </div>
                 {% endif %}
             </div>
-            
         </div>
     </div>
 </div>
+
+<!-- COMMUNITY REVIEWS & RATINGS SECTION -->
+<div class="mt-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h4 class="h5 mb-1 fw-bold" style="color: var(--text-primary);">
+                <i class="bi bi-chat-heart-fill text-indigo me-2"></i>Reader Reviews &amp; Community Ratings
+            </h4>
+            <p class="small text-muted mb-0">Verified feedback and book ratings from library readers.</p>
+        </div>
+        {% if user.is_authenticated %}
+        <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#reviewModal">
+            <i class="bi bi-pencil-square me-1"></i> {% if user_review %}Edit My Review{% else %}Write a Review{% endif %}
+        </button>
+        {% else %}
+        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+            Login to Review
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Rating Summary Card & Histogram -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 text-center h-100 d-flex flex-column justify-content-center">
+                <div class="display-3 fw-bold text-warning mb-1">
+                    {{ book.average_rating|default:"--" }}
+                </div>
+                <div class="mb-2">
+                    {% if book.average_rating %}
+                    <span class="text-warning">
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
+                        <i class="bi bi-star-half"></i>
+                    </span>
+                    {% else %}
+                    <span class="text-muted small">No ratings yet</span>
+                    {% endif %}
+                </div>
+                <div class="small text-muted mb-4">Based on {{ total_reviews }} verified review{{ total_reviews|pluralize }}</div>
+
+                <!-- Histogram Bars -->
+                <div class="d-flex flex-column gap-2 text-start">
+                    {% for stars in "54321" %}
+                    <div class="d-flex align-items-center gap-2" style="font-size: 0.78rem;">
+                        <span class="text-muted" style="width: 25px;">{{ stars }}★</span>
+                        <div class="progress flex-grow-1" style="height: 6px; background: rgba(0,0,0,0.1);">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {% if stars == '5' %}{{ rating_percentages.5 }}{% elif stars == '4' %}{{ rating_percentages.4 }}{% elif stars == '3' %}{{ rating_percentages.3 }}{% elif stars == '2' %}{{ rating_percentages.2 }}{% else %}{{ rating_percentages.1 }}{% endif %}%;"></div>
+                        </div>
+                        <span class="text-muted" style="width: 32px; text-align: right;">
+                            {% if stars == '5' %}{{ rating_percentages.5 }}{% elif stars == '4' %}{{ rating_percentages.4 }}{% elif stars == '3' %}{{ rating_percentages.3 }}{% elif stars == '2' %}{{ rating_percentages.2 }}{% else %}{{ rating_percentages.1 }}{% endif %}%
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Feed -->
+        <div class="col-lg-8">
+            <div class="d-flex flex-column gap-3">
+                {% for rev in reviews %}
+                <div class="glass-card p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 36px; height: 36px; background: linear-gradient(135deg, #6366F1, #8B5CF6); font-size: 0.85rem;">
+                                {{ rev.user.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold" style="color: var(--text-primary); font-size: 0.9rem;">
+                                    {{ rev.user.first_name|default:rev.user.username }}
+                                    <span class="badge rounded-pill bg-success-subtle text-success ms-1" style="font-size: 0.65rem;">
+                                        <i class="bi bi-shield-check me-1"></i>Verified Reader
+                                    </span>
+                                </div>
+                                <div class="small text-muted" style="font-size: 0.72rem;">{{ rev.created_at|date:"M d, Y" }}</div>
+                            </div>
+                        </div>
+                        <div class="text-warning">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= rev.rating %}★{% else %}☆{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% if rev.headline %}
+                    <h6 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 0.92rem;">{{ rev.headline }}</h6>
+                    {% endif %}
+                    <p class="small text-muted mb-0" style="line-height: 1.55;">
+                        {{ rev.review_text }}
+                    </p>
+                </div>
+                {% empty %}
+                <div class="glass-card p-5 text-center">
+                    <i class="bi bi-chat-square-quote fs-2 text-muted d-block mb-2"></i>
+                    <h6 class="mb-1" style="color: var(--text-primary);">Be the first to review this book!</h6>
+                    <p class="small text-muted mb-3">Share your thoughts with other readers in the library community.</p>
+                    {% if user.is_authenticated %}
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                        Write Review
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- REVIEW SUBMISSION MODAL -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content glass-card" style="border: 1px solid var(--glass-border); border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold h6" style="color: var(--text-primary);" id="reviewModalLabel">
+                    <i class="bi bi-star-fill text-warning me-2"></i>Review "{{ book.title }}"
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'catalog:add_review' book.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body py-3">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Your Rating</label>
+                        <select name="rating" class="form-select">
+                            <option value="5" {% if user_review and user_review.rating == 5 %}selected{% endif %}>★★★★★ (5/5) - Masterpiece / Highly Recommended</option>
+                            <option value="4" {% if user_review and user_review.rating == 4 %}selected{% endif %}>★★★★☆ (4/5) - Very Good / Engaging Read</option>
+                            <option value="3" {% if user_review and user_review.rating == 3 %}selected{% endif %}>★★★☆☆ (3/5) - Average / Good Information</option>
+                            <option value="2" {% if user_review and user_review.rating == 2 %}selected{% endif %}>★★☆☆☆ (2/5) - Below Average / Needs Improvement</option>
+                            <option value="1" {% if user_review and user_review.rating == 1 %}selected{% endif %}>★☆☆☆☆ (1/5) - Disappointing</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Review Title (Optional)</label>
+                        <input type="text" name="headline" value="{{ user_review.headline|default:'' }}" class="form-control" placeholder="e.g. An absolute must-read classic!">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Your Feedback &amp; Insights</label>
+                        <textarea name="review_text" rows="4" required class="form-control" placeholder="What did you enjoy? What can other patrons expect from this book?">{{ user_review.review_text|default:'' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- RELATED RECOMMENDATIONS CAROUSEL -->
+{% if related_books %}
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="h5 mb-0 fw-bold" style="color: var(--text-primary);">
+            <i class="bi bi-compass text-indigo me-2"></i>Readers Also Enjoyed in {{ book.category.name }}
+        </h4>
+        <a href="{% url 'catalog:list' %}?category={{ book.category.id }}" class="small text-indigo text-decoration-none">
+            View All in Category <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    
+    <div class="row g-4">
+        {% for r_book in related_books %}
+        <div class="col-6 col-md-3">
+            <div class="glass-card h-100 p-3 text-center" style="transition: transform 0.2s;">
+                <div class="book-cover-wrapper mb-3 shadow-sm mx-auto" style="width: 100px;">
+                    {% if r_book.cover_image %}
+                    <img src="{{ r_book.cover_image.url }}" alt="{{ r_book.title }}" class="book-cover">
+                    {% else %}
+                    <div class="book-cover-fallback p-2">
+                        <div class="fallback-body p-0">
+                            <div class="fallback-title" style="font-size: 0.7rem;">{{ r_book.title }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <h6 class="fw-bold mb-1 text-truncate" title="{{ r_book.title }}" style="color: var(--text-primary);">
+                    <a href="{% url 'catalog:detail' r_book.id %}" class="text-decoration-none hover-indigo" style="color: var(--text-primary);">
+                        {{ r_book.title }}
+                    </a>
+                </h6>
+                <div class="small text-muted mb-3 text-truncate">
+                    {% for a in r_book.authors.all %}{{ a.full_name }}{% if not forloop.last %}, {% endif %}{% empty %}Unknown{% endfor %}
+                </div>
+                <a href="{% url 'catalog:detail' r_book.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 w-100">
+                    View Details
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_authenticated %}
+<script>
+async function toggleShelf(bookId, shelfType, btn) {
+    try {
+        const res = await fetch("{% url 'catalog:api_toggle_bookshelf' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ book_id: bookId, shelf_type: shelfType })
+        });
+        const data = await res.json();
+        if (data.success) {
+            const icon = btn.querySelector('.check-icon');
+            if (data.action === 'added') {
+                icon.className = 'bi bi-check-circle-fill text-success check-icon';
+            } else {
+                icon.className = 'bi bi-circle text-muted check-icon';
+            }
+        }
+    } catch(e) {
+        console.error('Bookshelf toggle error', e);
+    }
+}
+</script>
+{% endif %}
 {% endblock %}

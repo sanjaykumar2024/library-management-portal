@@ -1,87 +1,217 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Catalogue{% endblock %}
+{% block page_title %}Search Books{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="glass-card p-4">
-            <form method="get" action="{% url 'catalog:list' %}" class="row g-3">
-                <div class="col-md-5">
-                    <label class="form-label visually-hidden">Search</label>
-                    <div class="input-group">
-                        <span class="input-group-text border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Search by title, author, or ISBN..." value="{{ query }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="category" class="form-select">
-                        <option value="">All Categories</option>
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select name="type" class="form-select">
-                        <option value="">All Formats</option>
-                        <option value="PHYSICAL" {% if selected_type == 'PHYSICAL' %}selected{% endif %}>Physical Only</option>
-                        <option value="EBOOK" {% if selected_type == 'EBOOK' %}selected{% endif %}>E-Book Only</option>
-                        <option value="BOTH" {% if selected_type == 'BOTH' %}selected{% endif %}>Both</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">Search</button>
-                </div>
-            </form>
-        </div>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-compass text-indigo me-2"></i>Search Books
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Browse library books, physical copies, and online e-books.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        {% if user.is_authenticated and user.profile.is_librarian %}
+        <a href="{% url 'catalog:book_create' %}" class="btn btn-success btn-sm px-3 rounded-pill">
+            <i class="bi bi-plus-lg me-1"></i> Add New Book
+        </a>
+        {% endif %}
+        <a href="{% url 'catalog:ai_assistant' %}" class="btn btn-outline-primary btn-sm px-3 rounded-pill">
+            <i class="bi bi-robot me-1"></i> AI Book Helper
+        </a>
+        <a href="{% url 'ebooks:catalog' %}" class="btn btn-primary btn-sm px-3 rounded-pill">
+            <i class="bi bi-book-half me-1"></i> Online E-Books
+        </a>
     </div>
 </div>
 
+<!-- Search & Advanced Filter Toolbar -->
+<div class="glass-card p-4 mb-4">
+    <form method="get" action="{% url 'catalog:list' %}" class="row g-3 align-items-end" id="catalogSearchForm">
+        <input type="hidden" name="mode" id="searchModeInput" value="{{ selected_mode }}">
+        <div class="col-lg-4 col-md-6">
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">Search Collection</label>
+            <div class="input-group">
+                <span class="input-group-text border-end-0 bg-transparent text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Title, author, ISBN, or topic..." value="{{ query }}">
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">Category</label>
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-3 col-6">
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">Format</label>
+            <select name="type" class="form-select">
+                <option value="">All Formats</option>
+                <option value="PHYSICAL" {% if selected_type == 'PHYSICAL' %}selected{% endif %}>Physical Copy</option>
+                <option value="EBOOK" {% if selected_type == 'EBOOK' %}selected{% endif %}>Digital E-Book</option>
+                <option value="BOTH" {% if selected_type == 'BOTH' %}selected{% endif %}>Dual (Both)</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">Availability</label>
+            <select name="avail" class="form-select">
+                <option value="">All Books</option>
+                <option value="available" {% if selected_avail == 'available' %}selected{% endif %}>Available Now</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+            <label class="form-label small text-uppercase fw-semibold" style="color: var(--text-secondary); letter-spacing: 0.5px;">Sort By</label>
+            <select name="sort" class="form-select">
+                <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest Additions</option>
+                <option value="title" {% if selected_sort == 'title' %}selected{% endif %}>Title (A to Z)</option>
+                <option value="year" {% if selected_sort == 'year' %}selected{% endif %}>Publication Year</option>
+            </select>
+        </div>
+        <div class="col-12 d-flex justify-content-between align-items-center pt-2">
+            <span class="small text-muted">
+                Found <strong style="color: var(--text-primary);">{{ total_results }}</strong> book{{ total_results|pluralize }} in catalog
+                {% if is_semantic %}<span class="badge ms-2" style="background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; font-size: 0.7rem;"><i class="bi bi-stars me-1"></i>Semantic AI Results</span>{% endif %}
+            </span>
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Semantic AI Toggle -->
+                <button type="button" id="semanticToggleBtn" class="btn btn-sm rounded-pill px-3 {% if selected_mode == 'semantic' %}active{% endif %}"
+                        style="font-size: 0.8rem; border: 1px solid rgba(99,102,241,0.5); {% if selected_mode == 'semantic' %}background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; border-color: transparent;{% else %}background: transparent; color: var(--text-secondary);{% endif %}"
+                        title="Toggle Semantic AI Search (cosine similarity + RAG)">
+                    <i class="bi bi-stars me-1"></i> Semantic AI
+                </button>
+
+                {% if query or selected_category or selected_type or selected_avail or selected_sort != 'newest' or selected_mode %}
+                <a href="{% url 'catalog:list' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="bi bi-x-circle me-1"></i> Reset Filters
+                </a>
+                {% endif %}
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">
+                    <i class="bi bi-funnel me-1"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Books Grid -->
 {% if not page_obj %}
 <div class="text-center py-5 glass-card">
-    <i class="bi bi-search" style="font-size: 3rem; color: var(--accent-primary);"></i>
-    <h3 class="h5 mt-3" style="color: var(--text-primary);">No books found</h3>
-    <p style="color: var(--text-secondary);">Try adjusting your search or filters.</p>
-    <a href="{% url 'catalog:list' %}" class="btn btn-outline-primary mt-2">Clear Search</a>
+    <i class="bi bi-book-half fs-1 d-block mb-3 opacity-50" style="color: var(--accent-primary);"></i>
+    <h4 class="h5 mt-2" style="color: var(--text-primary);">No books found</h4>
+    <p class="small text-muted">Try clearing your filters or searching for another title, author, or ISBN.</p>
+    <a href="{% url 'catalog:list' %}" class="btn btn-primary btn-sm rounded-pill px-4 mt-2">Clear Search &amp; View All</a>
 </div>
 {% else %}
 <div class="row g-4">
     {% for book in page_obj %}
     <div class="col-sm-6 col-md-4 col-xl-3">
-        <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none h-100 d-block">
-            <div class="book-card">
-                <div class="book-cover-wrapper">
+        <div class="book-card h-100 d-flex flex-column position-relative">
+            <!-- Semantic Score Badge (top-left overlay) -->
+            {% if book.semantic_score %}
+            <div class="position-absolute top-0 start-0 m-2" style="z-index: 5;">
+                <span class="badge" style="background: linear-gradient(135deg, #6366F1, #8B5CF6); color: white; font-size: 0.75rem; padding: 0.35em 0.65em; box-shadow: 0 2px 8px rgba(99,102,241,0.4);">
+                    <i class="bi bi-stars me-1"></i>{{ book.semantic_score }}% Match
+                </span>
+            </div>
+            {% endif %}
+
+            <!-- Cover Container -->
+            <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none">
+                <div class="book-cover-wrapper position-relative overflow-hidden">
                     {% if book.cover_image %}
                         <img src="{{ book.cover_image.url }}" class="book-cover" alt="{{ book.title }}">
                     {% else %}
                         <div class="book-cover-fallback">
-                            <div class="fallback-title">{{ book.title }}</div>
-                            <div class="fallback-author">
-                                {% for author in book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            <div class="fallback-header">{{ book.category.name|default:"Heritage Edition" }}</div>
+                            <div class="fallback-body">
+                                <div class="fallback-title">{{ book.title }}</div>
+                                <div class="fallback-divider"></div>
+                                <div class="fallback-author">{{ book.author|default:"Library Archive" }}</div>
                             </div>
+                            <div class="fallback-footer">LibrarySphere Edition</div>
                         </div>
                     {% endif %}
-                </div>
-                <div class="book-card-body">
-                    <h3 class="book-title">{{ book.title }}</h3>
-                    <p class="book-author">
-                        {% for author in book.authors.all %}
-                            {{ author.full_name }}{% if not forloop.last %}, {% endif %}
-                        {% endfor %}
-                    </p>
-                    
-                    <div class="mt-auto d-flex flex-wrap gap-1">
-                        {% if book.book_type == 'PHYSICAL' or book.book_type == 'BOTH' %}
-                            <span class="availability-chip chip-available"><i class="bi bi-book me-1"></i> Physical</span>
+
+                    <!-- Floating Availability Badge -->
+                    <div class="position-absolute top-0 end-0 m-2">
+                        {% if book.available_copies_count > 0 %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.9); color: #fff; backdrop-filter: blur(4px); font-size: 0.7rem;">
+                            <i class="bi bi-check-circle me-1"></i>{{ book.available_copies_count }} On Shelf
+                        </span>
+                        {% elif book.total_copies_count > 0 %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.9); color: #000; backdrop-filter: blur(4px); font-size: 0.7rem;">
+                            <i class="bi bi-clock me-1"></i>On Loan (Waitlist)
+                        </span>
+                        {% elif book.has_ebook_access %}
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.9); color: #fff; backdrop-filter: blur(4px); font-size: 0.7rem;">
+                            <i class="bi bi-laptop me-1"></i>Digital E-Book
+                        </span>
                         {% endif %}
-                        {% if book.book_type == 'EBOOK' or book.book_type == 'BOTH' %}
-                            <span class="availability-chip chip-ebook"><i class="bi bi-laptop me-1"></i> Digital</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Card Body -->
+            <div class="book-card-body d-flex flex-column flex-grow-1 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted">{{ book.category.name|default:"General" }}</span>
+                    {% if book.average_rating %}
+                    <span class="badge rounded-pill bg-warning-subtle text-warning fw-semibold" style="font-size: 0.7rem; border: 1px solid rgba(234,179,8,0.25);">
+                        <i class="bi bi-star-fill text-warning me-1"></i>{{ book.average_rating }}
+                    </span>
+                    {% endif %}
+                </div>
+                <h3 class="book-title mb-1" style="font-size: 1rem; line-height: 1.4;">
+                    <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none hover-indigo" style="color: var(--text-primary);">
+                        {{ book.title }}
+                    </a>
+                </h3>
+                <p class="book-author small text-muted mb-2">
+                    {{ book.author }}
+                </p>
+
+                <!-- Semantic Passage Snippet -->
+                {% if book.relevant_passage %}
+                <div class="mb-2 p-2 rounded" style="background: rgba(99,102,241,0.08); border-left: 3px solid #6366F1; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45;">
+                    <i class="bi bi-quote text-indigo" style="font-size: 0.7rem;"></i>
+                    {{ book.relevant_passage }}
+                </div>
+                {% endif %}
+
+                <!-- Card Footer Actions -->
+                <div class="mt-auto pt-2 border-top d-flex flex-column gap-2" style="border-color: rgba(255,255,255,0.06) !important;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small font-monospace text-muted" style="font-size: 0.75rem;">ISBN: {{ book.isbn }}</span>
+                        {% if book.publication_year %}
+                        <span class="small text-muted" style="font-size: 0.75rem;">{{ book.publication_year }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'catalog:detail' book.id %}" class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill" style="font-size: 0.8rem;">
+                            Details
+                        </a>
+                        {% if book.has_ebook_access %}
+                        <a href="{% url 'ebooks:read' book.ebook_metadata.id %}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.8rem;" title="Read Online Instantly">
+                            <i class="bi bi-book-half"></i> Read
+                        </a>
+                        {% elif book.available_copies_count > 0 %}
+                        <a href="{% url 'catalog:detail' book.id %}" class="btn btn-sm btn-success rounded-pill px-3" style="font-size: 0.8rem;" title="Reserve Copy">
+                            <i class="bi bi-bookmark-plus"></i> Hold
+                        </a>
+                        {% else %}
+                        <a href="{% url 'catalog:detail' book.id %}" class="btn btn-sm btn-warning rounded-pill px-2" style="font-size: 0.75rem;" title="Join Waitlist">
+                            Waitlist
+                        </a>
                         {% endif %}
                     </div>
                 </div>
             </div>
-        </a>
+        </div>
     </div>
     {% endfor %}
 </div>
@@ -92,25 +222,55 @@
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
         <li class="page-item">
-            <a class="page-link bg-transparent text-white border-secondary" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}">Previous</a>
+            <a class="page-link rounded-pill me-2 px-3" style="background: var(--glass-bg); color: var(--text-primary); border-color: var(--glass-border);" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_avail %}&avail={{ selected_avail }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_mode %}&mode={{ selected_mode }}{% endif %}">
+                &larr; Previous
+            </a>
         </li>
         {% else %}
-        <li class="page-item disabled"><span class="page-link bg-transparent text-muted border-secondary">Previous</span></li>
+        <li class="page-item disabled"><span class="page-link text-muted rounded-pill me-2 px-3" style="background: var(--glass-bg); border-color: var(--glass-border);">&larr; Previous</span></li>
         {% endif %}
         
         <li class="page-item active" aria-current="page">
-            <span class="page-link" style="background-color: var(--accent-primary); border-color: var(--accent-primary);">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            <span class="page-link rounded-pill px-3" style="background-color: var(--accent-primary); border-color: var(--accent-primary); color: #FFFFFF;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         </li>
         
         {% if page_obj.has_next %}
         <li class="page-item">
-            <a class="page-link bg-transparent text-white border-secondary" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}">Next</a>
+            <a class="page-link rounded-pill ms-2 px-3" style="background: var(--glass-bg); color: var(--text-primary); border-color: var(--glass-border);" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_avail %}&avail={{ selected_avail }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_mode %}&mode={{ selected_mode }}{% endif %}">
+                Next &rarr;
+            </a>
         </li>
         {% else %}
-        <li class="page-item disabled"><span class="page-link bg-transparent text-muted border-secondary">Next</span></li>
+        <li class="page-item disabled"><span class="page-link text-muted rounded-pill ms-2 px-3" style="background: var(--glass-bg); border-color: var(--glass-border);">Next &rarr;</span></li>
         {% endif %}
     </ul>
 </nav>
 {% endif %}
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('semanticToggleBtn');
+    const modeInput = document.getElementById('searchModeInput');
+    if (toggleBtn && modeInput) {
+        toggleBtn.addEventListener('click', function() {
+            if (modeInput.value === 'semantic') {
+                modeInput.value = '';
+                toggleBtn.style.background = 'transparent';
+                toggleBtn.style.color = 'var(--text-secondary)';
+                toggleBtn.style.borderColor = 'rgba(99,102,241,0.5)';
+                toggleBtn.classList.remove('active');
+            } else {
+                modeInput.value = 'semantic';
+                toggleBtn.style.background = 'linear-gradient(135deg, #6366F1, #8B5CF6)';
+                toggleBtn.style.color = 'white';
+                toggleBtn.style.borderColor = 'transparent';
+                toggleBtn.classList.add('active');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

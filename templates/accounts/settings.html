@@ -1,0 +1,274 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Settings &amp; Preferences{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1" style="font-size: 0.82rem;">
+                <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}" style="color: var(--text-secondary); text-decoration: none;">Dashboard</a></li>
+                <li class="breadcrumb-item active" style="color: var(--accent-primary);">Settings</li>
+            </ol>
+        </nav>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-gear-wide-connected me-2" style="color: var(--accent-primary);"></i>Settings &amp; Preferences
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Manage your display mode (Normal vs Dark mode), patron profile information, and account preferences.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary rounded-pill px-3" style="font-size: 0.85rem;">
+            <i class="bi bi-person-badge me-1"></i> View Full Profile
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Appearance & Theme Selector -->
+    <div class="col-lg-8">
+        <!-- Appearance Card -->
+        <div class="glass-card p-4 mb-4 position-relative overflow-hidden">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom" style="border-color: var(--glass-border) !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-palette-fill fs-5" style="color: var(--accent-primary);"></i>
+                    <h5 class="mb-0 fw-bold" style="color: var(--text-primary);">Appearance &amp; Display Mode</h5>
+                </div>
+                <span class="badge rounded-pill px-3 py-1" id="currentThemeBadge" style="background: var(--accent-primary-subtle, rgba(37,99,235,0.12)); color: var(--accent-primary); font-weight: 600;">
+                    Currently: {% if current_theme == 'dark' %}Dark Mode{% else %}Normal Mode (Light){% endif %}
+                </span>
+            </div>
+
+            <p class="small mb-4" style="color: var(--text-secondary); line-height: 1.6;">
+                Select your preferred interface theme. <strong>Normal Mode</strong> provides the crisp, official institutional public library layout with high contrast and readable slate typography. <strong>Dark Mode</strong> offers an eye-comfort night reading palette.
+            </p>
+
+            <form method="POST" action="{% url 'accounts:settings' %}" id="themeForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_theme">
+
+                <div class="row g-3 mb-4">
+                    <!-- Option 1: Normal Mode (Light) -->
+                    <div class="col-md-6">
+                        <label class="theme-option-card d-block p-3 h-100 rounded-3 position-relative cursor-pointer"
+                               for="themeLight"
+                               id="cardLight"
+                               style="border: 2px solid {% if current_theme == 'light' %}var(--accent-primary){% else %}var(--glass-border){% endif %}; background: {% if current_theme == 'light' %}rgba(37, 99, 235, 0.05){% else %}transparent{% endif %}; transition: all 0.2s; cursor: pointer;">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="radio" name="theme" id="themeLight" value="light" {% if current_theme != 'dark' %}checked{% endif %} onchange="onThemeRadioChange('light')">
+                                    <span class="fw-bold ms-1" style="color: var(--text-primary); font-size: 1.05rem;">Normal Mode</span>
+                                </div>
+                                <span class="badge rounded-pill" style="background: #E2E8F0; color: #1E293B; font-size: 0.7rem;">Official &bull; Light</span>
+                            </div>
+
+                            <!-- Mini UI Preview Mockup (Light) -->
+                            <div class="p-3 rounded-2 mb-3 shadow-sm" style="background: #FFFFFF; border: 1px solid #CBD5E1; color: #0F172A;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: #1E40AF;"><i class="bi bi-book me-1"></i>LibrarySphere</span>
+                                    <span class="badge bg-primary rounded-pill" style="font-size: 0.6rem;">Active</span>
+                                </div>
+                                <div class="p-2 rounded mb-2" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
+                                    <div style="font-size: 0.72rem; font-weight: 600; color: #0F172A;">Clean White Canvas</div>
+                                    <div style="font-size: 0.65rem; color: #64748B;">High-contrast institutional typography</div>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <span class="px-2 py-0 rounded" style="background: #EFF6FF; color: #1E40AF; font-size: 0.62rem; font-weight: 600;">Navy</span>
+                                    <span class="px-2 py-0 rounded" style="background: #ECFDF5; color: #059669; font-size: 0.62rem; font-weight: 600;">Emerald</span>
+                                </div>
+                            </div>
+
+                            <p class="small mb-0" style="color: var(--text-muted); font-size: 0.8rem;">
+                                Recommended for daytime library patrons, research, catalog browsing, and professional administration.
+                            </p>
+                        </label>
+                    </div>
+
+                    <!-- Option 2: Dark Mode -->
+                    <div class="col-md-6">
+                        <label class="theme-option-card d-block p-3 h-100 rounded-3 position-relative cursor-pointer"
+                               for="themeDark"
+                               id="cardDark"
+                               style="border: 2px solid {% if current_theme == 'dark' %}var(--accent-primary){% else %}var(--glass-border){% endif %}; background: {% if current_theme == 'dark' %}rgba(37, 99, 235, 0.05){% else %}transparent{% endif %}; transition: all 0.2s; cursor: pointer;">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="radio" name="theme" id="themeDark" value="dark" {% if current_theme == 'dark' %}checked{% endif %} onchange="onThemeRadioChange('dark')">
+                                    <span class="fw-bold ms-1" style="color: var(--text-primary); font-size: 1.05rem;">Dark Mode</span>
+                                </div>
+                                <span class="badge rounded-pill" style="background: #334155; color: #F8FAFC; font-size: 0.7rem;">Night &bull; Slate</span>
+                            </div>
+
+                            <!-- Mini UI Preview Mockup (Dark) -->
+                            <div class="p-3 rounded-2 mb-3 shadow-sm" style="background: #1E293B; border: 1px solid #334155; color: #F8FAFC;">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span style="font-size: 0.75rem; font-weight: 700; color: #60A5FA;"><i class="bi bi-moon-stars me-1"></i>LibrarySphere</span>
+                                    <span class="badge bg-primary rounded-pill" style="font-size: 0.6rem;">Night</span>
+                                </div>
+                                <div class="p-2 rounded mb-2" style="background: #0F172A; border: 1px solid #334155;">
+                                    <div style="font-size: 0.72rem; font-weight: 600; color: #F8FAFC;">Night Slate Canvas</div>
+                                    <div style="font-size: 0.65rem; color: #94A3B8;">Reduced glare for evening study</div>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <span class="px-2 py-0 rounded" style="background: rgba(59,130,246,0.2); color: #93C5FD; font-size: 0.62rem; font-weight: 600;">Slate</span>
+                                    <span class="px-2 py-0 rounded" style="background: rgba(16,185,129,0.2); color: #6EE7B7; font-size: 0.62rem; font-weight: 600;">Emerald</span>
+                                </div>
+                            </div>
+
+                            <p class="small mb-0" style="color: var(--text-muted); font-size: 0.8rem;">
+                                Deep slate and dark background designed to minimize eye strain during evening and late-night reading sessions.
+                            </p>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-3 border-top" style="border-color: var(--glass-border) !important;">
+                    <div class="small" style="color: var(--text-muted);">
+                        <i class="bi bi-info-circle me-1"></i> Changes apply immediately and save to your profile.
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-check2-circle me-1"></i> Save Appearance Preferences
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Contact & Profile Details Card -->
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom" style="border-color: var(--glass-border) !important;">
+                <i class="bi bi-person-lines-fill fs-5" style="color: var(--accent-primary);"></i>
+                <h5 class="mb-0 fw-bold" style="color: var(--text-primary);">Patron Contact Information</h5>
+            </div>
+
+            <form method="POST" action="{% url 'accounts:settings' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_preferences">
+                <input type="hidden" name="theme" id="formContactTheme" value="{{ current_theme }}">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold" style="color: var(--text-secondary);">Phone Number</label>
+                        <input type="text" name="phone_number" value="{{ profile.phone_number|default:'' }}" class="form-control" placeholder="+1 (555) 012-3456">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold" style="color: var(--text-secondary);">Email Address</label>
+                        <input type="email" value="{{ user.email }}" class="form-control" disabled style="opacity: 0.7;">
+                        <small style="color: var(--text-muted); font-size: 0.72rem;">Managed by library membership record.</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold" style="color: var(--text-secondary);">Physical Residential Address</label>
+                    <textarea name="address" class="form-control" rows="3" placeholder="Street Address, City, State, ZIP">{{ profile.address|default:'' }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-end pt-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                        <i class="bi bi-save me-1"></i> Save Contact Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Membership Summary & Quick Info -->
+    <div class="col-lg-4">
+        <!-- Membership Badge Card -->
+        <div class="glass-card p-4 mb-4">
+            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-muted); letter-spacing: 0.5px;">
+                <i class="bi bi-card-heading me-1"></i> Library Membership
+            </h6>
+            <div class="text-center py-2 mb-3">
+                <div class="user-avatar mx-auto mb-2" style="width: 56px; height: 56px; font-size: 1.4rem; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                    {{ user.username.0|upper }}
+                </div>
+                <h5 class="fw-bold mb-0" style="color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</h5>
+                <span class="small font-monospace" style="color: var(--text-secondary);">#{{ profile.membership_number|default:"LIB-2026-PATRON" }}</span>
+            </div>
+
+            <div class="p-3 rounded-3 mb-3" style="background: var(--bg-subtle, rgba(0,0,0,0.03)); border: 1px solid var(--glass-border);">
+                <div class="d-flex justify-content-between mb-2 small">
+                    <span style="color: var(--text-muted);">Role:</span>
+                    <span class="fw-semibold" style="color: var(--text-primary);">{{ profile.get_role_display }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 small">
+                    <span style="color: var(--text-muted);">Tier:</span>
+                    <span class="fw-semibold" style="color: var(--accent-primary);">{{ profile.get_tier_display }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 small">
+                    <span style="color: var(--text-muted);">Status:</span>
+                    <span class="badge {% if profile.membership_status == 'ACTIVE' %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ profile.get_membership_status_display }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between small">
+                    <span style="color: var(--text-muted);">Borrow Limit:</span>
+                    <span class="fw-semibold" style="color: var(--text-primary);">{{ profile.max_books_allowed }} Books</span>
+                </div>
+            </div>
+
+            <a href="{% url 'accounts:profile' %}" class="btn btn-outline-secondary w-100 rounded-pill py-2 small" style="font-size: 0.82rem;">
+                <i class="bi bi-arrow-up-right me-1"></i> Membership Details &amp; Renewal
+            </a>
+        </div>
+
+        <!-- Security Card -->
+        <div class="glass-card p-4">
+            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-muted); letter-spacing: 0.5px;">
+                <i class="bi bi-shield-lock me-1"></i> Security &amp; Sessions
+            </h6>
+            <p class="small mb-3" style="color: var(--text-secondary); line-height: 1.5;">
+                Your account is authenticated via Django security standards. End-to-end sessions are encrypted.
+            </p>
+            <div class="d-flex flex-column gap-2">
+                <a href="{% url 'core:dashboard' %}" class="btn btn-outline-primary rounded-pill py-2 small" style="font-size: 0.82rem;">
+                    <i class="bi bi-speedometer2 me-1"></i> Return to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onThemeRadioChange(newTheme) {
+    // 1. Update UI mockup card borders immediately
+    const cardLight = document.getElementById('cardLight');
+    const cardDark = document.getElementById('cardDark');
+    const badge = document.getElementById('currentThemeBadge');
+    const formTheme = document.getElementById('formContactTheme');
+
+    if (newTheme === 'dark') {
+        if (cardLight) { cardLight.style.borderColor = 'var(--glass-border)'; cardLight.style.background = 'transparent'; }
+        if (cardDark) { cardDark.style.borderColor = 'var(--accent-primary)'; cardDark.style.background = 'rgba(37, 99, 235, 0.08)'; }
+        if (badge) { badge.textContent = 'Currently: Dark Mode'; }
+        if (formTheme) { formTheme.value = 'dark'; }
+    } else {
+        if (cardDark) { cardDark.style.borderColor = 'var(--glass-border)'; cardDark.style.background = 'transparent'; }
+        if (cardLight) { cardLight.style.borderColor = 'var(--accent-primary)'; cardLight.style.background = 'rgba(37, 99, 235, 0.08)'; }
+        if (badge) { badge.textContent = 'Currently: Normal Mode (Light)'; }
+        if (formTheme) { formTheme.value = 'light'; }
+    }
+
+    // 2. Trigger global application theme switch immediately
+    if (window.setAppTheme) {
+        window.setAppTheme(newTheme);
+    } else {
+        document.documentElement.setAttribute('data-theme', newTheme);
+        document.documentElement.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme_preference', newTheme);
+    }
+
+    // 3. Persist via AJAX in background
+    fetch("{% url 'accounts:api_toggle_theme' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ theme: newTheme })
+    }).catch(err => console.log('Theme auto-sync error:', err));
+}
+</script>
+{% endblock %}

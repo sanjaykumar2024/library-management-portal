@@ -1,19 +1,25 @@
-{% extends "portal_base.html" %}
+{% extends "base.html" %}
 
-{% block page_title %}403 - Permission Denied{% endblock %}
+{% block title %}403 — Permission Denied | LibrarySphere{% endblock %}
 
 {% block content %}
-<div class="glass-card p-5 text-center my-5" style="max-width: 600px; margin: 0 auto; border-left: 4px solid var(--accent-danger);">
-    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.2); color: var(--accent-danger);">
-        <i class="bi bi-shield-slash fs-1"></i>
-    </div>
-    <h3 class="h4 mb-2" style="color: var(--text-primary); font-weight: 700;">403 — Permission Denied</h3>
-    <p class="mb-4" style="color: var(--text-muted);">
-        Sorry, you do not have permission to access this resource or page. Please ensure you are logged in with the appropriate user role or active library membership status.
-    </p>
-    <div class="d-flex justify-content-center gap-3">
-        <a href="{% url 'core:dashboard' %}" class="btn btn-primary px-4"><i class="bi bi-house me-1"></i> Return to Dashboard</a>
-        <a href="{% url 'catalog:list' %}" class="btn btn-outline-secondary px-4" style="border-color: rgba(255,255,255,0.2); color: var(--text-secondary);">Browse Catalogue</a>
+<div class="container py-5">
+    <div class="text-center mx-auto" style="max-width: 550px;">
+        <div class="mb-4">
+            <span style="font-size: 5rem; font-weight: 800; background: linear-gradient(135deg, #EF4444, #F87171); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">403</span>
+        </div>
+        <h2 class="h3 mb-3" style="color: var(--text-primary); font-weight: 700;">Permission Denied</h2>
+        <p class="mb-4" style="color: var(--text-secondary);">
+            You don't have permission to access this resource. Please ensure you're logged in with an appropriate account and active membership.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            {% if user.is_authenticated %}
+            <a href="/" class="btn btn-primary px-4 rounded-pill"><i class="bi bi-house me-1"></i>Dashboard</a>
+            {% else %}
+            <a href="/" class="btn btn-primary px-4 rounded-pill"><i class="bi bi-house me-1"></i>Home</a>
+            <a href="/accounts/login/" class="btn btn-outline-secondary px-4 rounded-pill">Sign In</a>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

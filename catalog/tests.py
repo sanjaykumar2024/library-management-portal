@@ -79,6 +79,21 @@ class CatalogFilterTest(TestCase):
         self.assertContains(response, 'Physical Only Book')
         self.assertNotContains(response, 'Digital Only Book')
 
+    def test_filter_by_category_name_string(self):
+        self.client.login(username='filteruser', password='Test!Pass99')
+        # Test filtering by category name as string (from home page pill/directory)
+        response = self.client.get(reverse('catalog:list'), {'category': 'Sci-Fi'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Physical Only Book')
+        self.assertNotContains(response, 'Digital Only Book')
+
+    def test_filter_by_category_name_case_insensitive(self):
+        self.client.login(username='filteruser', password='Test!Pass99')
+        response = self.client.get(reverse('catalog:list'), {'category': 'history'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Digital Only Book')
+        self.assertNotContains(response, 'Physical Only Book')
+
     def test_filter_by_book_type(self):
         self.client.login(username='filteruser', password='Test!Pass99')
         response = self.client.get(reverse('catalog:list'), {'type': 'EBOOK'})
@@ -90,3 +105,63 @@ class CatalogFilterTest(TestCase):
         response = self.client.get(reverse('catalog:detail', args=[self.physical_book.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Physical Only Book')
+
+
+class AIAssistantTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user('aiuser', password='Test!Pass99')
+        cls.cat = Category.objects.create(name='Artificial Intelligence')
+        cls.author = Author.objects.create(full_name='Alan Turing')
+        cls.book = Book.objects.create(
+            title='Neural Networks and RAG Search',
+            isbn='9999999999999',
+            category=cls.cat,
+            description='Deep learning and vector semantic search.',
+            book_type='EBOOK',
+        )
+        cls.book.authors.add(cls.author)
+        EBookMetadata.objects.create(book=cls.book, format='PDF', access_mode='READ_AND_DOWNLOAD')
+
+    def test_ai_assistant_page_loads(self):
+        self.client.login(username='aiuser', password='Test!Pass99')
+        response = self.client.get(reverse('catalog:ai_assistant'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'AI Knowledge Assistant')
+
+    def test_ai_assistant_api_search(self):
+        self.client.login(username='aiuser', password='Test!Pass99')
+        response = self.client.post(
+            reverse('catalog:ai_assistant_api'),
+            data='{"query": "Neural Networks"}',
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertIn('answer', json_data)
+        self.assertIn('citations', json_data)
+        self.assertTrue(len(json_data['citations']) > 0)
+        self.assertEqual(json_data['citations'][0]['title'], 'Neural Networks and RAG Search')
+
+    def test_global_semantic_search_api(self):
+        self.client.login(username='aiuser', password='Test!Pass99')
+        response = self.client.get(
+            reverse('catalog:semantic_search_api') + '?q=Neural Networks'
+        )
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertIn('answer', json_data)
+        self.assertIn('citations', json_data)
+        self.assertTrue(len(json_data['citations']) > 0)
+        self.assertEqual(json_data['citations'][0]['title'], 'Neural Networks and RAG Search')
+        self.assertIn('match_score', json_data['citations'][0])
+
+    def test_catalog_semantic_mode(self):
+        response = self.client.get(
+            reverse('catalog:list') + '?q=Neural&mode=semantic'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['is_semantic'])
+        self.assertEqual(response.context['selected_mode'], 'semantic')
+        self.assertContains(response, 'Semantic AI Results')
+

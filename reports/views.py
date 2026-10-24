@@ -3,7 +3,6 @@ from datetime import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
@@ -13,38 +12,79 @@ from catalog.models import Book, BookCopy, Category, EBookMetadata
 from circulation.models import Loan, Fine
 from reservations.models import Reservation
 from ebooks.models import EBookAccessLog
-
-
-def is_librarian_or_admin(user):
-    return user.is_authenticated and hasattr(user, 'profile') and user.profile.is_librarian()
+from core.decorators import librarian_required, is_librarian_or_admin
 
 
 # ---------------------------------------------------------------------------
 # Report Index Hub
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def report_index(request):
     today = timezone.now().date()
+
+    # Category distribution for Doughnut Chart
+    category_counts = Category.objects.filter(is_active=True).annotate(
+        book_count=Count('books')
+    ).values('name', 'book_count')
+
+    chart_categories = [c['name'] for c in category_counts]
+    chart_category_data = [c['book_count'] for c in category_counts]
+
+    # Circulation trends by month (Last 6 months)
+    six_months_ago = today - timezone.timedelta(days=180)
+    recent_loans = Loan.objects.filter(issue_date__gte=six_months_ago)
+    
+    # Monthly aggregations
+    months_labels = []
+    loans_per_month = []
+    returns_per_month = []
+
+    for i in range(5, -1, -1):
+        m_date = today - timezone.timedelta(days=i*30)
+        m_str = m_date.strftime('%b %Y')
+        months_labels.append(m_str)
+        l_cnt = Loan.objects.filter(issue_date__year=m_date.year, issue_date__month=m_date.month).count()
+        r_cnt = Loan.objects.filter(return_date__year=m_date.year, return_date__month=m_date.month).count()
+        loans_per_month.append(l_cnt)
+        returns_per_month.append(r_cnt)
+
+    # Physical vs E-Book Activity
+    physical_loan_count = Loan.objects.count()
+    ebook_read_count = EBookAccessLog.objects.filter(action='READ').count()
+    ebook_download_count = EBookAccessLog.objects.filter(action='DOWNLOAD').count()
+
+    # Fines Paid vs Pending
+    fines_pending = Fine.objects.filter(status='PENDING').aggregate(t=Sum('amount'))['t'] or Decimal('0.00')
+    fines_paid = Fine.objects.filter(status='PAID').aggregate(t=Sum('amount'))['t'] or Decimal('0.00')
+
+    import json
     context = {
         'total_members': UserProfile.objects.filter(role='MEMBER').count(),
         'total_books': Book.objects.count(),
         'active_loans': Loan.objects.filter(status='ISSUED').count(),
         'overdue_loans': Loan.objects.filter(status='ISSUED', due_date__lt=today).count(),
-        'total_fines': Fine.objects.filter(status='PENDING').aggregate(t=Sum('amount'))['t'] or Decimal('0.00'),
+        'total_fines': fines_pending,
         'total_reservations': Reservation.objects.filter(status='PENDING').count(),
-        'total_ebook_reads': EBookAccessLog.objects.filter(action='READ').count(),
+        'total_ebook_reads': ebook_read_count,
+        # Chart JSON data
+        'chart_categories_json': json.dumps(chart_categories),
+        'chart_category_data_json': json.dumps(chart_category_data),
+        'months_labels_json': json.dumps(months_labels),
+        'loans_per_month_json': json.dumps(loans_per_month),
+        'returns_per_month_json': json.dumps(returns_per_month),
+        'activity_data_json': json.dumps([physical_loan_count, ebook_read_count, ebook_download_count]),
+        'fines_data_json': json.dumps([float(fines_paid), float(fines_pending)]),
     }
     return render(request, 'reports/report_index.html', context)
+
 
 
 # ---------------------------------------------------------------------------
 # 1. Membership Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def membership_report(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -80,8 +120,7 @@ def membership_report(request):
     return render(request, 'reports/membership_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def membership_csv(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -129,18 +168,25 @@ def membership_csv(request):
 # 2. Book Inventory Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def inventory_report(request):
-    category_id = request.GET.get('category', '')
+    category_id = request.GET.get('category', '').strip()
     book_type = request.GET.get('type', '')
     copy_status = request.GET.get('copy_status', '')
     query = request.GET.get('q', '')
 
+    category_obj = Category.resolve(category_id) if category_id else None
+    selected_category = str(category_obj.id) if category_obj else (category_id if category_id.isdigit() else '')
+
     copies = BookCopy.objects.select_related('book', 'book__category').order_by('accession_number')
 
-    if category_id:
-        copies = copies.filter(book__category_id=category_id)
+    if category_obj:
+        copies = copies.filter(book__category=category_obj)
+    elif category_id and category_id.isdigit():
+        copies = copies.filter(book__category_id=int(category_id))
+    elif category_id:
+        copies = copies.filter(book__category__name__icontains=category_id)
+
     if book_type:
         copies = copies.filter(book__book_type=book_type)
     if copy_status:
@@ -157,7 +203,7 @@ def inventory_report(request):
     context = {
         'copies': copies,
         'categories': categories,
-        'selected_category': category_id,
+        'selected_category': selected_category,
         'selected_type': book_type,
         'selected_copy_status': copy_status,
         'q': query,
@@ -168,18 +214,24 @@ def inventory_report(request):
     return render(request, 'reports/inventory_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def inventory_csv(request):
-    category_id = request.GET.get('category', '')
+    category_id = request.GET.get('category', '').strip()
     book_type = request.GET.get('type', '')
     copy_status = request.GET.get('copy_status', '')
     query = request.GET.get('q', '')
 
+    category_obj = Category.resolve(category_id) if category_id else None
+
     copies = BookCopy.objects.select_related('book', 'book__category').order_by('accession_number')
 
-    if category_id:
-        copies = copies.filter(book__category_id=category_id)
+    if category_obj:
+        copies = copies.filter(book__category=category_obj)
+    elif category_id and category_id.isdigit():
+        copies = copies.filter(book__category_id=int(category_id))
+    elif category_id:
+        copies = copies.filter(book__category__name__icontains=category_id)
+
     if book_type:
         copies = copies.filter(book__book_type=book_type)
     if copy_status:
@@ -215,8 +267,7 @@ def inventory_csv(request):
 # 3. Loan & Return Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def loan_report(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -252,8 +303,7 @@ def loan_report(request):
     return render(request, 'reports/loan_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def loan_csv(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -299,8 +349,7 @@ def loan_csv(request):
 # 4. Overdue Books Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def overdue_report(request):
     today = timezone.now().date()
     loans = Loan.objects.filter(status='ISSUED', due_date__lt=today).select_related('member__user', 'book_copy__book').order_by('due_date')
@@ -313,8 +362,7 @@ def overdue_report(request):
     return render(request, 'reports/overdue_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def overdue_csv(request):
     today = timezone.now().date()
     loans = Loan.objects.filter(status='ISSUED', due_date__lt=today).select_related('member__user', 'book_copy__book').order_by('due_date')
@@ -344,8 +392,7 @@ def overdue_csv(request):
 # 5. Fine Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def fine_report(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -375,8 +422,7 @@ def fine_report(request):
     return render(request, 'reports/fine_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def fine_csv(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -415,8 +461,7 @@ def fine_csv(request):
 # 6. Reservation Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def reservation_report(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -441,8 +486,7 @@ def reservation_report(request):
     return render(request, 'reports/reservation_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def reservation_csv(request):
     status = request.GET.get('status', '')
     query = request.GET.get('q', '')
@@ -479,8 +523,7 @@ def reservation_csv(request):
 # 7. E-Book Usage Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def ebook_usage_report(request):
     action = request.GET.get('action', '')
     query = request.GET.get('q', '')
@@ -505,8 +548,7 @@ def ebook_usage_report(request):
     return render(request, 'reports/ebook_usage_report.html', context)
 
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def ebook_usage_csv(request):
     action = request.GET.get('action', '')
     query = request.GET.get('q', '')
@@ -543,8 +585,7 @@ def ebook_usage_csv(request):
 # 8. Popular Books & E-Books Report
 # ---------------------------------------------------------------------------
 
-@login_required
-@user_passes_test(is_librarian_or_admin)
+@librarian_required
 def popular_report(request):
     popular_physical = Book.objects.annotate(
         loan_count=Count('copies__loans')

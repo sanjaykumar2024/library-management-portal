@@ -1,0 +1,47 @@
+<div class="col-md-6 col-lg-4" id="shelf-item-{{ entry.id }}">
+    <div class="glass-card h-100 p-4 d-flex flex-column justify-content-between hover-lift position-relative" style="border-radius: 14px;">
+        <div>
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge rounded-pill" style="background: rgba(99,102,241,0.15); color: #C4B5FD; font-size: 0.72rem;">
+                    {{ entry.book.category.name|default:"General" }}
+                </span>
+                <span class="small text-muted" style="font-size: 0.72rem;">
+                    Added {{ entry.added_at|date:"M d, Y" }}
+                </span>
+            </div>
+
+            <h5 class="h6 fw-bold mb-1">
+                <a href="{% url 'catalog:detail' entry.book.id %}" class="text-decoration-none hover-underline" style="color: var(--text-primary);">{{ entry.book.title }}</a>
+            </h5>
+            <p class="small text-muted mb-2">by {{ entry.book.author }}</p>
+            <p class="small text-muted mb-3 text-truncate-2" style="font-size: 0.8rem; line-height: 1.5;">
+                {{ entry.book.description }}
+            </p>
+        </div>
+
+        <div class="pt-3 border-top d-flex align-items-center justify-content-between" style="border-color: var(--glass-border) !important;">
+            <div>
+                {% if entry.book.average_rating %}
+                <span class="badge bg-warning-subtle text-warning fw-semibold" style="font-size: 0.72rem;">
+                    ★ {{ entry.book.average_rating }}
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2">
+                {% if entry.book.ebook_metadata %}
+                <a href="{% url 'ebooks:read' entry.book.ebook_metadata.id %}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.75rem;">
+                    <i class="bi bi-book me-1"></i>Read
+                </a>
+                {% else %}
+                <a href="{% url 'catalog:detail' entry.book.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3" style="font-size: 0.75rem;">
+                    Details
+                </a>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Remove from shelf" onclick="removeFromShelf({{ entry.book.id }}, '{{ entry.shelf_type }}', 'shelf-item-{{ entry.id }}')">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

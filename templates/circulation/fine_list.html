@@ -1,14 +1,14 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Fine Management{% endblock %}
+{% block page_title %}Library Fines{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="h5 mb-1" style="color: var(--text-primary); font-weight: 600;">
-            <i class="bi bi-cash-stack me-2"></i>Circulation Fine Management
+            <i class="bi bi-cash-stack me-2"></i>Library Fines
         </h3>
-        <p class="small mb-0" style="color: var(--text-muted);">View, collect, and record fine payments for overdue loans.</p>
+        <p class="small mb-0" style="color: var(--text-muted);">View, collect, and record fine payments for overdue books.</p>
     </div>
 </div>
 
@@ -27,7 +27,7 @@
         </div>
         <div class="col-md-4">
             <button type="submit" class="btn btn-primary"><i class="bi bi-filter me-1"></i> Filter</button>
-            <a href="{% url 'circulation:fine_list' %}" class="btn btn-outline-secondary ms-2" style="border-color: rgba(255,255,255,0.15); color: var(--text-muted);">Reset</a>
+            <a href="{% url 'circulation:fine_list' %}" class="btn btn-outline-secondary ms-2">Reset</a>
         </div>
     </form>
 </div>
@@ -49,13 +49,13 @@
             </thead>
             <tbody>
                 {% for fine in fines %}
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <tr style="border-bottom: 1px solid var(--glass-border);">
                     <td class="px-4 py-3">
                         <div class="fw-medium">{{ fine.loan.member.user.get_full_name|default:fine.loan.member.user.username }}</div>
                         <div class="small font-monospace" style="color: var(--text-muted);">{{ fine.loan.member.membership_number }}</div>
                     </td>
                     <td class="px-4 py-3">{{ fine.loan.book_copy.book.title }}</td>
-                    <td class="px-4 py-3 font-monospace fw-bold" style="color: var(--accent-warning);">${{ fine.amount }}</td>
+                    <td class="px-4 py-3 font-monospace fw-bold" style="color: var(--accent-warning);">₹{{ fine.amount }}</td>
                     <td class="px-4 py-3 small font-monospace">{{ fine.overdue_days }} days</td>
                     <td class="px-4 py-3">
                         {% if fine.status == 'PENDING' %}
@@ -67,11 +67,13 @@
                     <td class="px-4 py-3 small font-monospace">{{ fine.created_at|date:"Y-m-d" }}</td>
                     <td class="px-4 py-3 text-end">
                         {% if fine.status == 'PENDING' %}
-                        <a href="{% url 'circulation:pay_fine' fine.id %}" class="btn btn-sm px-3 py-1" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">
+                        <a href="{% url 'circulation:pay_fine' fine.id %}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1">
                             <i class="bi bi-cash me-1"></i>Collect Payment
                         </a>
                         {% else %}
-                        <span class="small" style="color: var(--text-muted);"><i class="bi bi-check-circle me-1"></i>Cleared</span>
+                        <a href="{% url 'circulation:fine_receipt' fine.id %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1" title="Print Official Receipt">
+                            <i class="bi bi-printer me-1"></i>Receipt
+                        </a>
                         {% endif %}
                     </td>
                 </tr>

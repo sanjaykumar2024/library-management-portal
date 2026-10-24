@@ -110,6 +110,7 @@ class Milestone6ProductionAndE2ETests(TestCase):
             'book': book.id,
             'file': uploaded_pdf,
             'access_mode': 'READ_AND_DOWNLOAD',
+            'rental_price': '0.00',
             'rights_status': 'PUBLIC_DOMAIN',
             'rights_text': 'Public Domain License'
         })

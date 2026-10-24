@@ -1,0 +1,167 @@
+{% load static %}
+<!-- Main Navigation (Open Library style) -->
+<nav class="navbar navbar-expand-lg sticky-top" style="background: var(--bg-surface); border-bottom: 2px solid var(--glass-border); box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+    <div class="container">
+        <!-- Brand Logo -->
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'core:home' %}">
+            <svg class="brand-logo-svg me-2" style="width: 36px; height: 36px;" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="20" cy="20" r="19" stroke="#02599C" stroke-width="2.5"/>
+                <path d="M12 26V14C12 12.8954 12.8954 12 14 12H20C21.1046 12 22 12.8954 22 14V26" stroke="#02599C" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M22 14H26C27.1046 14 28 14.8954 28 16V26" stroke="#02599C" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="12" y1="26" x2="28" y2="26" stroke="#02599C" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M15 16H19" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+                <path d="M15 20H19" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div>
+                <span class="brand-name d-block" style="font-size: 1.3rem; font-weight: 800; color: #02599C; letter-spacing: -0.5px;">LibrarySphere</span>
+                <span class="brand-subtitle d-block" style="color: var(--text-muted); font-size: 0.72rem; letter-spacing: 0.5px; font-weight: 600;">Public Library Portal</span>
+            </div>
+        </a>
+
+        <!-- Mobile Toggler -->
+        <button class="navbar-toggler border-0 shadow-none" type="button"
+                data-bs-toggle="collapse" data-bs-target="#mainNav"
+                aria-controls="mainNav" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links -->
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1 align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link px-3 fw-semibold {% if request.resolver_match.view_name == 'catalog:list' %}text-primary active{% endif %}" href="{% url 'catalog:list' %}" style="color: var(--text-primary);">
+                        <i class="bi bi-search me-1 text-primary"></i> Search Books
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 fw-semibold {% if 'ebooks/commons' in request.path %}text-success active{% endif %}" href="{% url 'ebooks:commons' %}" style="color: var(--text-primary);">
+                        <i class="bi bi-clouds-fill me-1" style="color: #10B981;"></i> Free Classics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 fw-semibold {% if 'ebooks' in request.path and 'commons' not in request.path and 'manage' not in request.path and 'upload' not in request.path and 'history' not in request.path and 'reports' not in request.path %}text-primary active{% endif %}" href="{% url 'ebooks:catalog' %}" style="color: var(--text-primary);">
+                        <i class="bi bi-book-half me-1" style="color: #6366F1;"></i> Online E-Books
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 fw-semibold {% if 'ai-assistant' in request.path %}text-warning active{% endif %}" href="{% url 'catalog:ai_assistant' %}" style="color: var(--text-primary);">
+                        <i class="bi bi-stars me-1 text-warning"></i> AI Helper
+                    </a>
+                </li>
+
+                <!-- My Shelf Dropdown (Authenticated Patrons) -->
+                {% if user.is_authenticated %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle px-3 fw-semibold" href="#" id="memberShelfDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: var(--text-primary);">
+                        <i class="bi bi-bookmarks me-1" style="color: #EC4899;"></i> My Shelf
+                    </a>
+                    <ul class="dropdown-menu shadow-lg py-2 border" aria-labelledby="memberShelfDropdown" style="border-color: var(--glass-border) !important; background: var(--bg-surface);">
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'core:dashboard' %}"><i class="bi bi-grid text-primary"></i> Dashboard</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'catalog:my_bookshelf' %}"><i class="bi bi-bookmarks-fill text-danger"></i> Saved Books</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'reservations:my_reservations' %}"><i class="bi bi-bookmark-heart text-info"></i> Reserved Books (Holds)</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'ebooks:history' %}"><i class="bi bi-clock-history text-secondary"></i> Reading History</a></li>
+                    </ul>
+                </li>
+                {% endif %}
+
+                <!-- Staff Desk Dropdown (Librarians & Admins) -->
+                {% if user.is_authenticated and user.profile.is_librarian or user.profile.is_admin %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle px-3 fw-semibold" href="#" id="staffDeskDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #059669;">
+                        <i class="bi bi-shield-check me-1"></i> Staff Desk
+                    </a>
+                    <ul class="dropdown-menu shadow-lg py-2 border" aria-labelledby="staffDeskDropdown" style="border-color: var(--glass-border) !important; background: var(--bg-surface); min-width: 230px;">
+                        <li><h6 class="dropdown-header text-uppercase px-3 py-1 text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Circulation &amp; Members</h6></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'circulation:dashboard' %}"><i class="bi bi-journal-bookmark text-primary"></i> Borrow &amp; Return</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'circulation:kiosk' %}"><i class="bi bi-qr-code-scan text-info"></i> Express Kiosk</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'accounts:member_list' %}"><i class="bi bi-people text-success"></i> Members Directory</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'reservations:manage_reservations' %}"><i class="bi bi-inboxes text-warning"></i> Book Holds Queue</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><h6 class="dropdown-header text-uppercase px-3 py-1 text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">E-Book Admin &amp; Reports</h6></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'ebooks:manage' %}"><i class="bi bi-file-earmark-pdf text-danger"></i> Manage E-Books</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'ebooks:kaggle_import' %}"><i class="bi bi-database-fill-check text-info"></i> Add Kaggle Books</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'ebooks:open_source_discovery' %}"><i class="bi bi-globe-americas text-success"></i> Add Web Books</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'reports:index' %}"><i class="bi bi-bar-chart-line text-primary"></i> Library Reports</a></li>
+                        {% if user.profile.is_admin or user.is_superuser %}
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="/admin/"><i class="bi bi-shield-lock text-warning"></i> System Admin</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link px-3 fw-semibold {% if 'circulation/kiosk' in request.path %}text-info active{% endif %}" href="{% url 'circulation:kiosk' %}" style="color: var(--text-primary);">
+                        <i class="bi bi-upc-scan me-1 text-info"></i> Express Kiosk
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Right Actions Area -->
+            <div class="d-flex gap-2 align-items-center">
+                <!-- AI Search Modal Trigger -->
+                <button type="button" class="btn btn-sm d-flex align-items-center gap-2 px-3 py-1 rounded-pill" id="globalSearchTrigger"
+                        style="background: var(--bg-surface); border: 1px solid var(--glass-border); color: var(--text-secondary); font-size: 0.82rem;"
+                        data-bs-toggle="modal" data-bs-target="#semanticSearchModal" title="AI Search (⌘K)">
+                    <i class="bi bi-stars text-warning"></i>
+                    <span class="d-none d-xl-inline">AI Search...</span>
+                    <kbd class="d-none d-md-inline" style="font-size: 0.65rem; background: var(--glass-border); color: var(--text-muted); border: none; padding: 1px 5px; border-radius: 4px;">⌘K</kbd>
+                </button>
+
+                <!-- Theme Toggle Button -->
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center" id="quickThemeBtn" onclick="toggleQuickTheme()" title="Toggle Light / Dark Mode" aria-label="Toggle Theme" style="width: 38px; height: 38px; border-color: var(--glass-border); color: var(--text-primary);">
+                    <i id="quickThemeIcon" class="bi bi-moon-stars-fill"></i>
+                </button>
+
+                {% if user.is_authenticated %}
+                <!-- Notifications Bell -->
+                <a href="{% url 'notifications:list' %}" class="btn btn-sm btn-outline-secondary rounded-circle position-relative d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; border-color: var(--glass-border); color: var(--text-primary);" title="Notifications">
+                    <i class="bi bi-bell"></i>
+                    {% if unread_notification_count > 0 %}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                        {{ unread_notification_count }}
+                    </span>
+                    {% endif %}
+                </a>
+
+                <!-- User Dropdown Menu -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle btn btn-sm rounded-pill px-3 py-1" style="background: var(--bg-surface); border: 1px solid var(--glass-border); color: var(--text-primary);" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="user-avatar flex-shrink-0 me-2" style="width: 26px; height: 26px; font-size: 0.75rem; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: #FFFFFF;">
+                            {{ user.username.0|upper }}
+                        </div>
+                        <span class="fw-semibold text-truncate d-none d-md-inline" style="max-width: 120px;">{{ user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg py-2 border" aria-labelledby="userMenu" style="min-width: 240px; border-color: var(--glass-border) !important; background: var(--bg-surface);">
+                        <li>
+                            <div class="px-3 py-2 border-bottom" style="border-color: var(--glass-border) !important;">
+                                <div class="fw-bold small" style="color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="small text-muted">{{ user.email|default:user.profile.get_role_display }}</div>
+                            </div>
+                        </li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'core:dashboard' %}"><i class="bi bi-grid text-primary"></i> Dashboard</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'accounts:profile' %}"><i class="bi bi-person-badge text-success"></i> My Profile &amp; QR Card</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'catalog:my_bookshelf' %}"><i class="bi bi-bookmarks text-danger"></i> Saved Books</a></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'accounts:settings' %}"><i class="bi bi-gear text-secondary"></i> Settings</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li>
+                            <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item px-3 py-2 d-flex align-items-center gap-2 w-100 border-0 bg-transparent text-start text-danger" style="font-weight: 600;"><i class="bi bi-box-arrow-right"></i> Log Out</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold" style="border-color: #CBD5E1; color: var(--text-primary);">
+                    Log In
+                </a>
+                <a href="{% url 'accounts:register' %}" class="btn btn-primary rounded-pill px-4 fw-semibold" style="background: #02599C; border: none; color: #FFFFFF;">
+                    Sign Up
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

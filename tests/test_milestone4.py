@@ -252,3 +252,49 @@ class Milestone4EBookTests(TestCase):
         public_url = f"/media/ebooks/{self.readonly_ebook.protected_filename}"
         response = self.client.get(public_url)
         self.assertEqual(response.status_code, 404)
+
+    def test_html_ebook_upload_and_stream(self):
+        """Librarian can upload HTML files (.html) and active members can stream HTML content."""
+        html_bytes = b"<!DOCTYPE html><html><body><h1>LibrarySphere HTML E-Book</h1><p>Testing HTML content.</p></body></html>"
+        html_file = SimpleUploadedFile("sample_book.html", html_bytes, content_type="text/html")
+        
+        ebook = ebook_services.validate_and_save_ebook(
+            file_obj=html_file,
+            book=self.book_both,
+            uploaded_by=self.librarian_user,
+            access_mode='READ_AND_DOWNLOAD',
+            rights_status='PUBLIC_DOMAIN',
+            rights_text='Public Domain HTML'
+        )
+
+        self.assertEqual(ebook.format, 'HTML')
+        self.assertTrue(ebook.protected_filename.endswith('.html'))
+
+        # Test streaming HTML content
+        self.client.login(username='member_active', password='pass123')
+        response = self.client.get(reverse('ebooks:stream', args=[ebook.id]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/html; charset=utf-8')
+
+    def test_manual_title_ebook_upload(self):
+        """Librarian can type a new book title manually when uploading an e-book."""
+        self.client.login(username='lib1', password='pass123')
+        html_bytes = b"<!DOCTYPE html><html><body><h1>Manual Title Test</h1></body></html>"
+        html_file = SimpleUploadedFile("manual_test.html", html_bytes, content_type="text/html")
+
+        response = self.client.post(
+            reverse('ebooks:upload'),
+            data={
+                'manual_title': 'Advanced Quantum Mechanics 2026',
+                'file': html_file,
+                'access_mode': 'READ_ONLY',
+                'rental_price': '0.00',
+                'rights_status': 'PUBLIC_DOMAIN',
+                'rights_text': 'Public Domain Book'
+            },
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Book.objects.filter(title='Advanced Quantum Mechanics 2026').exists())
+
+

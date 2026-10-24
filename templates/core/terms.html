@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service — LibrarySphere{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 800px;">
+    <div class="glass-card p-5">
+        <h2 class="h4 fw-bold text-white mb-4"><i class="bi bi-file-earmark-text me-2 text-indigo"></i>Terms of Service</h2>
+        <div class="text-white-50 lh-lg" style="font-size: 0.95rem;">
+            <p><strong class="text-white">Effective Date:</strong> September 2026</p>
+            <h5 class="text-white mt-4 mb-2">1. Membership</h5>
+            <p>Membership in LibrarySphere is open to all eligible individuals. Members must maintain an active membership status to borrow books, access e-books, and place reservations. Membership is valid for one year from the date of registration.</p>
+            <h5 class="text-white mt-4 mb-2">2. Borrowing Rules</h5>
+            <p>Standard members may borrow up to 3 physical books at a time for a period of 14 days. Premium Scholar members may borrow up to 5 books. Books may be renewed up to 2 times if no reservations are pending.</p>
+            <h5 class="text-white mt-4 mb-2">3. Overdue Fines</h5>
+            <p>A fine of ₹5 per day is charged for each overdue book. Members with outstanding fines exceeding ₹100 may have their borrowing privileges suspended until fines are cleared.</p>
+            <h5 class="text-white mt-4 mb-2">4. Reservations</h5>
+            <p>Members may reserve books that are currently checked out. Reserved books are held for 2 days once available. Unclaimed reservations are automatically expired and the book is offered to the next patron in the queue.</p>
+            <h5 class="text-white mt-4 mb-2">5. E-Book Access</h5>
+            <p>E-book access is provided for online reading through the portal. Download permissions vary by title. E-book access requires an active membership. All e-book activity is logged for licensing compliance.</p>
+            <h5 class="text-white mt-4 mb-2">6. Acceptable Use</h5>
+            <p>Members are responsible for all materials borrowed under their account. Lost or damaged books must be reported immediately. The library reserves the right to suspend accounts for violations of these terms.</p>
+            <h5 class="text-white mt-4 mb-2">7. Changes</h5>
+            <p>LibrarySphere reserves the right to modify these terms at any time. Members will be notified of significant changes through the portal notification system.</p>
+        </div>
+        <a href="{% url 'core:home' %}" class="btn btn-outline-primary rounded-pill px-4 mt-4">
+            <i class="bi bi-arrow-left me-1"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

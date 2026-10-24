@@ -1,0 +1,75 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Unlock E-Book Digital Pass — {{ ebook.book.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'ebooks:catalog' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to E-Book Library</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="glass-card p-4 p-md-5 text-center">
+            <!-- Header Badge -->
+            <div class="mb-3">
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+                    <i class="bi bi-shield-check me-1"></i> Affordable Digital Reading Pass
+                </span>
+            </div>
+
+            <!-- Title & Author -->
+            <h3 class="h4 mb-2" style="color: var(--text-primary); font-weight: 700;">{{ ebook.book.title }}</h3>
+            <p class="small mb-4" style="color: var(--text-muted);">
+                By {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                &bull; {{ ebook.format }} Format &bull; {{ ebook.page_count|default:"1" }} pages
+            </p>
+
+            <!-- Price Display Panel -->
+            <div class="glass-panel p-4 mb-4 text-center" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.3);">
+                <div class="small text-uppercase fw-bold mb-1" style="color: var(--text-muted); letter-spacing: 1px;">Affordable Reading Fee</div>
+                <div class="display-5 fw-bold my-1" style="color: var(--accent-primary-hover);">
+                    ₹{{ ebook.rental_price|floatformat:2 }}
+                </div>
+                <div class="small" style="color: var(--text-secondary);">
+                    <i class="bi bi-unlock-fill me-1" style="color: var(--accent-success);"></i> Unlimited online reading access for your account
+                </div>
+            </div>
+
+            <!-- Payment Methods Simulated Selection -->
+            <div class="mb-4 text-start">
+                <label class="form-label small text-uppercase fw-bold" style="color: var(--text-secondary); letter-spacing: 0.5px;">Select Payment Option</label>
+                <div class="d-flex flex-column gap-2">
+                    <div class="glass-card p-3 d-flex align-items-center justify-content-between cursor-pointer border-indigo">
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="radio" name="pay_option" id="upi" checked class="form-check-input">
+                            <label for="upi" class="m-0 cursor-pointer" style="color: var(--text-primary); font-weight: 500;">
+                                <i class="bi bi-qr-code-scan me-2 text-indigo"></i> UPI Instant Pay (Google Pay / PhonePe / Paytm)
+                            </label>
+                        </div>
+                        <span class="badge bg-success" style="font-size: 0.65rem;">Recommended</span>
+                    </div>
+                    <div class="glass-card p-3 d-flex align-items-center gap-3 cursor-pointer">
+                        <input type="radio" name="pay_option" id="wallet" class="form-check-input">
+                        <label for="wallet" class="m-0 cursor-pointer" style="color: var(--text-primary); font-weight: 500;">
+                            <i class="bi bi-wallet2 me-2 text-info"></i> Member Library Balance Pass
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pay Form -->
+            <form method="post" action="{% url 'ebooks:unlock' ebook.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary btn-lg w-100 py-3 d-flex align-items-center justify-content-center gap-2" style="font-size: 1.05rem; font-weight: 600;">
+                    <i class="bi bi-bag-check-fill"></i>
+                    <span>Pay ₹{{ ebook.rental_price|floatformat:2 }} & Unlock Reading Pass</span>
+                </button>
+            </form>
+
+            <div class="mt-3 small" style="color: var(--text-muted); font-size: 0.78rem;">
+                <i class="bi bi-lock-fill me-1"></i> Secure 256-bit encrypted micro-transaction &bull; Instant activation
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

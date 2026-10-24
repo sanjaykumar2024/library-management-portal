@@ -1,57 +1,232 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Manage Reservations{% endblock %}
+{% block page_title %}Book Holds Queue{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="h5 mb-0" style="color: var(--text-primary); font-weight: 600;">Active Reservations</h3>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-inboxes text-indigo me-2"></i>Book Holds Queue
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            Manage member book reservations, assign copies, and check pickup deadlines.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="post" action="{% url 'reservations:expire_overdue' %}" onsubmit="return confirm('Expire all holds that passed their pickup deadline? Copies will be released to the next readers in queue.');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-warning btn-sm px-3 rounded-pill">
+                <i class="bi bi-arrow-repeat me-1"></i> Clear Expired Holds
+            </button>
+        </form>
+        <a href="{% url 'circulation:dashboard' %}" class="btn btn-primary btn-sm px-3 rounded-pill">
+            <i class="bi bi-journal-arrow-up me-1"></i> Borrow & Return
+        </a>
+    </div>
 </div>
 
+<!-- Stat Summary Pills -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small" style="color: var(--text-muted);">Pending Waitlist</div>
+                <div class="fs-3 fw-bold text-warning">{{ total_pending }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">
+                <i class="bi bi-hourglass-split fs-4"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small" style="color: var(--text-muted);">On Hold Shelf</div>
+                <div class="fs-3 fw-bold text-success">{{ total_allocated }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">
+                <i class="bi bi-box-seam-fill fs-4"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small" style="color: var(--text-muted);">Total Fulfilled</div>
+                <div class="fs-3 fw-bold text-indigo">{{ total_fulfilled }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">
+                <i class="bi bi-check-all fs-4"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small" style="color: var(--text-muted);">Expired / Cancelled</div>
+                <div class="fs-3 fw-bold text-danger">{{ total_expired|add:total_cancelled }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger);">
+                <i class="bi bi-x-circle fs-4"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters & Search Toolbar -->
+<div class="glass-panel p-3 mb-4">
+    <form method="get" action="{% url 'reservations:manage_reservations' %}" class="row g-2 align-items-center">
+        <div class="col-md-7 d-flex flex-wrap gap-1">
+            <a href="?status=ACTIVE{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ACTIVE' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Active ({{ total_pending|add:total_allocated }})</a>
+            <a href="?status=PENDING{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'PENDING' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Pending Waitlist</a>
+            <a href="?status=ALLOCATED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ALLOCATED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Ready on Shelf</a>
+            <a href="?status=FULFILLED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'FULFILLED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Fulfilled</a>
+            <a href="?status=CANCELLED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'CANCELLED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Cancelled</a>
+            <a href="?status=EXPIRED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'EXPIRED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Expired</a>
+            <a href="?status=ALL{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ALL' %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+        </div>
+        <div class="col-md-5">
+            <div class="input-group input-group-sm">
+                <input type="hidden" name="status" value="{{ selected_status }}">
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search member, membership # or book title...">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                {% if q %}
+                <a href="{% url 'reservations:manage_reservations' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Reservations Desk Table -->
 <div class="glass-card overflow-hidden">
     <div class="table-responsive">
         <table class="table align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
             <thead style="border-bottom: 2px solid var(--glass-border);">
                 <tr class="text-uppercase small" style="color: var(--text-secondary); letter-spacing: 1px;">
-                    <th class="ps-4 py-3 border-0">Member</th>
-                    <th class="py-3 border-0">Book</th>
-                    <th class="py-3 border-0">Status</th>
-                    <th class="pe-4 py-3 text-end border-0">Action</th>
+                    <th class="ps-4 py-3 border-0">Member Info</th>
+                    <th class="py-3 border-0">Book Title</th>
+                    <th class="py-3 border-0">Queue / Hold Status</th>
+                    <th class="py-3 border-0">Dates & Shelf</th>
+                    <th class="pe-4 py-3 text-end border-0">Desk Action</th>
                 </tr>
             </thead>
             <tbody>
-                {% for reservation in active_reservations %}
+                {% for res in reservations %}
                 <tr style="border-bottom: 1px solid var(--glass-border);">
+                    <!-- Member Details -->
                     <td class="ps-4 py-3">
-                        <div class="fw-medium">{{ reservation.member.user.get_full_name|default:reservation.member.user.username }}</div>
-                        <div class="small font-monospace" style="color: var(--text-muted);">{{ reservation.member.membership_number }}</div>
+                        <div class="fw-bold" style="color: var(--text-primary);">
+                            <a href="{% url 'accounts:member_detail' res.member.id %}" class="text-decoration-none hover-indigo" style="color: var(--text-primary);">
+                                {{ res.member.user.get_full_name|default:res.member.user.username }}
+                            </a>
+                        </div>
+                        <div class="small font-monospace" style="color: var(--accent-primary-hover);">
+                            {{ res.member.membership_number }}
+                        </div>
+                        <div class="small text-muted">{{ res.member.user.email }}</div>
                     </td>
+
+                    <!-- Book Title -->
                     <td class="py-3">
-                        <div class="fw-medium">{{ reservation.book.title }}</div>
-                        {% if reservation.allocated_copy %}
-                        <div class="small text-white font-monospace">Acc: {{ reservation.allocated_copy.accession_number }}</div>
+                        <div class="fw-bold" style="color: var(--text-primary);">
+                            <a href="{% url 'catalog:detail' res.book.id %}" class="text-decoration-none hover-indigo" style="color: var(--text-primary);">
+                                {{ res.book.title }}
+                            </a>
+                        </div>
+                        <div class="small text-muted">
+                            {{ res.book.category.name|default:"General" }} &bull; ISBN: {{ res.book.isbn }}
+                        </div>
+                    </td>
+
+                    <!-- Status / Queue Position -->
+                    <td class="py-3">
+                        {% if res.status == 'PENDING' %}
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                                <i class="bi bi-hourglass-split me-1"></i> Queue #{{ res.queue_info.position }} ({{ res.queue_info.ahead_count }} ahead)
+                            </span>
+                            <div class="small mt-1 text-muted">
+                                {% if res.book_avail.available_copies > 0 %}
+                                <span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>{{ res.book_avail.available_copies }} copy available on shelf!</span>
+                                {% else %}
+                                <span>Total waitlist: {{ res.queue_info.total_queue }} holds</span>
+                                {% endif %}
+                            </div>
+                        {% elif res.status == 'ALLOCATED' %}
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <i class="bi bi-box-seam-fill me-1"></i> Ready on Hold Shelf
+                            </span>
+                            <div class="small mt-1 {% if res.queue_info.is_expiring_soon %}text-danger fw-bold{% else %}text-warning{% endif %}">
+                                <i class="bi bi-clock me-1"></i> {{ res.queue_info.hours_left }}h remaining
+                            </div>
+                        {% elif res.status == 'FULFILLED' %}
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">
+                                <i class="bi bi-check-all me-1"></i> Fulfilled
+                            </span>
+                        {% elif res.status == 'CANCELLED' %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                                Cancelled
+                            </span>
+                        {% elif res.status == 'EXPIRED' %}
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                                Expired Unclaimed
+                            </span>
                         {% endif %}
                     </td>
+
+                    <!-- Dates & Shelf Details -->
                     <td class="py-3">
-                        {% if reservation.status == 'PENDING' %}
-                            <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Pending</span>
-                        {% elif reservation.status == 'ALLOCATED' %}
-                            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Allocated</span>
-                            <div class="small mt-1" style="color: var(--text-muted);">Expires {{ reservation.expiry_date|date:"M j" }}</div>
+                        <div class="small" style="color: var(--text-primary);">Requested: {{ res.reservation_date|date:"M j, Y" }}</div>
+                        {% if res.allocated_copy %}
+                        <div class="small font-monospace text-indigo mt-1">
+                            <i class="bi bi-upc-scan me-1"></i> {{ res.allocated_copy.accession_number }}
+                        </div>
+                        <div class="small text-muted">{{ res.queue_info.shelf_location }}</div>
                         {% endif %}
                     </td>
+
+                    <!-- Action Controls -->
                     <td class="pe-4 py-3 text-end">
-                        {% if reservation.status == 'ALLOCATED' %}
-                        <a href="{% url 'reservations:fulfill_reservation' reservation.id %}" class="btn btn-sm btn-primary me-2">Fulfill</a>
-                        {% endif %}
-                        <form method="post" action="{% url 'reservations:cancel_reservation' reservation.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger" style="border-color: rgba(239, 68, 68, 0.3);">Cancel</button>
-                        </form>
+                        <div class="d-inline-flex gap-2 align-items-center">
+                            {% if res.status == 'PENDING' %}
+                                {% if res.book_avail.available_copies > 0 %}
+                                <form method="post" action="{% url 'reservations:allocate_reservation' res.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> Assign Book
+                                    </button>
+                                </form>
+                                {% endif %}
+                            {% elif res.status == 'ALLOCATED' %}
+                                <a href="{% url 'reservations:fulfill_reservation' res.id %}" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-hand-thumbs-up me-1"></i> Lend Book
+                                </a>
+                                <form method="post" action="{% url 'reservations:extend_reservation' res.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="Extend hold by 2 days">
+                                        <i class="bi bi-calendar-plus"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+
+                            {% if res.status in 'PENDING ALLOCATED' %}
+                            <form method="post" action="{% url 'reservations:cancel_reservation' res.id %}" 
+                                  onsubmit="return confirm('Cancel this hold? Copy will be released immediately.');" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Cancel Hold">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" class="text-center py-5" style="color: var(--text-muted); border: none;">No active reservations found.</td>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                        No reservations found matching the current filter.
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

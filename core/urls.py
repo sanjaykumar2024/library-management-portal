@@ -10,4 +10,7 @@ urlpatterns = [
     path('dashboard/member/', views.member_dashboard_view, name='member_dashboard'),
     path('dashboard/librarian/', views.librarian_dashboard_view, name='librarian_dashboard'),
     path('dashboard/admin/', views.admin_dashboard_view, name='admin_dashboard'),
+    path('privacy/', views.privacy_policy_view, name='privacy'),
+    path('terms/', views.terms_of_service_view, name='terms'),
+    path('help/', views.help_faq_view, name='help'),
 ]

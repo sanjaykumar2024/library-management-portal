@@ -6,17 +6,66 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from accounts.models import UserProfile
-from catalog.models import Book, BookCopy, EBookMetadata
+from catalog.models import Book, BookCopy, EBookMetadata, Category
 from circulation.models import Loan, Fine
 from reservations.models import Reservation
 from notifications.models import Notification
 from ebooks.models import EBookAccessLog
+from core.models import ActivityLog
 
 
 def home_view(request):
-    if request.user.is_authenticated:
-        return redirect('core:dashboard')
-    return render(request, 'core/home.html')
+    """
+    Public Library Home Portal inspired by Open Library & National Digital Library of India (NDLI).
+    Displays omni-search, 3 welcome feature cards, curated book shelves with real covers,
+    subjects directory, and live community statistics.
+    """
+    # 1. Trending Books (active books with covers, top reviewed / recent)
+    trending_books = Book.objects.filter(is_active=True).prefetch_related(
+        'authors', 'copies'
+    ).select_related('category', 'ebook_metadata').order_by('-id')[:10]
+
+    # 2. Free Classic Books (Open-access / Public Domain digital commons)
+    classic_books = Book.objects.filter(
+        is_active=True,
+        ebook_metadata__rights_status='PUBLIC_DOMAIN'
+    ).prefetch_related('authors', 'copies').select_related('category', 'ebook_metadata')[:10]
+
+    # 3. Technology & Computing Books (Kaggle dataset & Tech collection)
+    tech_books = Book.objects.filter(
+        is_active=True,
+        category__name__in=['Technology', 'Science Fiction', 'Computer Science']
+    ).prefetch_related('authors', 'copies').select_related('category', 'ebook_metadata')[:10]
+
+    # 4. Books We Love / Curated Literature
+    curated_books = Book.objects.filter(
+        is_active=True,
+        category__name__in=['Literature', 'Romance & Classic Fiction', 'History']
+    ).prefetch_related('authors', 'copies').select_related('category', 'ebook_metadata')[:10]
+
+    # 5. Active Categories with book counts
+    categories = Category.objects.filter(is_active=True).annotate(
+        book_count=Count('books')
+    ).filter(book_count__gt=0).order_by('-book_count')[:14]
+
+    # 6. Live "Around the Library" Statistics
+    stats = {
+        'total_books': Book.objects.filter(is_active=True).count(),
+        'total_ebooks': EBookMetadata.objects.filter(is_active=True).count(),
+        'total_copies': BookCopy.objects.filter(status='AVAILABLE').count(),
+        'total_members': UserProfile.objects.filter(membership_status='ACTIVE').count(),
+        'total_loans': Loan.objects.count(),
+    }
+
+    context = {
+        'trending_books': trending_books,
+        'classic_books': classic_books,
+        'tech_books': tech_books,
+        'curated_books': curated_books,
+        'categories': categories,
+        'stats': stats,
+    }
+    return render(request, 'core/home.html', context)
 
 
 @login_required
@@ -54,17 +103,43 @@ def member_dashboard_view(request):
         
         overdue_loans = [l for l in my_active_loans if l.due_date < today]
         
-        my_active_reservations = Reservation.objects.filter(
+        my_active_reservations = list(Reservation.objects.filter(
             member=profile, status__in=['PENDING', 'ALLOCATED']
-        ).select_related('book').order_by('-reservation_date')
+        ).select_related('book', 'allocated_copy').order_by('-reservation_date'))
+        
+        from reservations import services as res_services
+        for r in my_active_reservations:
+            r.queue_info = res_services.get_queue_info(r)
         
     recent_notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:5]
     recent_ebook_access = EBookAccessLog.objects.filter(
         user=request.user
     ).select_related('ebook', 'ebook__book').order_by('-accessed_at')[:4]
+
     
     recommended_books = Book.objects.filter(is_active=True).prefetch_related('authors').order_by('-created_at')[:4]
     
+    # Pillar 5: Gamification & Reading Challenge
+    from catalog.models import ReadingChallenge, PatronBadge, award_badge
+    reading_challenge, _ = ReadingChallenge.objects.get_or_create(
+        user=request.user, year=today.year, defaults={'target_books': 12}
+    )
+    
+    # Check automated badge unlocks
+    if Loan.objects.filter(member=profile).exists():
+        award_badge(request.user, 'FIRST_BORROW')
+    if reading_challenge.completed_count >= 5:
+        award_badge(request.user, 'BOOKWORM')
+    if timezone.now().hour >= 22:
+        award_badge(request.user, 'NIGHT_OWL')
+        
+    badges = list(request.user.badges.all())
+    unlocked_types = {b.badge_type for b in badges}
+    all_badge_types = [
+        {'type': k, 'title': v[0], 'desc': v[1], 'icon': v[2], 'color': v[3], 'unlocked': k in unlocked_types}
+        for k, v in PatronBadge.BADGE_INFO.items()
+    ]
+
     context = {
         'today': today,
         'profile': profile,
@@ -75,6 +150,9 @@ def member_dashboard_view(request):
         'recent_notifications': recent_notifications,
         'recent_ebook_access': recent_ebook_access,
         'recommended_books': recommended_books,
+        'reading_challenge': reading_challenge,
+        'badges': badges,
+        'all_badge_types': all_badge_types,
         'user': request.user
     }
     return render(request, 'core/dashboards/member_dashboard.html', context)
@@ -155,6 +233,8 @@ def admin_dashboard_view(request):
         read_count=Count('access_logs', filter=Q(access_logs__action='READ'))
     ).filter(read_count__gt=0).order_by('-read_count')[:5]
 
+    recent_activities = ActivityLog.objects.select_related('user').order_by('-timestamp')[:10]
+
     context = {
         'today': today,
         'total_members': total_members,
@@ -173,9 +253,43 @@ def admin_dashboard_view(request):
         'total_pending_fines': total_pending_fines,
         'recent_loans': recent_loans,
         'recent_reservations': recent_reservations,
+        'recent_activities': recent_activities,
         'active_ebooks': EBookMetadata.objects.filter(is_active=True).count(),
         'total_reads': EBookAccessLog.objects.filter(action='READ').count(),
         'total_downloads': EBookAccessLog.objects.filter(action='DOWNLOAD').count(),
         'most_read_ebooks': most_read_ebooks,
     }
     return render(request, 'core/dashboards/admin_dashboard.html', context)
+
+
+def privacy_policy_view(request):
+    """Informational privacy policy page."""
+    return render(request, 'core/privacy.html')
+
+
+def terms_of_service_view(request):
+    """Informational terms of service page."""
+    return render(request, 'core/terms.html')
+
+
+def help_faq_view(request):
+    """Help & FAQ page."""
+    return render(request, 'core/help.html')
+
+
+# ── Custom Error Handlers ────────────────────────────────────────────────────
+
+def custom_404_view(request, exception):
+    """Custom 404 handler that works for both authenticated and anonymous users."""
+    return render(request, '404.html', status=404)
+
+
+def custom_403_view(request, exception):
+    """Custom 403 handler for permission denied."""
+    return render(request, '403.html', status=403)
+
+
+def custom_500_view(request):
+    """Custom 500 handler — uses standalone HTML, no template context needed."""
+    return render(request, '500.html', status=500)
+

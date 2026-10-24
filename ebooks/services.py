@@ -19,8 +19,9 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
 
     # 2. Check file extension
     original_filename = file_obj.name
-    if not original_filename.lower().endswith('.pdf'):
-        raise ValueError("Invalid file extension. Only PDF (.pdf) files are supported.")
+    ext = os.path.splitext(original_filename)[1].lower()
+    if ext not in ['.pdf', '.html', '.htm']:
+        raise ValueError("Invalid file extension. Only PDF (.pdf) and HTML (.html, .htm) files are supported.")
 
     # 3. Check file size
     max_size = getattr(settings, 'MAX_EBOOK_FILE_SIZE', 20 * 1024 * 1024)
@@ -28,28 +29,42 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
         max_mb = max_size / (1024 * 1024)
         raise ValueError(f"File size exceeds maximum allowed limit of {max_mb:.0f} MB.")
 
-    # 4. Check magic bytes PDF signature (%PDF-)
-    file_obj.seek(0)
-    header = file_obj.read(1024)
-    file_obj.seek(0)
-    if not header.startswith(b'%PDF-'):
-        raise ValueError("Invalid file format. File header is not a valid PDF document.")
+    file_format = 'HTML' if ext in ['.html', '.htm'] else 'PDF'
+    page_count = 1
 
-    # 5. Parse PDF with pypdf to validate structure and get page count
-    try:
-        reader = PdfReader(file_obj)
-        page_count = len(reader.pages)
+    if file_format == 'PDF':
+        # 4. Check magic bytes PDF signature (%PDF-)
         file_obj.seek(0)
-    except Exception as e:
+        header = file_obj.read(1024)
         file_obj.seek(0)
-        raise ValueError(f"Corrupted or unreadable PDF file: {str(e)}")
+        if not header.startswith(b'%PDF-'):
+            raise ValueError("Invalid file format. File header is not a valid PDF document.")
+
+        # 5. Parse PDF with pypdf to validate structure and get page count
+        try:
+            reader = PdfReader(file_obj)
+            page_count = len(reader.pages)
+            file_obj.seek(0)
+        except Exception as e:
+            file_obj.seek(0)
+            raise ValueError(f"Corrupted or unreadable PDF file: {str(e)}")
+    else:
+        # Validate HTML content
+        file_obj.seek(0)
+        content = file_obj.read().decode('utf-8', errors='ignore')
+        file_obj.seek(0)
+        if not content.strip():
+            raise ValueError("HTML file is empty.")
+        # Estimate section/page count from headings or divs
+        h_count = content.lower().count('<h') or content.lower().count('<div') or 1
+        page_count = min(max(h_count, 1), 100)
 
     # 6. Prepare protected storage directory
     protected_root = Path(getattr(settings, 'PROTECTED_EBOOK_ROOT', settings.BASE_DIR / 'protected_ebooks'))
     os.makedirs(protected_root, exist_ok=True)
 
     # 7. Generate safe randomized filename
-    new_protected_filename = f"{uuid.uuid4().hex}.pdf"
+    new_protected_filename = f"{uuid.uuid4().hex}{ext}"
     new_file_path = protected_root / new_protected_filename
 
     # Save file chunks to protected path
@@ -81,7 +96,7 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
     ebook.uploaded_at = timezone.now()
     ebook.file_size = file_obj.size
     ebook.page_count = page_count
-    ebook.format = 'PDF'
+    ebook.format = file_format
     ebook.access_mode = access_mode
     ebook.rights_status = rights_status
     ebook.rights_text = rights_text
@@ -92,15 +107,19 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
     return ebook
 
 
-def update_ebook_metadata_only(ebook, access_mode, rights_status, rights_text, access_note, is_active=True):
+
+def update_ebook_metadata_only(ebook, access_mode, rights_status, rights_text, access_note, is_active=True, rental_price=None):
     """Updates metadata fields without changing the uploaded PDF file."""
     ebook.access_mode = access_mode
     ebook.rights_status = rights_status
     ebook.rights_text = rights_text
     ebook.access_note = access_note
     ebook.is_active = is_active
+    if rental_price is not None:
+        ebook.rental_price = rental_price
     ebook.save()
     return ebook
+
 
 
 def log_ebook_access(user, ebook, action, ip_address=None):

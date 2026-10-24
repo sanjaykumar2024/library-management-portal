@@ -1,33 +1,89 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Member Management{% endblock %}
+{% block page_title %}Members List{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="h5 mb-0" style="color: var(--text-primary); font-weight: 600;">Library Members</h3>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h3 class="h4 mb-1" style="color: var(--text-primary); font-weight: 700;">
+            <i class="bi bi-people-fill text-indigo me-2"></i>Members List
+        </h3>
+        <p class="small mb-0" style="color: var(--text-muted);">
+            View registered members, check renewal dates, and view borrowing activity.
+        </p>
+    </div>
 </div>
 
-<div class="glass-card p-3 mb-4">
-    <form method="GET" class="row g-3 align-items-end">
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small text-muted">Total Members</div>
+                <div class="fs-3 fw-bold" style="color: var(--text-primary);">{{ total_members }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover);">
+                <i class="bi bi-people fs-4"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small text-muted">Active Members</div>
+                <div class="fs-3 fw-bold text-success">{{ active_members }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">
+                <i class="bi bi-person-check fs-4"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small text-muted">Expired Cards</div>
+                <div class="fs-3 fw-bold text-warning">{{ expired_members }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">
+                <i class="bi bi-person-exclamation fs-4"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
+            <div>
+                <div class="small text-muted">Suspended</div>
+                <div class="fs-3 fw-bold text-danger">{{ suspended_members }}</div>
+            </div>
+            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger);">
+                <i class="bi bi-person-x fs-4"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters & Search Toolbar -->
+<div class="glass-panel p-3 mb-4">
+    <form method="GET" class="row g-2 align-items-center">
+        <div class="col-md-7 d-flex flex-wrap gap-1">
+            <a href="?status=ALL{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ALL' or not selected_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All Members ({{ total_members }})</a>
+            <a href="?status=ACTIVE{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ACTIVE' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Active ({{ active_members }})</a>
+            <a href="?status=EXPIRED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'EXPIRED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Expired ({{ expired_members }})</a>
+            <a href="?status=SUSPENDED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'SUSPENDED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Suspended ({{ suspended_members }})</a>
+        </div>
         <div class="col-md-5">
-            <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Search</label>
-            <input type="text" name="q" class="form-control" placeholder="Name, Email, or Mem #" value="{{ request.GET.q|default_if_none:'' }}">
-        </div>
-        <div class="col-md-4">
-            <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Status</label>
-            <select name="status" class="form-select">
-                <option value="">All Statuses</option>
-                <option value="ACTIVE" {% if request.GET.status == 'ACTIVE' %}selected{% endif %}>Active</option>
-                <option value="EXPIRED" {% if request.GET.status == 'EXPIRED' %}selected{% endif %}>Expired</option>
-                <option value="SUSPENDED" {% if request.GET.status == 'SUSPENDED' %}selected{% endif %}>Suspended</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-primary w-100">Filter Members</button>
+            <div class="input-group input-group-sm">
+                <input type="text" name="q" class="form-control" placeholder="Search by name, email, or membership #..." value="{{ q }}">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+                {% if q %}
+                <a href="{% url 'accounts:member_list' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </div>
         </div>
     </form>
 </div>
 
+<!-- Members Table -->
 <div class="glass-card overflow-hidden">
     <div class="table-responsive">
         <table class="table align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
@@ -36,31 +92,69 @@
                     <th class="ps-4 py-3 border-0">Member Info</th>
                     <th class="py-3 border-0">Membership #</th>
                     <th class="py-3 border-0">Status</th>
-                    <th class="py-3 border-0">Joined</th>
-                    <th class="pe-4 py-3 text-end border-0">Action</th>
+                    <th class="py-3 border-0">Validity / Expiry</th>
+                    <th class="pe-4 py-3 text-end border-0">Quick Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for member in members %}
                 <tr style="border-bottom: 1px solid var(--glass-border);">
                     <td class="ps-4 py-3">
-                        <div class="fw-medium">{{ member.user.get_full_name|default:member.user.username }}</div>
-                        <div class="small" style="color: var(--text-muted);">{{ member.user.email }}</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" 
+                                 style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));">
+                                {{ member.user.username.0|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-bold" style="color: var(--text-primary);">
+                                    <a href="{% url 'accounts:member_detail' member.pk %}" class="text-decoration-none hover-indigo" style="color: var(--text-primary);">
+                                         {{ member.user.get_full_name|default:member.user.username }}
+                                    </a>
+                                </div>
+                                <div class="small text-muted">{{ member.user.email }} {% if member.phone_number %}&bull; {{ member.phone_number }}{% endif %}</div>
+                            </div>
+                        </div>
                     </td>
-                    <td class="py-3 font-monospace">{{ member.membership_number }}</td>
+                    <td class="py-3 font-monospace text-indigo fw-bold">{{ member.membership_number }}</td>
                     <td class="py-3">
-                        {% if member.membership_status == 'ACTIVE' %}<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Active</span>{% endif %}
-                        {% if member.membership_status == 'EXPIRED' %}<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Expired</span>{% endif %}
-                        {% if member.membership_status == 'SUSPENDED' %}<span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Suspended</span>{% endif %}
+                        {% if member.membership_status == 'ACTIVE' %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                            <i class="bi bi-check-circle me-1"></i> Active
+                        </span>
+                        {% elif member.membership_status == 'EXPIRED' %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="bi bi-clock-history me-1"></i> Expired
+                        </span>
+                        {% elif member.membership_status == 'SUSPENDED' %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                            <i class="bi bi-x-circle me-1"></i> Suspended
+                        </span>
+                        {% endif %}
                     </td>
-                    <td class="py-3">{{ member.joining_date|date:"M j, Y" }}</td>
+                    <td class="py-3">
+                        <div class="small" style="color: var(--text-primary);">Expires: {{ member.membership_expiry_date|date:"M j, Y"|default:"N/A" }}</div>
+                        <div class="small text-muted">Joined: {{ member.joining_date|date:"M j, Y" }}</div>
+                    </td>
                     <td class="pe-4 py-3 text-end">
-                        <a href="{% url 'accounts:member_detail' member.pk %}" class="btn btn-sm btn-outline-primary" style="border-color: rgba(255,255,255,0.2); color: var(--text-primary);">View Details</a>
+                        <div class="d-inline-flex gap-2">
+                            <form method="post" action="{% url 'accounts:member_renew' member.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="Extend Membership (+1 Year)">
+                                    <i class="bi bi-arrow-repeat"></i> Renew
+                                </button>
+                            </form>
+                            <a href="{% url 'accounts:member_detail' member.pk %}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                View Profile
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center py-5" style="color: var(--text-muted); border: none;">No members found matching your search.</td>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <i class="bi bi-people fs-1 d-block mb-3 opacity-50"></i>
+                        No library members found matching your search criteria.
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

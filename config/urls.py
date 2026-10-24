@@ -9,8 +9,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from core.views import custom_404_view, custom_403_view, custom_500_view
+
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
+    path('favicon.ico', RedirectView.as_view(url='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/book-half.svg', permanent=True)),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('catalog/', include('catalog.urls')),
@@ -22,6 +26,11 @@ urlpatterns = [
     path('', include('core.urls')),
 ]
 
+handler404 = custom_404_view
+handler403 = custom_403_view
+handler500 = custom_500_view
+
 # Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

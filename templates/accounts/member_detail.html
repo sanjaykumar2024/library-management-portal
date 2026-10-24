@@ -1,106 +1,295 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Member Details{% endblock %}
+{% block page_title %}Member Profile — {{ member_profile.user.username }}{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="{% url 'accounts:member_list' %}" class="text-decoration-none" style="color: var(--text-secondary);"><i class="bi bi-arrow-left me-1"></i> Back to Members</a>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <a href="{% url 'accounts:member_list' %}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to Members List
+    </a>
+    <div class="d-flex gap-2">
+        {% if member_profile.membership_status == 'ACTIVE' %}
+        <a href="{% url 'circulation:issue_book' %}?member={{ member_profile.membership_number }}" class="btn btn-sm btn-success rounded-pill px-3">
+            <i class="bi bi-journal-plus me-1"></i> Lend Book
+        </a>
+        {% endif %}
+        <form method="post" action="{% url 'accounts:member_renew' member_profile.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3">
+                <i class="bi bi-arrow-repeat me-1"></i> Extend Membership (+1 Year)
+            </button>
+        </form>
+        <a href="{% url 'accounts:member_edit' member_profile.pk %}" class="btn btn-sm btn-primary rounded-pill px-3">
+            <i class="bi bi-pencil me-1"></i> Edit Profile
+        </a>
+    </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-4 mb-4">
-        <div class="glass-card">
-            <div class="p-4 text-center border-bottom border-secondary" style="border-color: var(--glass-border) !important;">
-                <div class="user-avatar mx-auto mb-3 border-0 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 3rem; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); color: var(--text-primary); border-radius: 50%;">
+<div class="row g-4">
+    <!-- Member Card & Status Column -->
+    <div class="col-lg-4">
+        <div class="glass-card mb-4">
+            <div class="p-4 text-center border-bottom" style="border-color: var(--glass-border) !important;">
+                <div class="user-avatar mx-auto mb-3 d-flex align-items-center justify-content-center text-white fw-bold shadow" 
+                     style="width: 90px; height: 90px; font-size: 2.5rem; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); border-radius: 50%;">
                     {{ member_profile.user.username.0|upper }}
                 </div>
-                <h4 class="mb-1" style="color: var(--text-primary);">{{ member_profile.user.get_full_name|default:member_profile.user.username }}</h4>
-                <div class="mb-3 font-monospace" style="color: var(--text-secondary);">{{ member_profile.membership_number }}</div>
+                <h4 class="h5 mb-1 fw-bold" style="color: var(--text-primary);">{{ member_profile.user.get_full_name|default:member_profile.user.username }}</h4>
+                <div class="mb-3 font-monospace" style="color: var(--accent-primary-hover);">{{ member_profile.membership_number }}</div>
                 
                 {% if member_profile.membership_status == 'ACTIVE' %}
-                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Active Member</span>
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                        <i class="bi bi-check-circle-fill me-1"></i> Active Member
+                    </span>
                 {% elif member_profile.membership_status == 'EXPIRED' %}
-                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Expired</span>
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                        <i class="bi bi-clock-history me-1"></i> Expired Card
+                    </span>
                 {% else %}
-                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Suspended</span>
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
+                        <i class="bi bi-x-circle-fill me-1"></i> Suspended
+                    </span>
                 {% endif %}
             </div>
             
             <div class="p-4">
                 <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Contact Information</h6>
-                <ul class="list-unstyled mb-0 small" style="color: var(--text-muted);">
-                    <li class="mb-3 d-flex align-items-start">
-                        <i class="bi bi-envelope me-3 fs-5" style="color: var(--text-primary);"></i>
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-3 d-flex align-items-start gap-2">
+                        <i class="bi bi-envelope fs-5" style="color: var(--accent-primary-hover);"></i>
                         <div>
-                            <div style="color: var(--text-secondary);">Email</div>
-                            <div style="color: var(--text-primary);">{{ member_profile.user.email }}</div>
+                            <div class="text-muted">Email</div>
+                            <div style="color: var(--text-primary); font-weight: 500;">{{ member_profile.user.email }}</div>
                         </div>
                     </li>
-                    <li class="mb-3 d-flex align-items-start">
-                        <i class="bi bi-telephone me-3 fs-5" style="color: var(--text-primary);"></i>
+                    <li class="mb-3 d-flex align-items-start gap-2">
+                        <i class="bi bi-telephone fs-5" style="color: var(--accent-primary-hover);"></i>
                         <div>
-                            <div style="color: var(--text-secondary);">Phone</div>
-                            <div style="color: var(--text-primary);">{{ member_profile.phone_number|default:"Not provided" }}</div>
+                            <div class="text-muted">Phone</div>
+                            <div style="color: var(--text-primary); font-weight: 500;">{{ member_profile.phone_number|default:"Not provided" }}</div>
                         </div>
                     </li>
-                    <li class="d-flex align-items-start">
-                        <i class="bi bi-geo-alt me-3 fs-5" style="color: var(--text-primary);"></i>
+                    <li class="d-flex align-items-start gap-2">
+                        <i class="bi bi-geo-alt fs-5" style="color: var(--accent-primary-hover);"></i>
                         <div>
-                            <div style="color: var(--text-secondary);">Address</div>
-                            <div style="color: var(--text-primary);">{{ member_profile.address|default:"Not provided"|linebreaksbr }}</div>
+                            <div class="text-muted">Address</div>
+                            <div style="color: var(--text-primary); font-weight: 500;">{{ member_profile.address|default:"Not provided"|linebreaksbr }}</div>
                         </div>
                     </li>
                 </ul>
             </div>
-        </div>
-        
-        <div class="mt-4">
-            <a href="{% url 'accounts:member_edit' member_profile.pk %}" class="btn btn-outline-primary w-100" style="border-color: rgba(99,102,241,0.5);">
-                <i class="bi bi-pencil me-2"></i> Edit Member Profile
-            </a>
+
+            <!-- Quick Status Change Form -->
+            <div class="p-4 border-top" style="border-color: var(--glass-border) !important;">
+                <h6 class="text-uppercase small fw-bold mb-2" style="color: var(--text-secondary); letter-spacing: 1px;">Change Status</h6>
+                <form method="post" action="{% url 'accounts:member_toggle_status' member_profile.pk %}" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="ACTIVE" {% if member_profile.membership_status == 'ACTIVE' %}selected{% endif %}>Active</option>
+                        <option value="SUSPENDED" {% if member_profile.membership_status == 'SUSPENDED' %}selected{% endif %}>Suspended</option>
+                        <option value="EXPIRED" {% if member_profile.membership_status == 'EXPIRED' %}selected{% endif %}>Expired</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3">Update</button>
+                </form>
+            </div>
         </div>
     </div>
     
+    <!-- Details Column with Tabbed History -->
     <div class="col-lg-8">
-        <div class="glass-card mb-4">
-            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
-                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Membership Details</h5>
-            </div>
-            <div class="p-4">
-                <div class="row g-4 mb-4">
-                    <div class="col-sm-6">
-                        <label style="color: var(--text-muted); font-size: 0.875rem;">Join Date</label>
-                        <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ member_profile.joining_date|date:"F j, Y" }}</div>
-                    </div>
-                    <div class="col-sm-6">
-                        <label style="color: var(--text-muted); font-size: 0.875rem;">Expiry Date</label>
-                        <div class="fw-medium fs-5" style="color: var(--text-primary);">{{ member_profile.membership_expiry_date|date:"F j, Y" }}</div>
-                    </div>
+        <!-- Membership Validity Details Card -->
+        <div class="glass-card mb-4 p-4">
+            <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-secondary); letter-spacing: 1px;">Membership Registration Info</h6>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <div class="small text-muted">Join Date</div>
+                    <div class="fw-bold fs-6" style="color: var(--text-primary);">{{ member_profile.joining_date|date:"F j, Y" }}</div>
                 </div>
-                
-                <div>
-                    <label style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Admin Notes</label>
-                    {% if member_profile.admin_notes %}
-                        <div class="p-3" style="background: rgba(0,0,0,0.15); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); color: var(--text-primary);">
-                            {{ member_profile.admin_notes|linebreaksbr }}
-                        </div>
-                    {% else %}
-                        <div class="p-3" style="background: rgba(0,0,0,0.1); border-radius: var(--radius-sm); border: 1px dashed var(--glass-border); color: var(--text-muted);">
-                            No administrative notes for this member.
-                        </div>
-                    {% endif %}
+                <div class="col-sm-6">
+                    <div class="small text-muted">Expiry Date</div>
+                    <div class="fw-bold text-warning fs-6">{{ member_profile.membership_expiry_date|date:"F j, Y"|default:"N/A" }}</div>
                 </div>
+                {% if member_profile.admin_notes %}
+                <div class="col-12">
+                    <div class="small text-muted">Staff Internal Notes:</div>
+                    <div class="p-2 rounded mt-1 small" style="background: rgba(99,102,241,0.06); border: 1px solid var(--glass-border); color: var(--text-primary);">{{ member_profile.admin_notes }}</div>
+                </div>
+                {% endif %}
             </div>
         </div>
-        
-        <!-- Circulation integration placeholder -->
-        <div class="glass-card">
-            <div class="p-4 border-bottom" style="border-color: var(--glass-border) !important;">
-                <h5 class="mb-0" style="color: var(--text-primary); font-weight: 600;">Active Loans & Reservations</h5>
-            </div>
-            <div class="p-5 text-center">
-                <i class="bi bi-journal-bookmark fs-1 mb-3" style="color: var(--text-muted); opacity: 0.5;"></i>
-                <p style="color: var(--text-muted);">Circulation history will appear here once the circulation module is complete.</p>
+
+        <!-- Tabbed Active Loans, Holds, Fines, and History -->
+        <div class="glass-card p-4">
+            <ul class="nav nav-pills mb-4 gap-2 border-bottom pb-3" id="memberDetailTabs" role="tablist" style="border-color: var(--glass-border) !important;">
+                <li class="nav-item">
+                    <button class="nav-link active rounded-pill px-3 py-1 small fw-semibold" id="mloans-tab" data-bs-toggle="tab" data-bs-target="#mloans" type="button">
+                        Borrowed Books ({{ active_loans|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-pill px-3 py-1 small fw-semibold" id="mholds-tab" data-bs-toggle="tab" data-bs-target="#mholds" type="button">
+                        Reserved Books ({{ reservations|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-pill px-3 py-1 small fw-semibold" id="mfines-tab" data-bs-toggle="tab" data-bs-target="#mfines" type="button">
+                        Library Fines ({{ fines|length }})
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link rounded-pill px-3 py-1 small fw-semibold" id="mhist-tab" data-bs-toggle="tab" data-bs-target="#mhist" type="button">
+                        Borrow History ({{ past_loans|length }})
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="memberDetailTabsContent">
+                <!-- Borrowed Books -->
+                <div class="tab-pane fade show active" id="mloans">
+                    {% if active_loans %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
+                            <thead>
+                                <tr class="small" style="color: var(--text-muted); border-bottom: 1px solid var(--glass-border);">
+                                    <th>Book Title</th>
+                                    <th>Copy</th>
+                                    <th>Borrowed</th>
+                                    <th>Due Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in active_loans %}
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td class="fw-bold" style="color: var(--text-primary);">{{ loan.book_copy.book.title }}</td>
+                                    <td class="font-monospace" style="color: var(--accent-primary-hover);">{{ loan.book_copy.accession_number }}</td>
+                                    <td class="small" style="color: var(--text-muted);">{{ loan.issue_date|date:"M j" }}</td>
+                                    <td class="small fw-bold {% if loan.is_overdue %}text-danger{% else %}text-warning{% endif %}">
+                                        {{ loan.due_date|date:"M j" }}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'circulation:process_return' loan.id %}" class="btn btn-sm btn-outline-success rounded-pill py-0 px-2" style="font-size: 0.75rem;">
+                                            Return
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 small" style="color: var(--text-muted);">No physical books currently borrowed.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Reserved Books -->
+                <div class="tab-pane fade" id="mholds">
+                    {% if reservations %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
+                            <thead>
+                                <tr class="small" style="color: var(--text-muted); border-bottom: 1px solid var(--glass-border);">
+                                    <th>Book Title</th>
+                                    <th>Reserved On</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for res in reservations %}
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td class="fw-bold" style="color: var(--text-primary);">{{ res.book.title }}</td>
+                                    <td class="small" style="color: var(--text-muted);">{{ res.reservation_date|date:"M j, Y" }}</td>
+                                    <td>
+                                        {% if res.status == 'ALLOCATED' %}<span class="badge bg-success">Ready on Shelf</span>
+                                        {% elif res.status == 'PENDING' %}<span class="badge bg-warning">Pending Waitlist</span>
+                                        {% else %}<span class="badge bg-secondary">{{ res.get_status_display }}</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if res.status == 'ALLOCATED' %}
+                                        <a href="{% url 'reservations:fulfill_reservation' res.id %}" class="btn btn-sm btn-primary rounded-pill py-0 px-2" style="font-size: 0.75rem;">Lend Book</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 small" style="color: var(--text-muted);">No active or past hold reservations.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Library Fines -->
+                <div class="tab-pane fade" id="mfines">
+                    {% if fines %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
+                            <thead>
+                                <tr class="small" style="color: var(--text-muted); border-bottom: 1px solid var(--glass-border);">
+                                    <th>Book</th>
+                                    <th>Overdue</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fine in fines %}
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td style="color: var(--text-primary);">{{ fine.loan.book_copy.book.title }}</td>
+                                    <td class="small" style="color: var(--text-muted);">{{ fine.overdue_days }}d</td>
+                                    <td class="fw-bold {% if fine.status == 'PENDING' %}text-danger{% else %}text-success{% endif %}">₹{{ fine.amount }}</td>
+                                    <td>
+                                        {% if fine.status == 'PENDING' %}<span class="badge bg-danger">Unpaid</span>
+                                        {% else %}<span class="badge bg-success">Paid</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if fine.status == 'PENDING' %}
+                                        <a href="{% url 'circulation:pay_fine' fine.id %}" class="btn btn-sm btn-success rounded-pill py-0 px-2" style="font-size: 0.75rem;">Pay Fine</a>
+                                        {% else %}
+                                        <a href="{% url 'circulation:fine_receipt' fine.id %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2" style="font-size: 0.75rem;">Receipt</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 small" style="color: var(--text-muted);">No fines recorded for this member.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Past Borrowing History -->
+                <div class="tab-pane fade" id="mhist">
+                    {% if past_loans %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0" style="color: var(--text-primary); --bs-table-bg: transparent; --bs-table-color: var(--text-primary); --bs-table-border-color: var(--glass-border);">
+                            <thead>
+                                <tr class="small" style="color: var(--text-muted); border-bottom: 1px solid var(--glass-border);">
+                                    <th>Book Title</th>
+                                    <th>Copy</th>
+                                    <th>Borrowed</th>
+                                    <th>Returned</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in past_loans %}
+                                <tr style="border-bottom: 1px solid var(--glass-border);">
+                                    <td style="color: var(--text-primary);">{{ loan.book_copy.book.title }}</td>
+                                    <td class="font-monospace" style="color: var(--text-muted);">{{ loan.book_copy.accession_number }}</td>
+                                    <td class="small" style="color: var(--text-muted);">{{ loan.issue_date|date:"M j, Y" }}</td>
+                                    <td class="small text-success">{{ loan.return_date|date:"M j, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 small" style="color: var(--text-muted);">No past borrowing history recorded.</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
