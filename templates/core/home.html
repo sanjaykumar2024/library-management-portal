@@ -220,7 +220,14 @@
             <div class="shelf-book-card">
                 <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none mb-2">
                     {% if book.cover_image %}
-                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="shelf-book-cover">
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="shelf-book-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                    <div class="shelf-book-cover book-cover-fallback p-2 d-none">
+                        <div class="fallback-body p-0">
+                            <div class="fallback-title" style="font-size: 0.72rem; -webkit-line-clamp: 3;">{{ book.title }}</div>
+                            <div class="fallback-divider" style="width: 50%; margin: 2px auto;"></div>
+                            <div class="fallback-author" style="font-size: 0.65rem;">{{ book.author|default:"Classic" }}</div>
+                        </div>
+                    </div>
                     {% else %}
                     <div class="shelf-book-cover book-cover-fallback p-2">
                         <div class="fallback-body p-0">
@@ -288,7 +295,14 @@
             <div class="shelf-book-card">
                 <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none mb-2">
                     {% if book.cover_image %}
-                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="shelf-book-cover">
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="shelf-book-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                    <div class="shelf-book-cover book-cover-fallback cover-theme-science p-2 d-none">
+                        <div class="fallback-body p-0">
+                            <div class="fallback-title" style="font-size: 0.72rem; -webkit-line-clamp: 3;">{{ book.title }}</div>
+                            <div class="fallback-divider" style="width: 50%; margin: 2px auto;"></div>
+                            <div class="fallback-author" style="font-size: 0.65rem;">{{ book.author|default:"Classic" }}</div>
+                        </div>
+                    </div>
                     {% else %}
                     <div class="shelf-book-cover book-cover-fallback cover-theme-science p-2">
                         <div class="fallback-body p-0">
@@ -351,7 +365,14 @@
             <div class="shelf-book-card">
                 <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none mb-2">
                     {% if book.cover_image %}
-                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="shelf-book-cover">
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="shelf-book-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                    <div class="shelf-book-cover book-cover-fallback cover-theme-tech p-2 d-none">
+                        <div class="fallback-body p-0">
+                            <div class="fallback-title" style="font-size: 0.72rem; -webkit-line-clamp: 3;">{{ book.title }}</div>
+                            <div class="fallback-divider" style="width: 50%; margin: 2px auto;"></div>
+                            <div class="fallback-author" style="font-size: 0.65rem;">{{ book.author|default:"Technology" }}</div>
+                        </div>
+                    </div>
                     {% else %}
                     <div class="shelf-book-cover book-cover-fallback cover-theme-tech p-2">
                         <div class="fallback-body p-0">

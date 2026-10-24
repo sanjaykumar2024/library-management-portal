@@ -123,7 +123,16 @@
             <a href="{% url 'catalog:detail' book.id %}" class="text-decoration-none">
                 <div class="book-cover-wrapper position-relative overflow-hidden">
                     {% if book.cover_image %}
-                        <img src="{{ book.cover_image.url }}" class="book-cover" alt="{{ book.title }}">
+                        <img src="{{ book.cover_image.url }}" class="book-cover" alt="{{ book.title }}" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                        <div class="book-cover-fallback d-none">
+                            <div class="fallback-header">{{ book.category.name|default:"Heritage Edition" }}</div>
+                            <div class="fallback-body">
+                                <div class="fallback-title">{{ book.title }}</div>
+                                <div class="fallback-divider"></div>
+                                <div class="fallback-author">{{ book.author|default:"Library Archive" }}</div>
+                            </div>
+                            <div class="fallback-footer">LibrarySphere Edition</div>
+                        </div>
                     {% else %}
                         <div class="book-cover-fallback">
                             <div class="fallback-header">{{ book.category.name|default:"Heritage Edition" }}</div>

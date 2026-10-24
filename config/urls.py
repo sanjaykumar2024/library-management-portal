@@ -8,7 +8,8 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.static import serve
 from core.views import custom_404_view, custom_403_view, custom_500_view
 
 from django.views.generic.base import RedirectView
@@ -30,7 +31,8 @@ handler404 = custom_404_view
 handler403 = custom_403_view
 handler500 = custom_500_view
 
-# Serve media files during development
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files in both development and production (for platforms like Render/PythonAnywhere)
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
 
