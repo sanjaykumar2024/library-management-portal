@@ -347,23 +347,30 @@ class KaggleEBookService:
         title = cls._extract_field(row, ['title', 'Book-Title', 'book_title', 'name'])
         if not title:
             return None, False, "Missing title"
+        title = title.strip()[:250]
 
         raw_isbn = cls._extract_field(row, ['isbn13', 'isbn', 'ISBN', 'isbn10'])
-        isbn = cls._clean_isbn(raw_isbn, title)
+        isbn = cls._clean_isbn(raw_isbn, title)[:30]
 
         authors_str = cls._extract_field(row, ['authors', 'author', 'Book-Author', 'creator', 'Authors'], default='Various Authors')
         category_name = cls._extract_field(row, ['categories', 'category', 'genre', 'genres', 'Category'], default='General Literature')
         # Clean category name (trim quotes, brackets)
         category_name = re.sub(r"[\[\]'\",]", "", category_name).strip() or "General"
-        if len(category_name) > 60:
-            category_name = category_name[:60]
+        if len(category_name) > 80:
+            category_name = category_name[:80]
 
         description = cls._extract_field(row, ['description', 'summary', 'Summary', 'desc', 'Description'])
         if not description or len(description) < 20:
             description = f"'{title}' is a celebrated work in {category_name} by {authors_str}, carefully cataloged in the LibrarySphere digital collection."
+        if len(description) > 3000:
+            description = description[:2997] + "..."
 
         subtitle = cls._extract_field(row, ['subtitle', 'Subtitle', 'sub_title'], default="")
+        if len(subtitle) > 200:
+            subtitle = subtitle[:197] + "..."
         publisher = cls._extract_field(row, ['publisher', 'Publisher'], default="Kaggle Curated Publishing")
+        if len(publisher) > 190:
+            publisher = publisher[:190]
 
         # Parse publication year
         year_str = cls._extract_field(row, ['published_year', 'Year-Of-Publication', 'publication_year', 'year', 'publishedDate'])
@@ -433,7 +440,7 @@ class KaggleEBookService:
                     first_author_name = clean_name
                 auth, _ = Author.objects.get_or_create(
                     full_name=clean_name[:190],
-                    defaults={'bio': f"Author of '{title}' and other distinguished works."}
+                    defaults={'bio': f"Author of '{title[:80]}' and other distinguished works."}
                 )
                 book.authors.add(auth)
 
@@ -499,7 +506,7 @@ class KaggleEBookService:
                     user=demo_user,
                     defaults={
                         'rating': star_int,
-                        'headline': f"Essential reading in {category.name}",
+                        'headline': f"Essential reading in {category.name}"[:140],
                         'review_text': f"An outstanding and deeply rewarding volume. {title} offers remarkable clarity, profound insights, and timeless principles. Highly recommended for every library member.",
                         'is_approved': True
                     }
@@ -510,7 +517,7 @@ class KaggleEBookService:
             from core.models import log_activity
             log_activity(
                 'EBOOK_IMPORTED',
-                f"Imported Kaggle E-Book '{book.title}' (ISBN: {book.isbn}) into digital catalog",
+                f"Imported Kaggle E-Book '{book.title[:50]}' (ISBN: {book.isbn}) into digital catalog",
                 user=uploaded_by
             )
         except Exception:
@@ -524,6 +531,8 @@ class KaggleEBookService:
         Parses a CSV stream or file path and imports books up to `limit`.
         Returns summary statistics dictionary.
         """
+        from django.db import transaction
+
         stats = {
             'total_rows': 0,
             'imported': 0,
@@ -554,13 +563,14 @@ class KaggleEBookService:
                 if limit and stats['total_rows'] > limit:
                     break
                 try:
-                    book, created, msg = cls.import_single_book(
-                        row=row,
-                        uploaded_by=uploaded_by,
-                        access_mode=access_mode,
-                        rights_status=rights_status,
-                        overwrite=overwrite
-                    )
+                    with transaction.atomic():
+                        book, created, msg = cls.import_single_book(
+                            row=row,
+                            uploaded_by=uploaded_by,
+                            access_mode=access_mode,
+                            rights_status=rights_status,
+                            overwrite=overwrite
+                        )
                     if created:
                         stats['imported'] += 1
                         stats['books'].append(book)

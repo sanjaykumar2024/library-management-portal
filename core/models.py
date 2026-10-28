@@ -49,7 +49,11 @@ def log_activity(action, description, user=None, request=None):
     """
     Convenience helper to record a platform activity event.
     Extracts IP address from request if supplied.
+    Safely truncates description to fit within CharField(max_length=255).
     """
+    if description and len(str(description)) > 250:
+        description = str(description)[:247] + '...'
+
     ip = None
     if request:
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')

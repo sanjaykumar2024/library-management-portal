@@ -8,8 +8,38 @@ embossed gold/silver foil framing, ornamental heraldic crests, and serif typogra
 import math
 import io
 import uuid
+import functools
 from PIL import Image, ImageDraw, ImageFont
 from django.core.files.base import ContentFile
+
+
+@functools.lru_cache(maxsize=128)
+def _load_font(name_or_path: str, size: int):
+    """Loads TTF font with fallback to system fonts or default, cached in memory."""
+    system_candidates = [
+        name_or_path,
+        # macOS paths
+        f"/System/Library/Fonts/Supplemental/{name_or_path}",
+        f"/System/Library/Fonts/{name_or_path}",
+        "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
+        "/System/Library/Fonts/Supplemental/Georgia.ttf",
+        "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+        # Linux / Ubuntu / Debian paths (Render container environment)
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf",
+    ]
+    for path in system_candidates:
+        try:
+            return ImageFont.truetype(path, size)
+        except Exception:
+            continue
+    return ImageFont.load_default()
 
 
 class BookCoverGenerator:
@@ -107,31 +137,8 @@ class BookCoverGenerator:
 
     @classmethod
     def _get_font(cls, name_or_path: str, size: int):
-        """Loads TTF font with fallback to system fonts or default."""
-        system_candidates = [
-            name_or_path,
-            # macOS paths
-            f"/System/Library/Fonts/Supplemental/{name_or_path}",
-            f"/System/Library/Fonts/{name_or_path}",
-            "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
-            "/System/Library/Fonts/Supplemental/Georgia.ttf",
-            "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
-            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
-            # Linux / Ubuntu / Debian paths (Render container environment)
-            "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-            "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf",
-        ]
-        for path in system_candidates:
-            try:
-                return ImageFont.truetype(path, size)
-            except Exception:
-                continue
-        return ImageFont.load_default()
+        """Loads TTF font with fallback to system fonts or default, cached for high performance."""
+        return _load_font(name_or_path, size)
 
     @classmethod
     def _draw_diamond(cls, draw, cx, cy, size, fill, outline=None):
@@ -216,51 +223,35 @@ class BookCoverGenerator:
         genre = cls.detect_genre(title, category)
         t = cls.THEMES.get(genre, cls.THEMES['literature'])
 
-        # 1. Background gradient with soft library overhead spotlight
-        img = Image.new('RGB', (W, H), t['bg_bot'])
-        spot_cx, spot_cy = W / 2, H * 0.35
-
+        # 1. Fast Background gradient with smooth bilinear scaling
+        grad = Image.new('RGB', (1, H))
         for y in range(H):
             ratio_y = y / H
-            for x in range(0, W, 2):
-                dist = math.hypot(x - spot_cx, (y - spot_cy) * 1.2) / (W * 0.75)
-                spot = max(0.0, 1.0 - dist) * 0.22
+            r = int(t['bg_top'][0] * (1 - ratio_y) + t['bg_bot'][0] * ratio_y)
+            g = int(t['bg_top'][1] * (1 - ratio_y) + t['bg_bot'][1] * ratio_y)
+            b = int(t['bg_top'][2] * (1 - ratio_y) + t['bg_bot'][2] * ratio_y)
+            grad.putpixel((0, y), (r, g, b))
 
-                r = int(t['bg_top'][0] * (1 - ratio_y) + t['bg_bot'][0] * ratio_y)
-                g = int(t['bg_top'][1] * (1 - ratio_y) + t['bg_bot'][1] * ratio_y)
-                b = int(t['bg_top'][2] * (1 - ratio_y) + t['bg_bot'][2] * ratio_y)
+        img = grad.resize((W, H), Image.Resampling.BILINEAR)
 
-                r = min(255, int(r + (255 - r) * spot))
-                g = min(255, int(g + (255 - g) * spot * 0.8))
-                b = min(255, int(b + (255 - b) * spot * 0.6))
+        # Soft library overhead spotlight overlay
+        spot = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+        spot_draw = ImageDraw.Draw(spot)
+        spot_cx, spot_cy = W // 2, int(H * 0.35)
+        spot_draw.ellipse([spot_cx - 260, spot_cy - 180, spot_cx + 260, spot_cy + 180], fill=(255, 230, 180, 24))
+        spot_draw.ellipse([spot_cx - 180, spot_cy - 120, spot_cx + 180, spot_cy + 120], fill=(255, 240, 200, 20))
+        img = Image.alpha_composite(img.convert('RGBA'), spot).convert('RGB')
 
-                img.putpixel((x, y), (r, g, b))
-                if x + 1 < W:
-                    img.putpixel((x + 1, y), (r, g, b))
-
-        # 2. Hardcover physical anatomy: 3D Spine hinge on the left
-        for x in range(32):
-            if x < 10:
-                alpha = (10 - x) / 10.0 * 0.50
-                col = (0, 0, 0)
-            elif x < 15:
-                alpha = (1.0 - abs(x - 12.5) / 2.5) * 0.28
-                col = (255, 255, 255)
-            else:
-                alpha = (32 - x) / 17.0 * 0.25
-                col = (0, 0, 0)
-
-            for y in range(H):
-                curr = img.getpixel((x, y))
-                new_r = int(curr[0] * (1 - alpha) + col[0] * alpha)
-                new_g = int(curr[1] * (1 - alpha) + col[1] * alpha)
-                new_b = int(curr[2] * (1 - alpha) + col[2] * alpha)
-                img.putpixel((x, y), (new_r, new_g, new_b))
-
-        # Right edge hardcover board bevel highlight
-        for y in range(H):
-            curr = img.getpixel((W - 2, y))
-            img.putpixel((W - 2, y), (min(255, curr[0] + 35), min(255, curr[1] + 35), min(255, curr[2] + 35)))
+        # 2. Hardcover physical anatomy: 3D Spine hinge on the left & right bevel highlight
+        hinge = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+        h_draw = ImageDraw.Draw(hinge)
+        h_draw.rectangle([0, 0, 8, H], fill=(0, 0, 0, 110))
+        h_draw.rectangle([8, 0, 12, H], fill=(0, 0, 0, 60))
+        h_draw.rectangle([12, 0, 15, H], fill=(255, 255, 255, 70))
+        h_draw.rectangle([15, 0, 24, H], fill=(0, 0, 0, 45))
+        h_draw.rectangle([24, 0, 32, H], fill=(0, 0, 0, 25))
+        h_draw.line([(W - 2, 0), (W - 2, H)], fill=(255, 255, 255, 45), width=2)
+        img = Image.alpha_composite(img.convert('RGBA'), hinge).convert('RGB')
 
         draw = ImageDraw.Draw(img)
         margin = 38
@@ -382,6 +373,6 @@ class BookCoverGenerator:
         draw.text(((W - i_w) // 2, imp_y), imprint_text, font=font_imprint, fill=t['sub'])
 
         buffer = io.BytesIO()
-        img.save(buffer, format='PNG', quality=95)
+        img.save(buffer, format='PNG', compress_level=1)
         file_name = f"{isbn or uuid.uuid4().hex}.png"
         return ContentFile(buffer.getvalue(), name=file_name)
