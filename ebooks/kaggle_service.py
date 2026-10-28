@@ -344,22 +344,22 @@ class KaggleEBookService:
         Imports or updates an individual Kaggle book record into the catalog,
         synthesizes its digital file, and creates its EBookMetadata.
         """
-        title = cls._extract_field(row, ['title', 'Book-Title', 'book_title', 'name'])
+        title = cls._extract_field(row, ['title', 'Book-Title', 'book_title', 'name', 'comic_name', 'series', 'book_name', 'issue_title', 'Volume', 'Issue_Name'])
         if not title:
             return None, False, "Missing title"
         title = title.strip()[:250]
 
-        raw_isbn = cls._extract_field(row, ['isbn13', 'isbn', 'ISBN', 'isbn10'])
+        raw_isbn = cls._extract_field(row, ['isbn13', 'isbn', 'ISBN', 'isbn10', 'upc', 'ean', 'diamond_code', 'issue_id', 'id'])
         isbn = cls._clean_isbn(raw_isbn, title)[:30]
 
-        authors_str = cls._extract_field(row, ['authors', 'author', 'Book-Author', 'creator', 'Authors'], default='Various Authors')
-        category_name = cls._extract_field(row, ['categories', 'category', 'genre', 'genres', 'Category'], default='General Literature')
+        authors_str = cls._extract_field(row, ['authors', 'author', 'Book-Author', 'creator', 'Authors', 'writer', 'writers', 'artist', 'artists', 'penciler'], default='Various Authors')
+        category_name = cls._extract_field(row, ['categories', 'category', 'genre', 'genres', 'Category', 'format', 'type'], default='General Literature')
         # Clean category name (trim quotes, brackets)
         category_name = re.sub(r"[\[\]'\",]", "", category_name).strip() or "General"
         if len(category_name) > 80:
             category_name = category_name[:80]
 
-        description = cls._extract_field(row, ['description', 'summary', 'Summary', 'desc', 'Description'])
+        description = cls._extract_field(row, ['description', 'summary', 'Summary', 'desc', 'Description', 'synopsis', 'Synopsis', 'plot', 'overview'])
         if not description or len(description) < 20:
             description = f"'{title}' is a celebrated work in {category_name} by {authors_str}, carefully cataloged in the LibrarySphere digital collection."
         if len(description) > 3000:
@@ -368,7 +368,7 @@ class KaggleEBookService:
         subtitle = cls._extract_field(row, ['subtitle', 'Subtitle', 'sub_title'], default="")
         if len(subtitle) > 200:
             subtitle = subtitle[:197] + "..."
-        publisher = cls._extract_field(row, ['publisher', 'Publisher'], default="Kaggle Curated Publishing")
+        publisher = cls._extract_field(row, ['publisher', 'Publisher', 'imprint', 'company', 'brand'], default="Kaggle Curated Publishing")
         if len(publisher) > 190:
             publisher = publisher[:190]
 
@@ -515,15 +515,16 @@ class KaggleEBookService:
         # 10. Log Activity
         try:
             from core.models import log_activity
+            action_label = "Updated" if not was_created else "Imported"
             log_activity(
                 'EBOOK_IMPORTED',
-                f"Imported Kaggle E-Book '{book.title[:50]}' (ISBN: {book.isbn}) into digital catalog",
+                f"{action_label} Kaggle E-Book '{book.title[:50]}' (ISBN: {book.isbn}) in digital catalog",
                 user=uploaded_by
             )
         except Exception:
             pass
 
-        return book, True, "Successfully imported"
+        return book, True, "Successfully updated" if not was_created else "Successfully imported"
 
     @classmethod
     def import_from_csv(cls, file_or_path, limit=None, access_mode='READ_AND_DOWNLOAD', rights_status='LIBRARY_LICENSED', uploaded_by=None, overwrite=False):
@@ -536,6 +537,7 @@ class KaggleEBookService:
         stats = {
             'total_rows': 0,
             'imported': 0,
+            'updated': 0,
             'skipped': 0,
             'errors': 0,
             'books': []
@@ -572,7 +574,10 @@ class KaggleEBookService:
                             overwrite=overwrite
                         )
                     if created:
-                        stats['imported'] += 1
+                        if "updated" in str(msg).lower():
+                            stats['updated'] += 1
+                        else:
+                            stats['imported'] += 1
                         stats['books'].append(book)
                     else:
                         stats['skipped'] += 1

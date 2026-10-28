@@ -727,11 +727,17 @@ def kaggle_import_view(request):
                     rights_status=rights,
                     overwrite=overwrite
                 )
-                messages.success(
-                    request,
-                    f"Kaggle CSV Ingestion Complete: {stats['imported']} new books added, {stats['skipped']} skipped/existing, {stats['errors']} errors (batch of {min(stats['total_rows'], batch_limit)} rows processed). "
-                    f"To import entire datasets with thousands of rows in bulk, run 'python manage.py import_kaggle_ebooks --file <path>' in terminal."
-                )
+                if stats.get('imported', 0) > 0 or stats.get('updated', 0) > 0:
+                    messages.success(
+                        request,
+                        f"Kaggle CSV Ingestion Complete: {stats['imported']} new books added, {stats.get('updated', 0)} existing books updated, {stats['skipped']} skipped/existing ({min(stats['total_rows'], batch_limit)} rows processed)."
+                    )
+                else:
+                    messages.info(
+                        request,
+                        f"All {stats['skipped']} books in this CSV batch are already cataloged in your library! "
+                        f"They were skipped to prevent duplicate records. If you wish to update them with new data from your CSV, check 'Update existing books if ISBN matches' below and click upload."
+                    )
             except Exception as e:
                 messages.error(request, f"Error processing Kaggle CSV: {str(e)}")
             return redirect('ebooks:kaggle_import')
