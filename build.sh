@@ -20,6 +20,9 @@ python populate_expanded_library.py
 echo "🎨 Generating book covers for all 173 books..."
 python manage.py regenerate_book_covers
 
+echo "📖 Syncing protected e-book reader documents for all 172 e-books..."
+python manage.py regenerate_ebook_files
+
 echo "👤 Ensuring default demo accounts (admin, librarian, member) are active..."
 python manage.py shell -c "
 from django.contrib.auth.models import User

@@ -1178,6 +1178,26 @@ def run_expansion():
                 is_active=True,
                 access_note='Full interactive browser reader with text-to-speech audio support.'
             )
+        elif not (protected_root / (book.ebook_metadata.protected_filename or 'dummy')).exists():
+            first_author = b_data['authors'][0]
+            doc_info = {
+                'title': title,
+                'subtitle': b_data.get('subtitle', ''),
+                'author': first_author,
+                'category': cat.name,
+                'publisher': b_data['publisher'],
+                'publication_year': b_data['year'],
+                'description': b_data['description'],
+                'isbn': isbn,
+                'pages': b_data['pages'],
+                'average_rating': b_data['rating'],
+            }
+            doc_html = KaggleEBookService._generate_reader_document(doc_info)
+            fn = book.ebook_metadata.protected_filename or f"{uuid.uuid4().hex}.html"
+            book.ebook_metadata.protected_filename = fn
+            book.ebook_metadata.save(update_fields=['protected_filename'])
+            with open(protected_root / fn, 'w', encoding='utf-8') as f:
+                f.write(doc_html)
 
         # Check or Create Physical Copies
         num_copies_to_add = b_data.get('copies', 2)

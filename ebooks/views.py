@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, HttpResponseForbidden, Http404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Q
 from catalog.models import Book, Category, EBookMetadata
 from .models import EBookAccessLog
@@ -14,23 +15,24 @@ def is_librarian(user):
 
 def can_user_access_ebook(user, ebook):
     """
-    Checks if a user is permitted to view/read/download an e-book.
-    Public domain titles and free classics are accessible to all visitors.
-    For licensed e-books, user must be authenticated with active membership.
-    Enforces maximum concurrent reader capacity.
+    Checks if a user is permitted to view/read/stream an e-book.
+    Free library e-books (rental_price == 0), public domain, and open licenses
+    are accessible to all visitors and patrons.
+    For paid/restricted e-books, user must be authenticated with active membership
+    and have an active digital reading pass.
     """
     if not ebook.is_active:
         return False, "This e-book is currently inactive or unavailable."
 
-    # Public domain classics are 100% free and open to everyone (including guests)
-    if ebook.rights_status == 'PUBLIC_DOMAIN':
+    if is_librarian(user):
+        return True, ""
+
+    # All free library collection books, public domain classics, and open licenses are open for online reading
+    if ebook.rental_price == 0 or ebook.rights_status in ['PUBLIC_DOMAIN', 'OPEN_LICENSE', 'LIBRARY_LICENSED']:
         return True, ""
 
     if not user.is_authenticated:
-        return False, "Authentication required to access licensed e-books."
-        
-    if is_librarian(user):
-        return True, ""
+        return False, "Authentication required to access this e-book."
         
     # Regular member check
     profile = getattr(user, 'profile', None)
@@ -47,9 +49,11 @@ def can_user_access_ebook(user, ebook):
             accessed_at__gte=recent_window
         ).values('user').distinct().count()
 
-        already_reading = ebook.access_logs.filter(
-            user=user, action='READ', accessed_at__gte=recent_window
-        ).exists()
+        already_reading = False
+        if user.is_authenticated:
+            already_reading = ebook.access_logs.filter(
+                user=user, action='READ', accessed_at__gte=recent_window
+            ).exists()
         
         if not already_reading and active_readers_count >= ebook.max_concurrent_readers:
             return False, f"All {ebook.max_concurrent_readers} simultaneous reader licenses for this e-book are currently in use. Please try again shortly."
