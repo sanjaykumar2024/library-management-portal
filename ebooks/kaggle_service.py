@@ -551,6 +551,8 @@ class KaggleEBookService:
             reader = csv.DictReader(f)
             for row in reader:
                 stats['total_rows'] += 1
+                if limit and stats['total_rows'] > limit:
+                    break
                 try:
                     book, created, msg = cls.import_single_book(
                         row=row,
@@ -564,9 +566,6 @@ class KaggleEBookService:
                         stats['books'].append(book)
                     else:
                         stats['skipped'] += 1
-
-                    if limit and stats['imported'] >= limit:
-                        break
                 except Exception as e:
                     stats['errors'] += 1
 

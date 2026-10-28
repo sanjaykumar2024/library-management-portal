@@ -708,8 +708,15 @@ def kaggle_import_view(request):
             rights = request.POST.get('rights_status', 'LIBRARY_LICENSED')
 
             try:
+                batch_limit = int(request.POST.get('batch_limit', 50))
+            except (ValueError, TypeError):
+                batch_limit = 50
+            batch_limit = max(1, min(batch_limit, 100))
+
+            try:
                 stats = KaggleEBookService.import_from_csv(
                     csv_file,
+                    limit=batch_limit,
                     uploaded_by=request.user,
                     access_mode=mode,
                     rights_status=rights,
@@ -717,7 +724,8 @@ def kaggle_import_view(request):
                 )
                 messages.success(
                     request,
-                    f"Kaggle CSV Ingestion Complete: {stats['imported']} new books added, {stats['skipped']} skipped, {stats['errors']} errors."
+                    f"Kaggle CSV Ingestion Complete: {stats['imported']} new books added, {stats['skipped']} skipped/existing, {stats['errors']} errors (batch of {min(stats['total_rows'], batch_limit)} rows processed). "
+                    f"To import entire datasets with thousands of rows in bulk, run 'python manage.py import_kaggle_ebooks --file <path>' in terminal."
                 )
             except Exception as e:
                 messages.error(request, f"Error processing Kaggle CSV: {str(e)}")

@@ -116,19 +116,27 @@
                     </div>
 
                     <div class="row g-2 mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label small text-muted">Reading Permission</label>
                             <select name="access_mode" class="form-select form-select-sm">
                                 <option value="READ_AND_DOWNLOAD" selected>Read & Download</option>
                                 <option value="READ_ONLY">Read Only</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label small text-muted">Book License</label>
                             <select name="rights_status" class="form-select form-select-sm">
                                 <option value="LIBRARY_LICENSED" selected>Library Licensed</option>
                                 <option value="OPEN_LICENSE">Open License</option>
                                 <option value="PUBLIC_DOMAIN">Public Domain</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted">Batch Size</label>
+                            <select name="batch_limit" class="form-select form-select-sm">
+                                <option value="25">25 Books (~5s)</option>
+                                <option value="50" selected>50 Books (~10s)</option>
+                                <option value="100">100 Books (~20s)</option>
                             </select>
                         </div>
                     </div>
@@ -140,9 +148,9 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="btn btn-outline-primary w-100 rounded-pill py-2 d-flex align-items-center justify-content-center gap-2">
-                        <i class="bi bi-upload"></i>
-                        <span>Upload & Add Books</span>
+                    <button type="submit" id="uploadSubmitBtn" class="btn btn-outline-primary w-100 rounded-pill py-2 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-upload" id="uploadBtnIcon"></i>
+                        <span id="uploadBtnText">Upload & Add Books</span>
                     </button>
                 </form>
             </div>
@@ -243,4 +251,19 @@
         </table>
     </div>
 </div>
+
+<script>
+document.getElementById('kaggleUploadForm')?.addEventListener('submit', function(e) {
+    const btn = document.getElementById('uploadSubmitBtn');
+    const btnText = document.getElementById('uploadBtnText');
+    const btnIcon = document.getElementById('uploadBtnIcon');
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-primary');
+        if (btnIcon) btnIcon.style.display = 'none';
+        btnText.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Importing Books (Processing CSV)... Please wait...';
+    }
+});
+</script>
 {% endblock %}
