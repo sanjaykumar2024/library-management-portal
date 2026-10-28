@@ -110,12 +110,21 @@ class BookCoverGenerator:
         """Loads TTF font with fallback to system fonts or default."""
         system_candidates = [
             name_or_path,
+            # macOS paths
             f"/System/Library/Fonts/Supplemental/{name_or_path}",
             f"/System/Library/Fonts/{name_or_path}",
             "/System/Library/Fonts/Supplemental/Georgia Bold.ttf",
             "/System/Library/Fonts/Supplemental/Georgia.ttf",
             "/System/Library/Fonts/Supplemental/Times New Roman.ttf",
             "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            # Linux / Ubuntu / Debian paths (Render container environment)
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf",
         ]
         for path in system_candidates:
             try:

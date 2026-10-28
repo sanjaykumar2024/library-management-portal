@@ -15,11 +15,19 @@ def is_librarian(user):
 def can_user_access_ebook(user, ebook):
     """
     Checks if a user is permitted to view/read/download an e-book.
-    Must be authenticated and an active member, librarian, or admin.
+    Public domain titles and free classics are accessible to all visitors.
+    For licensed e-books, user must be authenticated with active membership.
     Enforces maximum concurrent reader capacity.
     """
+    if not ebook.is_active:
+        return False, "This e-book is currently inactive or unavailable."
+
+    # Public domain classics are 100% free and open to everyone (including guests)
+    if ebook.rights_status == 'PUBLIC_DOMAIN':
+        return True, ""
+
     if not user.is_authenticated:
-        return False, "Authentication required to access e-books."
+        return False, "Authentication required to access licensed e-books."
         
     if is_librarian(user):
         return True, ""
@@ -28,9 +36,6 @@ def can_user_access_ebook(user, ebook):
     profile = getattr(user, 'profile', None)
     if not profile or profile.membership_status != 'ACTIVE':
         return False, "Active library membership is required to access e-books."
-        
-    if not ebook.is_active:
-        return False, "This e-book is currently inactive or unavailable."
         
     # Check concurrent reader limit (15 min active window)
     if ebook.max_concurrent_readers > 0:
@@ -42,7 +47,6 @@ def can_user_access_ebook(user, ebook):
             accessed_at__gte=recent_window
         ).values('user').distinct().count()
 
-        # If user is not already in active readers list and capacity is reached
         already_reading = ebook.access_logs.filter(
             user=user, action='READ', accessed_at__gte=recent_window
         ).exists()
@@ -71,7 +75,6 @@ def get_client_ip(request):
     return ip
 
 
-@login_required
 def ebook_catalog_view(request):
     """Public/Member E-Book catalogue with search and filtering."""
     q = request.GET.get('q', '')
@@ -123,18 +126,20 @@ def ebook_catalog_view(request):
     return render(request, 'ebooks/ebook_catalog.html', context)
 
 
-@login_required
 def ebook_detail_view(request, ebook_id):
     """Detailed view for a specific e-book."""
     ebook = get_object_or_404(EBookMetadata.objects.select_related('book', 'book__category', 'uploaded_by'), id=ebook_id)
     
     from .models import EBookPass
-    has_unlocked = is_librarian(request.user) or (ebook.rental_price == 0) or EBookPass.objects.filter(user=request.user, ebook=ebook, is_active=True).exists()
+    if request.user.is_authenticated:
+        has_unlocked = is_librarian(request.user) or (ebook.rental_price == 0) or EBookPass.objects.filter(user=request.user, ebook=ebook, is_active=True).exists()
+    else:
+        has_unlocked = (ebook.rental_price == 0) or (ebook.rights_status == 'PUBLIC_DOMAIN')
 
     # Read & download counts for Librarians/Admins only
     read_count = 0
     download_count = 0
-    if is_librarian(request.user):
+    if request.user.is_authenticated and is_librarian(request.user):
         read_count = ebook.access_logs.filter(action='READ').count()
         download_count = ebook.access_logs.filter(action='DOWNLOAD').count()
         
@@ -148,20 +153,23 @@ def ebook_detail_view(request, ebook_id):
     return render(request, 'ebooks/ebook_detail.html', context)
 
 
-@login_required
 def ebook_read_view(request, ebook_id):
     """Online protected reader view."""
     ebook = get_object_or_404(EBookMetadata.objects.select_related('book'), id=ebook_id)
     
     can_access, reason = can_user_access_ebook(request.user, ebook)
     if not can_access:
+        if not request.user.is_authenticated:
+            messages.info(request, "Please sign in or use a quick demo login to read this e-book.")
+            return redirect_to_login(request.get_full_path())
         if reason == "PAYMENT_REQUIRED":
             return redirect('ebooks:unlock', ebook_id=ebook.id)
         messages.error(request, reason)
         return redirect('ebooks:catalog')
         
-    # Log the reading access
-    services.log_ebook_access(request.user, ebook, 'READ', get_client_ip(request))
+    # Log the reading access if authenticated
+    if request.user.is_authenticated:
+        services.log_ebook_access(request.user, ebook, 'READ', get_client_ip(request))
     
     context = {
         'ebook': ebook,
@@ -214,7 +222,6 @@ def ebook_unlock_view(request, ebook_id):
 
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
-@login_required
 @xframe_options_sameorigin
 def ebook_stream_view(request, ebook_id):
     """Serves inline binary/HTML stream directly to embedded viewer."""

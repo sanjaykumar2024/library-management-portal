@@ -40,6 +40,30 @@
                     
                     <button type="submit" class="btn btn-primary w-100 py-2" style="font-weight: 600;">Sign In</button>
                     
+                    <!-- 1-Click Demo Evaluation Accounts -->
+                    <div class="mt-4 p-3 rounded-3" style="background: rgba(2, 89, 156, 0.05); border: 1px dashed rgba(2, 89, 156, 0.35);">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="small fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #02599C;">
+                                <i class="bi bi-shield-check me-1"></i> Quick Demo Logins
+                            </span>
+                            <span class="badge rounded-pill" style="background: rgba(2, 89, 156, 0.15); color: #02599C; font-size: 0.65rem;">1-Click Sign In</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary flex-fill" onclick="fillLogin('admin', 'admin123')">
+                                <i class="bi bi-shield-lock-fill me-1"></i> Admin
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-success flex-fill" onclick="fillLogin('librarian', 'librarian123')">
+                                <i class="bi bi-person-badge-fill me-1"></i> Librarian
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" onclick="fillLogin('member', 'member123')">
+                                <i class="bi bi-person-fill me-1"></i> Member
+                            </button>
+                        </div>
+                        <div class="text-center mt-2 small text-muted" style="font-size: 0.72rem;">
+                            Click any role above to automatically authenticate and explore that tier.
+                        </div>
+                    </div>
+                    
                     <div class="text-center mt-4 pt-4" style="border-top: 1px solid var(--glass-border);">
                         <p class="mb-0" style="color: var(--text-muted);">Don't have an account? <a href="{% url 'accounts:register' %}" class="fw-semibold" style="color: var(--accent-primary-hover); text-decoration: none;">Become a member</a></p>
                     </div>
@@ -50,6 +74,16 @@
 </div>
 
 <script>
+    function fillLogin(username, password) {
+        const uInput = document.querySelector('input[name="username"]');
+        const pInput = document.querySelector('input[name="password"]');
+        if (uInput && pInput) {
+            uInput.value = username;
+            pInput.value = password;
+            uInput.form.submit();
+        }
+    }
+
     // Add bootstrap form controls class dynamically
     document.addEventListener("DOMContentLoaded", function() {
         let inputs = document.querySelectorAll('.glass-card input');
