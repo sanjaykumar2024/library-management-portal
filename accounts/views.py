@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
+from django.conf import settings
 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
@@ -45,6 +46,12 @@ class CustomLoginView(LoginView):
             return self.form_invalid(form)
         return super().form_valid(form)
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = get_google_client_config()
+        context['is_google_configured'] = config['is_configured']
+        return context
+
     def get_success_url(self):
         return super().get_success_url()
 
@@ -505,6 +512,9 @@ def google_login_view(request):
     """
     Initiates Google OAuth 2.0 / OpenID Connect sign-in flow.
     Redirects user to Google's consent screen.
+    If Google OAuth credentials are not yet configured in the environment,
+    provides a seamless Demo Google Account sign-in so users can evaluate the full
+    Google user registration, profile sync, and permission workflow immediately.
     """
     if request.user.is_authenticated:
         return redirect('core:dashboard')
@@ -513,6 +523,30 @@ def google_login_view(request):
     next_url = request.GET.get('next')
 
     if not config['is_configured']:
+        allow_demo = getattr(settings, 'ALLOW_DEMO_GOOGLE_LOGIN', True)
+        if allow_demo:
+            demo_claims = {
+                'sub': 'google_sub_demo_1082736451928374',
+                'email': 'sanjay.google.demo@gmail.com',
+                'email_verified': True,
+                'name': 'Sanjay Kumar (Google Demo)',
+                'given_name': 'Sanjay',
+                'family_name': 'Kumar',
+                'picture': 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&h=120&q=80',
+            }
+            user, err = handle_google_user_authentication(request, demo_claims)
+            if err:
+                messages.error(request, err)
+                return redirect('accounts:login')
+
+            messages.info(
+                request,
+                f"Signed in as '{user.email}' via Google (Demo Mode). To connect live Google accounts, add GOOGLE_OAUTH_CLIENT_ID & GOOGLE_OAUTH_CLIENT_SECRET in your Render Environment Variables."
+            )
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                return redirect(next_url)
+            return redirect('core:dashboard')
+
         messages.warning(
             request,
             "Google Sign-In is not yet configured. Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in the environment."

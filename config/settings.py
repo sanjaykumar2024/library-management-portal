@@ -246,4 +246,6 @@ GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '').strip()
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '').strip()
 GOOGLE_OAUTH_REDIRECT_URI = os.getenv('GOOGLE_OAUTH_REDIRECT_URI', '').strip()
 REQUIRE_MEMBERSHIP_APPROVAL = os.getenv('REQUIRE_MEMBERSHIP_APPROVAL', 'False').lower() in ('true', '1', 'yes')
+ALLOW_DEMO_GOOGLE_LOGIN = os.getenv('ALLOW_DEMO_GOOGLE_LOGIN', 'True').lower() in ('true', '1', 'yes')
+
 

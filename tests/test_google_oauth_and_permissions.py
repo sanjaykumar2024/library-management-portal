@@ -120,12 +120,20 @@ class GoogleOAuthAndAccessControlTests(TestCase):
         self.assertContains(response, 'btn-google-login')
         self.assertContains(response, reverse('accounts:google_login'))
 
-    @override_settings(GOOGLE_OAUTH_CLIENT_ID='', GOOGLE_OAUTH_CLIENT_SECRET='')
+    @override_settings(GOOGLE_OAUTH_CLIENT_ID='', GOOGLE_OAUTH_CLIENT_SECRET='', ALLOW_DEMO_GOOGLE_LOGIN=False)
     def test_02_google_login_unconfigured_redirects_with_warning(self):
-        """When Google client ID/secret are unconfigured, show friendly notice and redirect safely."""
+        """When Google client ID/secret are unconfigured and demo disabled, show friendly notice and redirect safely."""
         response = self.client.get(reverse('accounts:google_login'))
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('accounts:login'))
+
+    @override_settings(GOOGLE_OAUTH_CLIENT_ID='', GOOGLE_OAUTH_CLIENT_SECRET='', ALLOW_DEMO_GOOGLE_LOGIN=True)
+    def test_02b_google_login_demo_mode_when_unconfigured(self):
+        """When Google client ID/secret are unconfigured, demo mode allows instant evaluation login."""
+        response = self.client.get(reverse('accounts:google_login'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('core:dashboard'))
+        self.assertTrue('_auth_user_id' in self.client.session)
 
     @override_settings(GOOGLE_OAUTH_CLIENT_ID='test-client-id.apps.googleusercontent.com', GOOGLE_OAUTH_CLIENT_SECRET='test-secret')
     def test_03_google_login_generates_state_nonce_and_redirects(self):
