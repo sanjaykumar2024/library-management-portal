@@ -68,6 +68,7 @@
         <div class="col-md-7 d-flex flex-wrap gap-1">
             <a href="?status=ALL{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ALL' or not selected_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All Members ({{ total_members }})</a>
             <a href="?status=ACTIVE{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'ACTIVE' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Active ({{ active_members }})</a>
+            <a href="?status=PENDING{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'PENDING' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Pending ({{ pending_members }})</a>
             <a href="?status=EXPIRED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'EXPIRED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Expired ({{ expired_members }})</a>
             <a href="?status=SUSPENDED{% if q %}&q={{ q }}{% endif %}" class="btn btn-sm rounded-pill px-3 {% if selected_status == 'SUSPENDED' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Suspended ({{ suspended_members }})</a>
         </div>
@@ -120,6 +121,10 @@
                         {% if member.membership_status == 'ACTIVE' %}
                         <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
                             <i class="bi bi-check-circle me-1"></i> Active
+                        </span>
+                        {% elif member.membership_status == 'PENDING' %}
+                        <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="bi bi-hourglass-split me-1"></i> Pending
                         </span>
                         {% elif member.membership_status == 'EXPIRED' %}
                         <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">

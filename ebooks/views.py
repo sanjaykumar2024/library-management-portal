@@ -36,6 +36,11 @@ def can_user_access_ebook(user, ebook):
         
     # Regular member check
     profile = getattr(user, 'profile', None)
+    if profile:
+        if profile.membership_status == 'SUSPENDED':
+            return False, "Your account has been suspended by the library administration."
+        if not getattr(profile, 'can_access_ebooks', True):
+            return False, "E-book reading privileges have been disabled for this account."
     if not profile or profile.membership_status != 'ACTIVE':
         return False, "Active library membership is required to access e-books."
         

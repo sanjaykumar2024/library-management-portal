@@ -10,9 +10,15 @@ MAX_RESERVATIONS_PER_MEMBER = getattr(settings, 'MAX_RESERVATIONS_PER_MEMBER', 2
 RESERVATION_EXPIRY_DAYS = getattr(settings, 'RESERVATION_EXPIRY_DAYS', 2)
 
 def can_member_reserve(member_profile):
-    """Check if member is active and under reservation limit."""
+    """Check if member is active, approved, permitted, and under reservation limit."""
+    if member_profile.membership_status == 'SUSPENDED':
+        return False, "Your account has been suspended by the library administration."
+    if member_profile.membership_status == 'PENDING' or not getattr(member_profile, 'is_approved', True):
+        return False, "Your library membership is pending administrator approval."
     if member_profile.membership_status != 'ACTIVE':
         return False, "Membership is not active."
+    if not getattr(member_profile, 'can_reserve', True):
+        return False, "Reservation privileges have been disabled for this account."
         
     active_reservations = Reservation.objects.filter(
         member=member_profile, 

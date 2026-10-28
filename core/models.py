@@ -19,6 +19,13 @@ class ActivityLog(models.Model):
         ('MEMBER_REGISTERED', 'Member Registered'),
         ('REVIEW_POSTED', 'Review Posted'),
         ('MEMBERSHIP_UPGRADED', 'Membership Upgraded'),
+        ('OAUTH_LOGIN', 'OAuth Google Sign-In'),
+        ('USER_ROLE_CHANGED', 'User Role Changed'),
+        ('PERMISSION_CHANGED', 'Permission Changed'),
+        ('ACCOUNT_STATUS_CHANGED', 'Account Status Changed'),
+        ('SESSION_REVOKED', 'User Session Revoked'),
+        ('MEMBERSHIP_APPROVED', 'Membership Approved'),
+        ('MEMBERSHIP_DENIED', 'Membership Denied'),
         ('OTHER', 'Other Activity'),
     ]
 

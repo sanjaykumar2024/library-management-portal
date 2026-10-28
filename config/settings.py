@@ -100,6 +100,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.AccountStatusMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -237,3 +238,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'core:home'
+
+# ---------------------------------------------------------------------------
+# Google OAuth 2.0 / OpenID Connect Settings
+# ---------------------------------------------------------------------------
+GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '').strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '').strip()
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv('GOOGLE_OAUTH_REDIRECT_URI', '').strip()
+REQUIRE_MEMBERSHIP_APPROVAL = os.getenv('REQUIRE_MEMBERSHIP_APPROVAL', 'False').lower() in ('true', '1', 'yes')
+

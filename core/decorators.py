@@ -6,14 +6,14 @@ from django.contrib.auth.views import redirect_to_login
 def is_librarian_or_admin(user):
     return user.is_authenticated and (
         user.is_superuser or
-        (hasattr(user, 'profile') and (user.profile.is_librarian() or user.profile.is_admin()))
+        (hasattr(user, 'profile') and (user.profile.is_librarian() or user.profile.is_admin()) and user.profile.membership_status != 'SUSPENDED')
     )
 
 
 def is_admin_user(user):
     return user.is_authenticated and (
         user.is_superuser or
-        (hasattr(user, 'profile') and user.profile.is_admin())
+        (hasattr(user, 'profile') and user.profile.is_admin() and user.profile.membership_status != 'SUSPENDED')
     )
 
 

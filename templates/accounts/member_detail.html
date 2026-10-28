@@ -41,6 +41,10 @@
                     <span class="badge rounded-pill px-3 py-2" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
                         <i class="bi bi-check-circle-fill me-1"></i> Active Member
                     </span>
+                {% elif member_profile.membership_status == 'PENDING' %}
+                    <span class="badge rounded-pill px-3 py-2" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
+                        <i class="bi bi-hourglass-split me-1"></i> Pending Approval
+                    </span>
                 {% elif member_profile.membership_status == 'EXPIRED' %}
                     <span class="badge rounded-pill px-3 py-2" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">
                         <i class="bi bi-clock-history me-1"></i> Expired Card
@@ -49,6 +53,14 @@
                     <span class="badge rounded-pill px-3 py-2" style="background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">
                         <i class="bi bi-x-circle-fill me-1"></i> Suspended
                     </span>
+                {% endif %}
+                
+                {% if member_profile.user.google_account %}
+                <div class="mt-2">
+                    <span class="badge" style="background: rgba(14, 165, 233, 0.15); color: #0284c7; border: 1px solid rgba(14, 165, 233, 0.3);">
+                        <i class="bi bi-google me-1"></i> Google Linked Account
+                    </span>
+                </div>
                 {% endif %}
             </div>
             

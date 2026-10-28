@@ -13,6 +13,8 @@
                     Member #: <span class="font-monospace fw-bold" style="color: var(--text-primary);">{{ profile.membership_number|default:"N/A" }}</span> &bull; Status: 
                     {% if profile.membership_status == 'ACTIVE' %}
                     <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success);">Active</span>
+                    {% elif profile.membership_status == 'PENDING' %}
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">Pending Approval</span>
                     {% elif profile.membership_status == 'EXPIRED' %}
                     <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning);">Expired</span>
                     {% else %}
@@ -28,6 +30,16 @@
         </div>
     </div>
 </div>
+
+{% if profile.membership_status == 'PENDING' %}
+<div class="alert alert-warning mb-4 d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm border border-warning-subtle">
+    <i class="bi bi-hourglass-split fs-3 text-warning"></i>
+    <div>
+        <h6 class="mb-1 fw-bold">Membership Pending Approval</h6>
+        <p class="mb-0 small">Your library account was registered and is currently under review by our library staff. You can freely explore the catalog, read open-access books, and browse physical titles. Borrowing and reservation privileges will activate once approved.</p>
+    </div>
+</div>
+{% endif %}
 
 <!-- Reading Challenge & Badges Bar -->
 <div class="row g-4 mb-4">

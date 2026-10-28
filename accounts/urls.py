@@ -15,6 +15,16 @@ urlpatterns = [
     path('profile/request-renewal/', views.request_membership_renewal_view, name='request_renewal'),
     path('profile/submit-request/', views.submit_membership_request_view, name='submit_request'),
     
+    # Google OAuth 2.0 / OpenID Connect
+    path('google/login/', views.google_login_view, name='google_login'),
+    path('google/callback/', views.google_callback_view, name='google_callback'),
+
+    # Admin User & Permission Management
+    path('users/', views.user_management_view, name='user_management'),
+    path('users/<int:user_id>/permissions/', views.update_user_permissions_view, name='update_user_permissions'),
+    path('users/<int:user_id>/revoke-sessions/', views.revoke_user_sessions_view, name='revoke_user_sessions'),
+    path('users/<int:user_id>/approve-membership/', views.approve_membership_view, name='approve_membership'),
+
     # Librarian/Admin Member Management
     path('members/', views.MemberListView.as_view(), name='member_list'),
     path('members/requests/', views.manage_membership_requests_view, name='manage_requests'),

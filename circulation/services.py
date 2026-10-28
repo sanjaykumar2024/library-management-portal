@@ -11,9 +11,15 @@ MAX_RENEWALS = getattr(settings, 'MAX_RENEWALS', 2)
 FINE_PER_DAY = Decimal(getattr(settings, 'FINE_PER_DAY', '5.00'))
 
 def can_member_borrow(member_profile):
-    """Check if member is active, under loan limit, and has no unpaid pending fines."""
+    """Check if member is active, approved, permitted, under loan limit, and has no unpaid pending fines."""
+    if member_profile.membership_status == 'SUSPENDED':
+        return False, "Your account has been suspended by the library administration."
+    if member_profile.membership_status == 'PENDING' or not getattr(member_profile, 'is_approved', True):
+        return False, "Your library membership is pending administrator approval."
     if member_profile.membership_status != 'ACTIVE':
         return False, "Membership is not active."
+    if not getattr(member_profile, 'can_borrow', True):
+        return False, "Borrowing privileges have been disabled for this account."
 
     # Check for pending unpaid fines
     pending_fines = Fine.objects.filter(loan__member=member_profile, status='PENDING')

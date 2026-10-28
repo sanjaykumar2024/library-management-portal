@@ -85,6 +85,8 @@
                         <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'reports:index' %}"><i class="bi bi-bar-chart-line text-primary"></i> Library Reports</a></li>
                         {% if user.profile.is_admin or user.is_superuser %}
                         <li><hr class="dropdown-divider my-1"></li>
+                        <li><h6 class="dropdown-header text-uppercase px-3 py-1 text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Administration &amp; Access</h6></li>
+                        <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="{% url 'accounts:user_management' %}"><i class="bi bi-person-gear text-primary"></i> User &amp; Permissions</a></li>
                         <li><a class="dropdown-item px-3 py-2 d-flex align-items-center gap-2" href="/admin/"><i class="bi bi-shield-lock text-warning"></i> System Admin</a></li>
                         {% endif %}
                     </ul>

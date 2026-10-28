@@ -37,6 +37,13 @@ def register_view(request):
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
     redirect_authenticated_user = True
+
+    def form_valid(self, form):
+        user = form.get_user()
+        if hasattr(user, 'profile') and user.profile.membership_status == 'SUSPENDED':
+            messages.error(self.request, "Your account has been suspended by the library administration. Access is denied.")
+            return self.form_invalid(form)
+        return super().form_valid(form)
     
     def get_success_url(self):
         return super().get_success_url()
@@ -238,6 +245,7 @@ class MemberListView(LibrarianRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['total_members'] = UserProfile.objects.filter(role='MEMBER').count()
         context['active_members'] = UserProfile.objects.filter(role='MEMBER', membership_status='ACTIVE').count()
+        context['pending_members'] = UserProfile.objects.filter(role='MEMBER', membership_status='PENDING').count()
         context['expired_members'] = UserProfile.objects.filter(role='MEMBER', membership_status='EXPIRED').count()
         context['suspended_members'] = UserProfile.objects.filter(role='MEMBER', membership_status='SUSPENDED').count()
         context['selected_status'] = self.request.GET.get('status', 'ALL')
@@ -393,6 +401,25 @@ def manage_membership_requests_view(request):
 import json
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.utils.crypto import constant_time_compare
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.db.models import Q
+import logging
+
+logger = logging.getLogger(__name__)
+
+from .oauth_services import (
+    build_google_auth_url,
+    exchange_code_for_tokens,
+    verify_google_id_token,
+    handle_google_user_authentication,
+    get_google_client_config,
+    get_redirect_uri,
+    revoke_user_sessions
+)
+from core.decorators import admin_required
+from core.models import log_activity
+
 
 
 @login_required
@@ -468,5 +495,317 @@ def api_toggle_theme(request):
         'theme': theme,
         'theme_label': 'Normal Mode (Light)' if theme == 'light' else 'Dark Mode'
     })
+
+
+# ---------------------------------------------------------------------------
+# Google OAuth 2.0 / OpenID Connect Views
+# ---------------------------------------------------------------------------
+
+def google_login_view(request):
+    """
+    Initiates Google OAuth 2.0 / OpenID Connect sign-in flow.
+    Redirects user to Google's consent screen.
+    """
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    config = get_google_client_config()
+    next_url = request.GET.get('next')
+
+    if not config['is_configured']:
+        messages.warning(
+            request,
+            "Google Sign-In is not yet configured. Please set GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET in the environment."
+        )
+        return redirect('accounts:login')
+
+    try:
+        auth_url = build_google_auth_url(request, next_url=next_url)
+        return redirect(auth_url)
+    except Exception as e:
+        messages.error(request, f"Unable to initialize Google Sign-In: {e}")
+        return redirect('accounts:login')
+
+
+def google_callback_view(request):
+    """
+    Handles Google OAuth 2.0 callback:
+    1. Checks for user cancellation / denied consent.
+    2. Validates CSRF state token against user session.
+    3. Exchanges authorization code for tokens.
+    4. Validates ID token claims (signature, aud, iss, exp, nonce, email_verified).
+    5. Retrieves or creates user record with safe account linking and default permissions.
+    6. Creates session and redirects to appropriate dashboard.
+    """
+    if request.user.is_authenticated:
+        return redirect('core:dashboard')
+
+    # 1. Check for error parameters (e.g. user cancelled consent)
+    error = request.GET.get('error')
+    if error:
+        error_desc = request.GET.get('error_description', '')
+        if error in ['access_denied', 'consent_denied', 'user_cancelled']:
+            messages.info(request, "Google sign-in was cancelled.")
+        else:
+            messages.warning(request, f"Google authentication failed: {error} {error_desc}".strip())
+        return redirect('accounts:login')
+
+    # 2. State verification for CSRF prevention
+    state = request.GET.get('state', '').strip()
+    session_state = request.session.get('oauth_state', '').strip()
+
+    if not state or not session_state or not constant_time_compare(state, session_state):
+        messages.error(request, "Authentication failed: Invalid security state token (possible CSRF attack).")
+        return redirect('accounts:login')
+
+    code = request.GET.get('code', '').strip()
+    if not code:
+        messages.error(request, "Authentication failed: Missing authorization code from Google.")
+        return redirect('accounts:login')
+
+    redirect_uri = get_redirect_uri(request)
+    config = get_google_client_config()
+    expected_nonce = request.session.get('oauth_nonce')
+
+    try:
+        # 3. Exchange code for tokens
+        token_data = exchange_code_for_tokens(code, redirect_uri)
+        id_token = token_data.get('id_token')
+        if not id_token:
+            messages.error(request, "Google authentication did not return an identity token.")
+            return redirect('accounts:login')
+
+        # 4. Validate token claims
+        claims = verify_google_id_token(
+            id_token,
+            expected_client_id=config['client_id'],
+            expected_nonce=expected_nonce
+        )
+
+        # 5. Authenticate or register user
+        user, err = handle_google_user_authentication(request, claims)
+        if err:
+            messages.error(request, err)
+            return redirect('accounts:login')
+
+        # 6. Success message & redirection
+        messages.success(request, f"Welcome to LibrarySphere, {user.first_name or user.username}! Signed in with Google.")
+
+        next_url = request.session.pop('oauth_next', None)
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+            return redirect(next_url)
+
+        return redirect('core:dashboard')
+
+    except Exception as e:
+        logger.error(f"Google OAuth callback error: {e}", exc_info=True)
+        messages.error(request, f"Google Sign-In failed: {e}")
+        return redirect('accounts:login')
+
+
+# ---------------------------------------------------------------------------
+# Admin User & Permission Management Views
+# ---------------------------------------------------------------------------
+
+@admin_required
+def user_management_view(request):
+    """
+    Dedicated Administrator Dashboard for User and Permission Management.
+    Supports searching, filtering by role, status, auth provider,
+    toggling granular permissions, approving memberships, and session revocation.
+    """
+    users_qs = User.objects.select_related('profile', 'google_account').order_by('-date_joined')
+
+    # Search & filters
+    q = request.GET.get('q', '').strip()
+    role_filter = request.GET.get('role', 'ALL').strip()
+    status_filter = request.GET.get('status', 'ALL').strip()
+    auth_filter = request.GET.get('auth', 'ALL').strip()
+
+    if q:
+        users_qs = users_qs.filter(
+            Q(username__icontains=q) |
+            Q(email__icontains=q) |
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q) |
+            Q(profile__membership_number__icontains=q)
+        )
+
+    if role_filter != 'ALL':
+        users_qs = users_qs.filter(profile__role=role_filter)
+
+    if status_filter != 'ALL':
+        users_qs = users_qs.filter(profile__membership_status=status_filter)
+
+    if auth_filter == 'GOOGLE':
+        users_qs = users_qs.filter(google_account__isnull=False)
+    elif auth_filter == 'PASSWORD':
+        users_qs = users_qs.filter(google_account__isnull=True)
+
+    # Statistics
+    all_users = User.objects.select_related('profile')
+    stats = {
+        'total_users': all_users.count(),
+        'total_admins': all_users.filter(profile__role='ADMIN').count(),
+        'total_librarians': all_users.filter(profile__role='LIBRARIAN').count(),
+        'total_members': all_users.filter(profile__role='MEMBER').count(),
+        'total_active': all_users.filter(profile__membership_status='ACTIVE').count(),
+        'total_pending': all_users.filter(profile__membership_status='PENDING').count(),
+        'total_suspended': all_users.filter(profile__membership_status='SUSPENDED').count(),
+        'total_google': User.objects.filter(google_account__isnull=False).count(),
+    }
+
+    context = {
+        'users': users_qs[:100],  # Display up to 100 per page
+        'stats': stats,
+        'q': q,
+        'selected_role': role_filter,
+        'selected_status': status_filter,
+        'selected_auth': auth_filter,
+        'role_choices': UserProfile.ROLE_CHOICES,
+        'status_choices': UserProfile.STATUS_CHOICES,
+        'tier_choices': UserProfile.TIER_CHOICES,
+    }
+    return render(request, 'accounts/user_management.html', context)
+
+
+@admin_required
+@require_POST
+def update_user_permissions_view(request, user_id):
+    """
+    Administrator action to update a user's role, status, and granular permissions.
+    Enforces authorization, self-demotion protection, session revocation on suspension,
+    and records an audit log.
+    """
+    target_user = get_object_or_404(User.objects.select_related('profile'), id=user_id)
+    profile = target_user.profile
+
+    new_role = request.POST.get('role', profile.role).strip()
+    new_status = request.POST.get('status', profile.membership_status).strip()
+    new_tier = request.POST.get('tier', profile.tier).strip()
+    is_approved = request.POST.get('is_approved') == 'on'
+    can_borrow = request.POST.get('can_borrow') == 'on'
+    can_reserve = request.POST.get('can_reserve') == 'on'
+    can_access_ebooks = request.POST.get('can_access_ebooks') == 'on'
+
+    # Self-protection: Prevent admin from revoking their own admin role
+    if target_user == request.user and new_role != 'ADMIN':
+        messages.error(request, "Safety restriction: You cannot remove administrator privileges from your own account.")
+        return redirect('accounts:user_management')
+
+    # Validate role choices
+    valid_roles = [r[0] for r in UserProfile.ROLE_CHOICES]
+    if new_role not in valid_roles:
+        new_role = profile.role
+
+    # Validate status choices
+    valid_statuses = [s[0] for s in UserProfile.STATUS_CHOICES]
+    if new_status not in valid_statuses:
+        new_status = profile.membership_status
+
+    # Validate tier choices
+    valid_tiers = [t[0] for t in UserProfile.TIER_CHOICES]
+    if new_tier not in valid_tiers:
+        new_tier = profile.tier
+
+    profile.role = new_role
+    profile.membership_status = new_status
+    profile.tier = new_tier
+    profile.is_approved = is_approved
+    profile.can_borrow = can_borrow
+    profile.can_reserve = can_reserve
+    profile.can_access_ebooks = can_access_ebooks
+    profile.save()
+
+    # Sync User.is_staff / User.is_superuser
+    if new_role == 'ADMIN':
+        target_user.is_staff = True
+        target_user.is_superuser = True
+        target_user.save(update_fields=['is_staff', 'is_superuser'])
+    elif new_role == 'LIBRARIAN':
+        target_user.is_staff = True
+        target_user.is_superuser = False
+        target_user.save(update_fields=['is_staff', 'is_superuser'])
+    else:
+        target_user.is_staff = False
+        target_user.is_superuser = False
+        target_user.save(update_fields=['is_staff', 'is_superuser'])
+
+    # If suspended, immediately revoke active sessions
+    if new_status == 'SUSPENDED':
+        revoked_count = revoke_user_sessions(target_user.id)
+        log_activity(
+            'ACCOUNT_STATUS_CHANGED',
+            f"Admin {request.user.username} suspended account '{target_user.username}' (revoked {revoked_count} sessions)",
+            user=request.user,
+            request=request
+        )
+        messages.warning(request, f"User '{target_user.username}' has been suspended. All active sessions were revoked.")
+    else:
+        log_activity(
+            'PERMISSION_CHANGED',
+            f"Admin {request.user.username} updated permissions for '{target_user.username}' (Role: {new_role}, Status: {new_status})",
+            user=request.user,
+            request=request
+        )
+        messages.success(request, f"Permissions and role for '{target_user.username}' updated successfully.")
+
+    return redirect('accounts:user_management')
+
+
+@admin_required
+@require_POST
+def revoke_user_sessions_view(request, user_id):
+    """
+    Administrator action to forcibly terminate all active sessions for a user.
+    """
+    target_user = get_object_or_404(User, id=user_id)
+    revoked_count = revoke_user_sessions(target_user.id)
+
+    log_activity(
+        'SESSION_REVOKED',
+        f"Admin {request.user.username} forcibly revoked {revoked_count} sessions for '{target_user.username}'",
+        user=request.user,
+        request=request
+    )
+    messages.success(request, f"Terminated {revoked_count} active sessions for '{target_user.username}'.")
+    return redirect('accounts:user_management')
+
+
+@admin_required
+@require_POST
+def approve_membership_view(request, user_id):
+    """
+    Administrator / Librarian 1-click action to approve a pending library membership.
+    """
+    target_user = get_object_or_404(User.objects.select_related('profile'), id=user_id)
+    profile = target_user.profile
+
+    profile.is_approved = True
+    profile.membership_status = 'ACTIVE'
+    profile.can_borrow = True
+    profile.can_reserve = True
+    profile.can_access_ebooks = True
+    profile.save()
+
+    log_activity(
+        'MEMBERSHIP_APPROVED',
+        f"Membership approved for '{target_user.username}' by {request.user.username}",
+        user=request.user,
+        request=request
+    )
+
+    from notifications.services import create_notification
+    create_notification(
+        user=target_user,
+        title="Membership Approved!",
+        message="Your library membership and borrowing privileges have been approved. Welcome to LibrarySphere!",
+        type='SUCCESS',
+        link='/accounts/profile/'
+    )
+
+    messages.success(request, f"Membership for '{target_user.username}' has been approved and activated.")
+    return redirect('accounts:user_management')
+
 
 
