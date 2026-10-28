@@ -526,7 +526,7 @@ class OpenSourceEBookService:
             except Exception:
                 content_html = f"""
                     <div class="book-container p-4">
-                        <h1>{book['title']}</h1>
+                        <h1>{book.title}</h1>
                         <p class="lead">By {clean_author_name}</p>
                         <hr>
                         <p>{book.description}</p>
@@ -606,7 +606,7 @@ class OpenSourceEBookService:
 
         try:
             from core.models import log_activity
-            author_names = ", ".join([a.name for a in book.authors.all()])
+            author_names = ", ".join([a.full_name for a in book.authors.all()])
             log_activity('EBOOK_IMPORTED', f"Imported open-access classic '{book.title}' by {author_names or 'Unknown'}", user=uploaded_by)
         except Exception:
             pass

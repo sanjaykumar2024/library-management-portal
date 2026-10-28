@@ -59,7 +59,7 @@ class Book(models.Model):
     )
 
     title = models.CharField(max_length=255)
-    isbn = models.CharField(max_length=13, unique=True, verbose_name="ISBN")
+    isbn = models.CharField(max_length=32, unique=True, verbose_name="ISBN")
     authors = models.ManyToManyField(Author, related_name='books')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='books')
     publisher = models.CharField(max_length=200, blank=True, null=True)
