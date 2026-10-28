@@ -53,15 +53,15 @@
     {% if messages %}
     <div class="container mt-3 position-relative" style="z-index: 1050;">
         {% for message in messages %}
-        <div class="glass-card p-3 mb-2 d-flex align-items-center justify-content-between shadow-sm" style="border-left: 4px solid var(--accent-primary);">
-            <div>
-                {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill text-success me-2"></i>
-                {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
-                {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-circle-fill text-danger me-2"></i>
-                {% else %}<i class="bi bi-info-circle-fill text-primary me-2"></i>{% endif %}
-                {{ message }}
+        <div class="alert alert-dismissible fade show glass-card p-3 mb-2 d-flex align-items-center justify-content-between shadow-sm" role="alert" style="border-left: 4px solid {% if message.tags == 'success' %}#10b981{% elif message.tags == 'warning' %}#f59e0b{% elif message.tags == 'error' or message.tags == 'danger' %}#ef4444{% else %}var(--accent-primary){% endif %};">
+            <div class="d-flex align-items-center">
+                {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill text-success fs-5 me-2"></i>
+                {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill text-warning fs-5 me-2"></i>
+                {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-circle-fill text-danger fs-5 me-2"></i>
+                {% else %}<i class="bi bi-info-circle-fill text-primary fs-5 me-2"></i>{% endif %}
+                <span>{{ message }}</span>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close ms-3" data-bs-dismiss="alert" aria-label="Close" onclick="this.closest('.alert')?.remove()"></button>
         </div>
         {% endfor %}
     </div>
@@ -118,6 +118,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             const cur = document.documentElement.getAttribute('data-theme') || 'light';
             updateThemeUI(cur);
+
+            // Auto-dismiss flash messages after 6 seconds
+            setTimeout(function() {
+                document.querySelectorAll('.alert.alert-dismissible').forEach(function(el) {
+                    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(-8px)';
+                    setTimeout(() => el.remove(), 500);
+                });
+            }, 6000);
         });
 
         // Register PWA Service Worker
