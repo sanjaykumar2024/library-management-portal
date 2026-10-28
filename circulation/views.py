@@ -331,7 +331,7 @@ def kiosk_view(request):
 
 def api_kiosk_lookup_member(request):
     """Lookup member profile by digital card QR / membership number / username."""
-    query = request.GET.get('q', '').strip()
+    query = (request.GET.get('q') or request.GET.get('query') or request.GET.get('membership_number') or '').strip()
     if not query:
         return JsonResponse({'success': False, 'error': 'Membership number is required.'}, status=400)
 
@@ -368,7 +368,7 @@ def api_kiosk_lookup_member(request):
 
 def api_kiosk_lookup_book(request):
     """Lookup physical book copy by barcode / accession number / ISBN / Title."""
-    query = (request.GET.get('barcode') or request.GET.get('q') or '').strip()
+    query = (request.GET.get('barcode') or request.GET.get('q') or request.GET.get('query') or request.GET.get('accession_number') or '').strip()
     if not query:
         return JsonResponse({'success': False, 'error': 'Accession barcode or ISBN is required.'}, status=400)
 
