@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.utils import timezone
 
-from catalog.models import Book, EBookMetadata
+from catalog.models import Book, EBookMetadata, Author, Category
 from ebooks.gutenberg_service import GutenbergService
 from ebooks.kaggle_service import KaggleEBookService
 from ebooks.generator import BookContentSynthesizer
@@ -44,6 +44,39 @@ class Command(BaseCommand):
             'Section 1.2: The Shadow of Family Expectations',
             'Section 1.2: Write-Ahead Log'
         ]
+
+        # Ensure reference benchmark EPUB (pg67098-images-3.epub: Winnie-the-Pooh by A. A. Milne)
+        epub_ref_path = protected_root / 'pg67098-images-3.epub'
+        if epub_ref_path.exists():
+            cat = Category.objects.filter(name__icontains='Children').first() or Category.objects.first()
+            pooh_book, _ = Book.objects.get_or_create(
+                isbn='978-0-14-036121-6',
+                defaults={
+                    'title': 'Winnie-the-Pooh',
+                    'description': 'The classic children’s story of Christopher Robin, Winnie-the-Pooh, Piglet, Eeyore, and friends in the Hundred Acre Wood. Complete illustrated edition with authentic Ernest H. Shepard artwork, served natively as a digital EPUB asset.',
+                    'category': cat,
+                    'publisher': 'Methuen & Co. / Project Gutenberg',
+                    'publication_year': 1926,
+                    'book_type': 'EBOOK',
+                }
+            )
+            author_obj, _ = Author.objects.get_or_create(full_name='A. A. Milne')
+            pooh_book.authors.add(author_obj)
+
+            EBookMetadata.objects.update_or_create(
+                book=pooh_book,
+                defaults={
+                    'protected_filename': 'pg67098-images-3.epub',
+                    'original_file_name': 'Winnie-the-Pooh_Illustrated_EPUB_pg67098.epub',
+                    'format': 'EPUB',
+                    'file_size': epub_ref_path.stat().st_size,
+                    'page_count': 160,
+                    'access_mode': 'READ_AND_DOWNLOAD',
+                    'rights_status': 'PUBLIC_DOMAIN',
+                    'rights_text': 'Project Gutenberg #67098 &bull; Public Domain in the United States',
+                    'is_active': True,
+                }
+            )
 
         ebooks_qs = EBookMetadata.objects.select_related('book', 'book__category').all().order_by('id')
         if limit > 0:

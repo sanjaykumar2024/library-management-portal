@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-10-29T09:31:30.319357+00:00",
-  "total_audited": 311,
+  "timestamp": "2026-10-29T09:41:44.644491+00:00",
+  "total_audited": 312,
   "repaired": 0,
   "preserved_gutenberg": 164,
-  "preserved_epub": 1,
+  "preserved_epub": 2,
   "errors": 0,
   "books": [
     {
@@ -1871,6 +1871,12 @@
       "title": "Winnie-the-Pooh",
       "status": "VALID_EPUB",
       "pages": 168
+    },
+    {
+      "id": 773,
+      "title": "Winnie-the-Pooh",
+      "status": "VALID_EPUB",
+      "pages": 160
     }
   ]
 }
