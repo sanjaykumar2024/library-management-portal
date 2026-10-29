@@ -249,8 +249,11 @@
                         <a href="{% url 'circulation:dashboard' %}" class="btn btn-outline-primary rounded-pill px-3 py-2">
                             <i class="bi bi-journal-album me-1"></i> Borrow &amp; Return Desk
                         </a>
-                        <a href="/admin/catalog/book/{{ book.id }}/change/" target="_blank" class="btn btn-outline-secondary rounded-pill px-3 py-2">
-                            <i class="bi bi-gear me-1"></i> Edit in Admin
+                        <a href="{% url 'catalog:book_edit' book.id %}" class="btn btn-outline-secondary rounded-pill px-3 py-2">
+                            <i class="bi bi-pencil me-1"></i> Edit Book
+                        </a>
+                        <a href="{% url 'catalog:add_book_copy' book.id %}" class="btn btn-outline-primary rounded-pill px-3 py-2">
+                            <i class="bi bi-plus-circle me-1"></i> Add Copy
                         </a>
                     {% else %}
                         <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary rounded-pill px-4 py-2">

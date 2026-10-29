@@ -36,6 +36,27 @@ ALLOWED_HOSTS = [
 ]
 
 # ---------------------------------------------------------------------------
+# Reverse Proxy & SSL Configuration (Essential for Render, Cloudflare, HTTPS)
+# ---------------------------------------------------------------------------
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+# CSRF Trusted Origins for HTTPS on Render & Local Development
+CSRF_TRUSTED_ORIGINS = [
+    'https://librarysphere-19cx.onrender.com',
+    'https://*.onrender.com',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+extra_origins = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if extra_origins:
+    CSRF_TRUSTED_ORIGINS.extend([o.strip() for o in extra_origins.split(',') if o.strip()])
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# ---------------------------------------------------------------------------
 # Production Security Settings (Enabled when DEBUG=False or via .env)
 # ---------------------------------------------------------------------------
 
@@ -244,7 +265,7 @@ LOGOUT_REDIRECT_URL = 'core:home'
 # ---------------------------------------------------------------------------
 GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID', '').strip()
 GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET', '').strip()
-GOOGLE_OAUTH_REDIRECT_URI = os.getenv('GOOGLE_OAUTH_REDIRECT_URI', '').strip()
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv('GOOGLE_OAUTH_REDIRECT_URI', 'https://librarysphere-19cx.onrender.com/accounts/google/callback/').strip()
 REQUIRE_MEMBERSHIP_APPROVAL = os.getenv('REQUIRE_MEMBERSHIP_APPROVAL', 'False').lower() in ('true', '1', 'yes')
 ALLOW_DEMO_GOOGLE_LOGIN = os.getenv('ALLOW_DEMO_GOOGLE_LOGIN', 'True').lower() in ('true', '1', 'yes')
 
