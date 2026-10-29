@@ -25,17 +25,23 @@ else:
     print('Database already contains records, preserving existing data.')
 "
 
-echo "📚 Populating complete library catalog (physical copies & curated e-books)..."
-python populate_expanded_library.py
+# Optimize catalog population: only run ingestion if catalog has not yet reached 300 books
+python manage.py shell -c "
+from catalog.models import Book
+from django.core.management import call_command
+import subprocess
 
-echo "🎨 Generating book covers for all catalog books..."
-python manage.py regenerate_book_covers
+count = Book.objects.count()
+print(f'Current Catalog Status: {count} books present.')
 
-echo "📖 Syncing protected e-book reader documents..."
-python manage.py regenerate_ebook_files
-
-echo "🚀 Ensuring 300+ complete e-book library is fully populated..."
-python manage.py expand_ebook_catalog
+if count < 300:
+    print('🚀 Seeding full catalog to 300+ books...')
+    subprocess.run(['python', 'populate_expanded_library.py'], check=True)
+    call_command('regenerate_book_covers', missing_only=True)
+    call_command('expand_ebook_catalog')
+else:
+    print('✅ Catalog already fully populated (300+ books verified). Skipping heavy ingestion for fast deployment!')
+"
 
 echo "👤 Ensuring default demo accounts (admin, librarian, member) are active..."
 python manage.py shell -c "

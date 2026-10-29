@@ -164,6 +164,7 @@ if DATABASE_URL:
             'PASSWORD': url.password or '',
             'HOST': url.hostname or '',
             'PORT': url.port or (5432 if is_postgres else 3306),
+            'CONN_MAX_AGE': 600,
         }
     }
 elif USE_SQLITE:
