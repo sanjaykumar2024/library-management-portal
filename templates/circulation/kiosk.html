@@ -262,7 +262,7 @@
 
                 <!-- Checkout Action Button -->
                 <button type="button" id="btnCheckout" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3" onclick="submitCheckout()" disabled>
-                    <i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (<span id="checkoutTotalCount">0</span>)
+                    <i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (0)
                 </button>
             </div>
 
@@ -618,41 +618,49 @@ function renderCart() {
     const emptyState = document.getElementById('cartEmptyState');
     const clearBtn = document.getElementById('clearCartBtn');
     const checkoutBtn = document.getElementById('btnCheckout');
+    const cartCountEl = document.getElementById('cartCount');
     const count = scannedCopies.length;
 
-    document.getElementById('cartCount').textContent = count;
-    document.getElementById('checkoutTotalCount').textContent = count;
+    if (cartCountEl) {
+        cartCountEl.textContent = count;
+    }
 
     if (count === 0) {
-        list.innerHTML = '';
-        emptyState.classList.remove('d-none');
-        clearBtn.classList.add('d-none');
-        checkoutBtn.disabled = true;
-        checkoutBtn.className = 'btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3';
-        checkoutBtn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (0)`;
+        if (list) list.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('d-none');
+        if (clearBtn) clearBtn.classList.add('d-none');
+        if (checkoutBtn) {
+            checkoutBtn.disabled = true;
+            checkoutBtn.className = 'btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3';
+            checkoutBtn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (0)`;
+        }
         return;
     }
 
-    emptyState.classList.add('d-none');
-    clearBtn.classList.remove('d-none');
-    checkoutBtn.disabled = false;
-    checkoutBtn.className = 'btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3';
-    checkoutBtn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${count})`;
+    if (emptyState) emptyState.classList.add('d-none');
+    if (clearBtn) clearBtn.classList.remove('d-none');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.className = 'btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3';
+        checkoutBtn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${count})`;
+    }
 
-    list.innerHTML = scannedCopies.map((item, idx) => `
-        <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
-            <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 82%;">
-                <div class="rounded px-2 py-1 font-monospace small fw-bold" style="font-size: 0.72rem; background: var(--glass-border); color: var(--text-primary);">${item.accession_number}</div>
-                <div class="text-truncate">
-                    <div class="small fw-semibold text-truncate" style="color: var(--text-primary);">${item.title}</div>
-                    <div class="text-muted" style="font-size: 0.72rem;">${item.author}</div>
+    if (list) {
+        list.innerHTML = scannedCopies.map((item, idx) => `
+            <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
+                <div class="d-flex align-items-center gap-2 text-truncate" style="max-width: 82%;">
+                    <div class="rounded px-2 py-1 font-monospace small fw-bold" style="font-size: 0.72rem; background: var(--glass-border); color: var(--text-primary);">${item.accession_number}</div>
+                    <div class="text-truncate">
+                        <div class="small fw-semibold text-truncate" style="color: var(--text-primary);">${item.title}</div>
+                        <div class="text-muted" style="font-size: 0.72rem;">${item.author}</div>
+                    </div>
                 </div>
+                <button type="button" class="btn btn-link text-danger p-0 ms-2" title="Remove" onclick="removeFromCart(${idx})">
+                    <i class="bi bi-x-circle fs-5"></i>
+                </button>
             </div>
-            <button type="button" class="btn btn-link text-danger p-0 ms-2" title="Remove" onclick="removeFromCart(${idx})">
-                <i class="bi bi-x-circle fs-5"></i>
-            </button>
-        </div>
-    `).join('');
+        `).join('');
+    }
 }
 
 function removeFromCart(idx) {
@@ -775,14 +783,23 @@ function resetKiosk() {
     stopCameraScanner();
     currentMember = null;
     scannedCopies = [];
-    document.getElementById('manualMemberInput').value = '';
-    document.getElementById('manualBookInput').value = '';
-    document.getElementById('patronErrorAlert').classList.add('d-none');
-    document.getElementById('bookErrorAlert').classList.add('d-none');
-    document.getElementById('patronInfoEmpty').classList.remove('d-none');
-    document.getElementById('patronInfoActive').classList.add('d-none');
-    document.getElementById('patronStatusBadge').className = 'badge bg-secondary';
-    document.getElementById('patronStatusBadge').textContent = 'Awaiting Scan';
+    const memberInput = document.getElementById('manualMemberInput');
+    if (memberInput) memberInput.value = '';
+    const bookInput = document.getElementById('manualBookInput');
+    if (bookInput) bookInput.value = '';
+    const patronErr = document.getElementById('patronErrorAlert');
+    if (patronErr) patronErr.classList.add('d-none');
+    const bookErr = document.getElementById('bookErrorAlert');
+    if (bookErr) bookErr.classList.add('d-none');
+    const patronEmpty = document.getElementById('patronInfoEmpty');
+    if (patronEmpty) patronEmpty.classList.remove('d-none');
+    const patronActive = document.getElementById('patronInfoActive');
+    if (patronActive) patronActive.classList.add('d-none');
+    const patronBadge = document.getElementById('patronStatusBadge');
+    if (patronBadge) {
+        patronBadge.className = 'badge bg-secondary';
+        patronBadge.textContent = 'Awaiting Scan';
+    }
     renderCart();
     setStep(1);
 }
