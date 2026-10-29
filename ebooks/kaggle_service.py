@@ -81,13 +81,25 @@ class KaggleEBookService:
 
 
     @classmethod
-    def _generate_reader_document(cls, book_data: dict) -> str:
+    def _generate_reader_document(cls, book_data: dict) -> tuple[str, int]:
         """
-        Generates a complete, publication-grade digital HTML reader document scaled
-        proportionally to the book's recorded page count (e.g. 400 to 1,000+ pages)
-        using the BookContentSynthesizer engine.
+        Generates a complete, publication-grade digital HTML reader document.
+        Prefers authentic Project Gutenberg illustrated editions for world literature classics;
+        otherwise synthesizes a complete, publication-grade digital book edition.
+        Returns (document_html, total_pages).
         """
-        return BookContentSynthesizer.generate_full_edition(book_data)
+        from ebooks.gutenberg_service import GutenbergService
+        title = str(book_data.get('title', ''))
+        author = str(book_data.get('author', ''))
+        gid = GutenbergService.get_gutenberg_id_for_title(title)
+        if gid:
+            res = GutenbergService.format_gutenberg_reader_document(title, author, gid)
+            if res:
+                return res[0], res[1]
+
+        target_pages = book_data.get('pages', 350)
+        doc = BookContentSynthesizer.generate_full_edition(book_data)
+        return doc, target_pages
 
     @classmethod
     def import_single_book(cls, row: dict, uploaded_by=None, access_mode='READ_AND_DOWNLOAD', rights_status='LIBRARY_LICENSED', overwrite=False):
@@ -216,7 +228,7 @@ class KaggleEBookService:
             'pages': pages,
             'average_rating': avg_rating,
         }
-        document_html = cls._generate_reader_document(book_info)
+        document_html, actual_pages = cls._generate_reader_document(book_info)
 
         # 7. Write to protected storage
         protected_root = Path(getattr(settings, 'PROTECTED_EBOOK_ROOT', settings.BASE_DIR / 'protected_ebooks'))
@@ -235,7 +247,7 @@ class KaggleEBookService:
                 'original_file_name': f"{re.sub(r'[^a-zA-Z0-9_-]', '_', title)[:60]}.html",
                 'uploaded_by': uploaded_by,
                 'file_size': len(document_html.encode('utf-8')),
-                'page_count': pages,
+                'page_count': actual_pages,
                 'format': 'HTML',
                 'rental_price': Decimal('0.00'),
                 'access_mode': access_mode,

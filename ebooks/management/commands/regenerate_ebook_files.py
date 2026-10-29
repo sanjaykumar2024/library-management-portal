@@ -88,16 +88,16 @@ class Command(BaseCommand):
             }
 
             try:
-                doc_html = KaggleEBookService._generate_reader_document(book_info)
+                doc_html, authentic_pages = KaggleEBookService._generate_reader_document(book_info)
                 encoded = doc_html.encode('utf-8')
                 with open(file_path, 'wb') as f:
                     f.write(encoded)
                 ebook.file_size = len(encoded)
                 ebook.format = 'HTML'
-                ebook.page_count = target_pages
+                ebook.page_count = authentic_pages
                 ebook.save(update_fields=['file_size', 'format', 'page_count'])
                 generated_count += 1
-                self.stdout.write(self.style.SUCCESS(f"  ✓ [{ebook.id}] Synced {target_pages}-page edition for '{book.title}'"))
+                self.stdout.write(self.style.SUCCESS(f"  ✓ [{ebook.id}] Synced {authentic_pages}-page edition for '{book.title}'"))
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"  ✗ [{ebook.id}] Failed for '{book.title}': {e}"))
 

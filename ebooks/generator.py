@@ -879,18 +879,18 @@ class BookContentSynthesizer:
                             body_content = f"""
                             <h3 class="h5 fw-bold mb-3" style="color: #1e293b;">{sec_header}</h3>
                             <p>Applying the insights of <em>{ch_title.lower()}</em> requires a structured behavioral protocol:</p>
-                            <div class="d-flex flex-column gap-2 my-3">
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">1</span>
-                                    <div><strong class="small text-dark">Make the Cue Salient:</strong> <span class="small text-secondary">Place the visual trigger directly in the physical execution environment.</span></div>
+                            <div class="book-protocol my-3">
+                                <div class="py-2 border-bottom d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 24px;">1.</span>
+                                    <div><strong class="text-dark">Make the Cue Salient:</strong> <span class="small text-secondary">Place the visual trigger directly in the physical execution environment.</span></div>
                                 </div>
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">2</span>
-                                    <div><strong class="small text-dark">Reduce Initial Friction:</strong> <span class="small text-secondary">Design the starting step to take less than 120 seconds of effort.</span></div>
+                                <div class="py-2 border-bottom d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 24px;">2.</span>
+                                    <div><strong class="text-dark">Reduce Initial Friction:</strong> <span class="small text-secondary">Design the starting step to take less than 120 seconds of effort.</span></div>
                                 </div>
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">3</span>
-                                    <div><strong class="small text-dark">Pair with Immediate Feedback:</strong> <span class="small text-secondary">Tie execution to a deterministic sensory acknowledgment.</span></div>
+                                <div class="py-2 d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 24px;">3.</span>
+                                    <div><strong class="text-dark">Pair with Immediate Feedback:</strong> <span class="small text-secondary">Tie execution to a deterministic sensory acknowledgment.</span></div>
                                 </div>
                             </div>
                             <p class="small text-muted">When systems are designed for cognitive ease, adherence ceases to be a battle of willpower and becomes the path of least resistance.</p>
@@ -971,18 +971,18 @@ class BookContentSynthesizer:
                             c_title, c_narrative, c_lesson = case
                             body_content = f"""
                             <h3 class="h5 fw-bold mb-3" style="color: #1e293b;">{sec_header}</h3>
-                            <div class="p-3 rounded my-3" style="background: #fafaf9; border: 1px solid #e2e8f0; border-top: 4px solid #ef4444;">
+                            <aside class="book-case-study my-4 p-4" style="background: #fdfbf7; border-top: 2px solid #0f172a; border-bottom: 2px solid #0f172a;">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge bg-danger text-uppercase font-monospace" style="font-size:0.7rem;">Field Incident Audit #{actual_page}</span>
-                                    <span class="small text-muted">{ch_title}</span>
+                                    <span class="text-uppercase small fw-bold tracking-wider" style="color: #991b1b; font-family: Georgia, serif;">Case Study: Incident Analysis</span>
+                                    <span class="small text-muted fst-italic">{ch_title}</span>
                                 </div>
-                                <h4 class="h6 fw-bold text-dark mb-2">{c_title}</h4>
-                                <p class="small text-secondary mb-3" style="line-height:1.7;">{c_narrative}</p>
-                                <div class="p-2 rounded bg-light border">
-                                    <strong class="small text-dark d-block">Architectural Takeaway:</strong>
-                                    <span class="small text-primary">{c_lesson}</span>
+                                <h4 class="h6 fw-bold text-dark mb-2" style="font-family: Georgia, serif;">{c_title}</h4>
+                                <p class="small text-secondary mb-3" style="line-height: 1.8;">{c_narrative}</p>
+                                <div class="pt-2 border-top">
+                                    <strong class="small text-dark d-block">Key Architectural Lesson:</strong>
+                                    <span class="small text-muted fst-italic">{c_lesson}</span>
                                 </div>
-                            </div>
+                            </aside>
                             <p>By studying real failure modes rather than sanitized laboratory examples, we develop the anticipatory mindset required to maintain system stability under real-world pressure.</p>
                             """
 
@@ -991,26 +991,26 @@ class BookContentSynthesizer:
                             body_content = f"""
                             <h3 class="h5 fw-bold mb-3" style="color: #1e293b;">{sec_header}</h3>
                             <p>To translate the conceptual mandates of <em>{ch_title.lower()}</em> into reliable operational execution, follow this structured procedure:</p>
-                            <div class="d-flex flex-column gap-2 my-3">
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">1</span>
-                                    <div><strong class="small text-dark">Define Invariant Contracts:</strong> <span class="small text-secondary">Establish non-negotiable correctness rules before authoring any implementation logic.</span></div>
+                            <div class="book-protocol my-4">
+                                <div class="py-2 border-bottom d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 28px;">I.</span>
+                                    <div><strong class="text-dark">Define Invariant Contracts:</strong> <span class="text-secondary small">Establish non-negotiable correctness rules before authoring any implementation logic.</span></div>
                                 </div>
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">2</span>
-                                    <div><strong class="small text-dark">Establish Bounded Timeouts:</strong> <span class="small text-secondary">Configure jittered exponential retry thresholds on all external communication channels.</span></div>
+                                <div class="py-2 border-bottom d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 28px;">II.</span>
+                                    <div><strong class="text-dark">Establish Bounded Timeouts:</strong> <span class="text-secondary small">Configure jittered exponential retry thresholds on all external communication channels.</span></div>
                                 </div>
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">3</span>
-                                    <div><strong class="small text-dark">Enforce Idempotency Keys:</strong> <span class="small text-secondary">Ensure replayed operations yield identical deterministic state transformations.</span></div>
+                                <div class="py-2 border-bottom d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 28px;">III.</span>
+                                    <div><strong class="text-dark">Enforce Idempotency Keys:</strong> <span class="text-secondary small">Ensure replayed operations yield identical deterministic state transformations.</span></div>
                                 </div>
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">4</span>
-                                    <div><strong class="small text-dark">Audit Telemetry Percentiles:</strong> <span class="small text-secondary">Base operational health alarms on 99th percentile metrics rather than average aggregate counters.</span></div>
+                                <div class="py-2 border-bottom d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 28px;">IV.</span>
+                                    <div><strong class="text-dark">Audit Telemetry Percentiles:</strong> <span class="text-secondary small">Base operational health alarms on 99th percentile metrics rather than average aggregate counters.</span></div>
                                 </div>
-                                <div class="p-2 px-3 rounded d-flex align-items-start gap-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                    <span class="badge bg-primary rounded-circle p-2 mt-1" style="width:24px;height:24px;">5</span>
-                                    <div><strong class="small text-dark">Simulate Partition Failovers:</strong> <span class="small text-secondary">Routinely inject simulated network partitions to verify automated split-brain prevention.</span></div>
+                                <div class="py-2 d-flex align-items-baseline gap-3">
+                                    <span class="fw-bold font-monospace text-muted" style="min-width: 28px;">V.</span>
+                                    <div><strong class="text-dark">Simulate Partition Failovers:</strong> <span class="text-secondary small">Routinely inject simulated network partitions to verify automated split-brain prevention.</span></div>
                                 </div>
                             </div>
                             """
@@ -1023,14 +1023,14 @@ class BookContentSynthesizer:
                             
                             <div class="row g-3 my-3">
                                 <div class="col-md-6">
-                                    <div class="p-3 rounded h-100" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
-                                        <h5 class="h6 fw-bold text-success mb-2"><i class="bi bi-shield-check me-1"></i> Strong Consistency School</h5>
+                                    <div class="p-3 rounded h-100" style="background: #fafaf9; border-top: 2px solid #16a34a; border-bottom: 1px solid #e2e8f0;">
+                                        <h5 class="h6 fw-bold text-success mb-2" style="font-family: Georgia, serif;">Strong Consistency School</h5>
                                         <p class="small text-secondary mb-0">Demands linearizability and atomic coordination. Asserts that data divergence compromises the intellectual integrity of the ledger.</p>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="p-3 rounded h-100" style="background: #eff6ff; border: 1px solid #bfdbfe;">
-                                        <h5 class="h6 fw-bold text-primary mb-2"><i class="bi bi-lightning-charge me-1"></i> High Availability School</h5>
+                                    <div class="p-3 rounded h-100" style="background: #fafaf9; border-top: 2px solid #2563eb; border-bottom: 1px solid #e2e8f0;">
+                                        <h5 class="h6 fw-bold text-primary mb-2" style="font-family: Georgia, serif;">High Availability School</h5>
                                         <p class="small text-secondary mb-0">Prioritizes user continuity and partition tolerance. Argues that real-world operations routinely rely on eventual consistency.</p>
                                     </div>
                                 </div>
@@ -1043,31 +1043,19 @@ class BookContentSynthesizer:
                             body_content = f"""
                             <h3 class="h5 fw-bold mb-3" style="color: #1e293b;">{sec_header}</h3>
                             <p>Before deploying updates to <em>{ch_title.lower()}</em> in high-volume environments, verify readiness against these essential health gates:</p>
-                            <div class="p-3 rounded my-3" style="background: #fafaf9; border: 1px solid #e2e8f0;">
-                                <h4 class="h6 fw-bold text-dark mb-3">Production Health &amp; Robustness Gates</h4>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                    <label class="form-check-label small text-secondary">
-                                        Are write-ahead log flush policies configured with explicit durability guarantees?
-                                    </label>
+                            <div class="book-readiness-checklist my-4 p-4 rounded" style="background: #fafaf9; border-left: 3px solid #334155;">
+                                <h4 class="h6 fw-bold text-dark text-uppercase tracking-wider mb-3" style="font-family: Georgia, serif;">Production Readiness Criteria</h4>
+                                <div class="py-2 border-bottom small text-secondary">
+                                    &bull; <strong>Storage Durability:</strong> Write-ahead log flush policies configured with explicit sync invariants.
                                 </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                    <label class="form-check-label small text-secondary">
-                                        Has secondary index replication lag been bounded with active backpressure throttling?
-                                    </label>
+                                <div class="py-2 border-bottom small text-secondary">
+                                    &bull; <strong>Replication Lag:</strong> Secondary index replication bounded with active backpressure throttling.
                                 </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                    <label class="form-check-label small text-secondary">
-                                        Is there a deterministic schema evolution protocol with backward-compatible validation?
-                                    </label>
+                                <div class="py-2 border-bottom small text-secondary">
+                                    &bull; <strong>Schema Compatibility:</strong> Deterministic schema evolution with verified backward-compatible deserialization.
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" checked disabled>
-                                    <label class="form-check-label small text-secondary">
-                                        Are failover leader elections tested under simulated network partitioning scenarios?
-                                    </label>
+                                <div class="py-2 small text-secondary">
+                                    &bull; <strong>Partition Recovery:</strong> Failover leader elections validated under simulated asymmetric network partitions.
                                 </div>
                             </div>
                             <p class="small text-muted">A passing score on all four gates provides confidence that the implementation can survive unpredictable production disruptions.</p>
