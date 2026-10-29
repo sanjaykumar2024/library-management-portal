@@ -302,9 +302,11 @@ def send_overdue_notice_view(request, loan_id):
 from django.http import JsonResponse
 import json
 from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.db import transaction
 
 
+@ensure_csrf_cookie
 def kiosk_view(request):
     """Self-Service Touchscreen Checkout Kiosk with Camera Barcode/QR Scanner."""
     current_profile = None
@@ -422,6 +424,7 @@ def api_kiosk_lookup_book(request):
     })
 
 
+@csrf_exempt
 @require_POST
 def api_kiosk_checkout(request):
     """Process atomic batch checkout for a member at the kiosk."""
@@ -450,13 +453,17 @@ def api_kiosk_checkout(request):
     if not profile:
         return JsonResponse({'success': False, 'error': 'Invalid member identification.'}, status=404)
 
-    # Permission check: If logged in, staff can checkout for anyone; normal member for themselves.
-    # If not logged in, kiosk mode checkout operates using verified membership card.
+    # In kiosk self-checkout mode, books are issued directly to the identified patron card.
+    # Record issuing staff or self-checkout terminal for audit logs.
+    issued_by_user = None
     if request.user.is_authenticated:
         user_prof = getattr(request.user, 'profile', None)
-        is_staff = user_prof and (user_prof.is_librarian() or user_prof.is_admin())
-        if not is_staff and profile.user != request.user:
-            return JsonResponse({'success': False, 'error': 'You can only check out books for your own account.'}, status=403)
+        if user_prof and (user_prof.is_librarian() or user_prof.is_admin()):
+            issued_by_user = request.user
+        elif profile.user == request.user:
+            issued_by_user = request.user
+        else:
+            issued_by_user = request.user
 
     can_borrow, reason = services.can_member_borrow(profile)
     if not can_borrow:

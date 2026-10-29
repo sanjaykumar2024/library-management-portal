@@ -675,27 +675,48 @@ function submitCheckout() {
 
     stopCameraScanner();
 
+    // Helper to get CSRF cookie if present
+    function getCsrfToken() {
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    return decodeURIComponent(cookie.substring(10));
+                }
+            }
+        }
+        return '{{ csrf_token }}';
+    }
+
     fetch('/circulation/api/kiosk/checkout/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
+            'X-CSRFToken': getCsrfToken()
         },
         body: JSON.stringify({
             membership_number: currentMember.membership_number,
             accession_numbers: scannedCopies.map(c => c.accession_number)
         })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (!data.success) {
-            playErrorTone();
-            alert("Checkout Error: " + data.error);
-            btn.disabled = false;
-            btn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${scannedCopies.length})`;
-            return;
+    .then(async response => {
+        let data = null;
+        try {
+            data = await response.json();
+        } catch (e) {
+            // Non-JSON response (e.g. 502 Bad Gateway during redeployment, or HTML error)
+            throw new Error(`Server temporarily unavailable (HTTP ${response.status}). Please try again in a few moments.`);
         }
 
+        if (!response.ok || !data || !data.success) {
+            const errDetail = (data && data.error) ? data.error : `Transaction failed (HTTP ${response.status})`;
+            throw new Error(errDetail);
+        }
+
+        return data;
+    })
+    .then(data => {
         playSuccessChime();
 
         // 1. Update Patron State & Quota UI
@@ -740,11 +761,12 @@ function submitCheckout() {
             </div>
         `;
     })
-    .catch(() => {
+    .catch(err => {
         playErrorTone();
-        alert("Failed to complete checkout transaction. Please call circulation staff.");
+        // Immediately restore button state so it never freezes in 'Processing Checkout...'
         btn.disabled = false;
         btn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${scannedCopies.length})`;
+        alert(err.message || "Failed to complete checkout transaction. Please call circulation staff.");
     });
 }
 

@@ -76,3 +76,55 @@ class KioskSelfCheckoutTests(TestCase):
         self.assertEqual(self.copy.status, 'ISSUED')
         self.assertTrue(Loan.objects.filter(member=self.profile, book_copy=self.copy, status='ISSUED').exists())
 
+    def test_kiosk_checkout_cross_user_station_mode(self):
+        """Kiosk station allows checkout for verified scanned card even if browser session differs."""
+        other_user = User.objects.create_user(username='other_patron', password='password123')
+        self.client.force_login(other_user)
+
+        copy2 = BookCopy.objects.create(
+            book=self.book,
+            accession_number='LIB-1007',
+            status='AVAILABLE',
+            condition='GOOD'
+        )
+        payload = {
+            'membership_number': 'LIB-TEST-001',
+            'accession_numbers': ['LIB-1007']
+        }
+        resp = self.client.post(
+            '/circulation/api/kiosk/checkout/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        copy2.refresh_from_db()
+        self.assertEqual(copy2.status, 'ISSUED')
+        self.assertTrue(Loan.objects.filter(member=self.profile, book_copy=copy2, status='ISSUED').exists())
+
+    def test_kiosk_checkout_anonymous_walkup_csrf_exempt(self):
+        """Anonymous walk-up kiosk patron checkout succeeds without session login or CSRF error."""
+        anon_client = Client(enforce_csrf_checks=True)
+        copy3 = BookCopy.objects.create(
+            book=self.book,
+            accession_number='LIB-1008',
+            status='AVAILABLE',
+            condition='GOOD'
+        )
+        payload = {
+            'membership_number': 'LIB-TEST-001',
+            'accession_numbers': ['LIB-1008']
+        }
+        resp = anon_client.post(
+            '/circulation/api/kiosk/checkout/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['success'])
+        copy3.refresh_from_db()
+        self.assertEqual(copy3.status, 'ISSUED')
+
+
