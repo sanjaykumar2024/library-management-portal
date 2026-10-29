@@ -43,6 +43,9 @@ else:
     print('✅ Catalog already fully populated (300+ books verified). Skipping heavy ingestion for fast deployment!')
 "
 
+echo "📖 Running automated e-book library audit & repair suite..."
+python manage.py repair_ebook_library
+
 echo "👤 Ensuring default demo accounts (admin, librarian, member) are active..."
 python manage.py shell -c "
 from django.contrib.auth.models import User

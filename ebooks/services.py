@@ -20,19 +20,40 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
     # 2. Check file extension
     original_filename = file_obj.name
     ext = os.path.splitext(original_filename)[1].lower()
-    if ext not in ['.pdf', '.html', '.htm']:
-        raise ValueError("Invalid file extension. Only PDF (.pdf) and HTML (.html, .htm) files are supported.")
+    if ext not in ['.pdf', '.html', '.htm', '.epub']:
+        raise ValueError("Invalid file extension. Only PDF (.pdf), HTML (.html, .htm), and EPUB (.epub) files are supported.")
 
     # 3. Check file size
-    max_size = getattr(settings, 'MAX_EBOOK_FILE_SIZE', 20 * 1024 * 1024)
+    max_size = getattr(settings, 'MAX_EBOOK_FILE_SIZE', 50 * 1024 * 1024)
     if file_obj.size > max_size:
         max_mb = max_size / (1024 * 1024)
         raise ValueError(f"File size exceeds maximum allowed limit of {max_mb:.0f} MB.")
 
-    file_format = 'HTML' if ext in ['.html', '.htm'] else 'PDF'
+    if ext == '.epub':
+        file_format = 'EPUB'
+    elif ext in ['.html', '.htm']:
+        file_format = 'HTML'
+    else:
+        file_format = 'PDF'
     page_count = 1
 
-    if file_format == 'PDF':
+    if file_format == 'EPUB':
+        import zipfile
+        try:
+            file_obj.seek(0)
+            with zipfile.ZipFile(file_obj, 'r') as zf:
+                # Check for mimetype or container
+                names = zf.namelist()
+                if 'mimetype' not in names and 'META-INF/container.xml' not in names:
+                    raise ValueError("Invalid EPUB: Missing mimetype or container.xml.")
+                # Count reading chapters/documents
+                ch_count = sum(1 for n in names if n.endswith(('.xhtml', '.html', '.htm')) and not n.endswith(('toc.xhtml', 'nav.xhtml')))
+                page_count = max(ch_count * 15, 20)
+            file_obj.seek(0)
+        except zipfile.BadZipFile:
+            file_obj.seek(0)
+            raise ValueError("Corrupted or unreadable EPUB archive.")
+    elif file_format == 'PDF':
         # 4. Check magic bytes PDF signature (%PDF-)
         file_obj.seek(0)
         header = file_obj.read(1024)

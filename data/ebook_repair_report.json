@@ -1,0 +1,1876 @@
+{
+  "timestamp": "2026-10-29T09:31:30.319357+00:00",
+  "total_audited": 311,
+  "repaired": 0,
+  "preserved_gutenberg": 164,
+  "preserved_epub": 1,
+  "errors": 0,
+  "books": [
+    {
+      "id": 12,
+      "title": "The Quantum Horizon",
+      "status": "ALREADY_CLEAN",
+      "pages": 360
+    },
+    {
+      "id": 13,
+      "title": "Algorithms of Tomorrow",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 14,
+      "title": "Pride and Prejudice",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 494
+    },
+    {
+      "id": 15,
+      "title": "The Project Gutenberg eBook of Monster no more",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 20
+    },
+    {
+      "id": 16,
+      "title": "Pride and Prejudice",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 494
+    },
+    {
+      "id": 17,
+      "title": "Frankenstein; or, The Modern Prometheus",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 219
+    },
+    {
+      "id": 18,
+      "title": "The Adventures of Sherlock Holmes",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 314
+    },
+    {
+      "id": 19,
+      "title": "Dracula",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 430
+    },
+    {
+      "id": 20,
+      "title": "Alice's Adventures in Wonderland",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 88
+    },
+    {
+      "id": 21,
+      "title": "The Great Gatsby",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 158
+    },
+    {
+      "id": 22,
+      "title": "The Time Machine",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 95
+    },
+    {
+      "id": 23,
+      "title": "The Metamorphosis",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 48
+    },
+    {
+      "id": 24,
+      "title": "A Tale of Two Cities",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 433
+    },
+    {
+      "id": 25,
+      "title": "Moby-Dick; or, The Whale",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 614
+    },
+    {
+      "id": 26,
+      "title": "Designing Data-Intensive Applications",
+      "status": "ALREADY_CLEAN",
+      "pages": 26
+    },
+    {
+      "id": 27,
+      "title": "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 28,
+      "title": "Clean Code",
+      "status": "ALREADY_CLEAN",
+      "pages": 26
+    },
+    {
+      "id": 29,
+      "title": "Deep Learning",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 30,
+      "title": "Artificial Intelligence: A Modern Approach",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 31,
+      "title": "The Pragmatic Programmer",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 32,
+      "title": "Dune",
+      "status": "ALREADY_CLEAN",
+      "pages": 24
+    },
+    {
+      "id": 33,
+      "title": "Neuromancer",
+      "status": "ALREADY_CLEAN",
+      "pages": 271
+    },
+    {
+      "id": 34,
+      "title": "Foundation",
+      "status": "ALREADY_CLEAN",
+      "pages": 256
+    },
+    {
+      "id": 35,
+      "title": "The Three-Body Problem",
+      "status": "ALREADY_CLEAN",
+      "pages": 400
+    },
+    {
+      "id": 36,
+      "title": "The Hitchhiker's Guide to the Galaxy",
+      "status": "ALREADY_CLEAN",
+      "pages": 216
+    },
+    {
+      "id": 37,
+      "title": "1984",
+      "status": "ALREADY_CLEAN",
+      "pages": 328
+    },
+    {
+      "id": 38,
+      "title": "To Kill a Mockingbird",
+      "status": "ALREADY_CLEAN",
+      "pages": 336
+    },
+    {
+      "id": 39,
+      "title": "The Great Gatsby",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 158
+    },
+    {
+      "id": 40,
+      "title": "Brave New World",
+      "status": "ALREADY_CLEAN",
+      "pages": 288
+    },
+    {
+      "id": 41,
+      "title": "One Hundred Years of Solitude",
+      "status": "ALREADY_CLEAN",
+      "pages": 417
+    },
+    {
+      "id": 42,
+      "title": "The Alchemist",
+      "status": "ALREADY_CLEAN",
+      "pages": 208
+    },
+    {
+      "id": 43,
+      "title": "Atomic Habits",
+      "status": "ALREADY_CLEAN",
+      "pages": 320
+    },
+    {
+      "id": 44,
+      "title": "Thinking, Fast and Slow",
+      "status": "ALREADY_CLEAN",
+      "pages": 512
+    },
+    {
+      "id": 45,
+      "title": "The Psychology of Money",
+      "status": "ALREADY_CLEAN",
+      "pages": 252
+    },
+    {
+      "id": 46,
+      "title": "Zero to One",
+      "status": "ALREADY_CLEAN",
+      "pages": 24
+    },
+    {
+      "id": 47,
+      "title": "Sapiens: A Brief History of Humankind",
+      "status": "ALREADY_CLEAN",
+      "pages": 464
+    },
+    {
+      "id": 48,
+      "title": "Deep Work",
+      "status": "ALREADY_CLEAN",
+      "pages": 304
+    },
+    {
+      "id": 49,
+      "title": "A Brief History of Time",
+      "status": "ALREADY_CLEAN",
+      "pages": 212
+    },
+    {
+      "id": 50,
+      "title": "Cosmos",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 51,
+      "title": "Guns, Germs, and Steel",
+      "status": "ALREADY_CLEAN",
+      "pages": 498
+    },
+    {
+      "id": 52,
+      "title": "Meditations",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 201
+    },
+    {
+      "id": 53,
+      "title": "Python Crash Course",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 54,
+      "title": "Introduction to Algorithms",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 55,
+      "title": "Pride and Prejudice",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 494
+    },
+    {
+      "id": 56,
+      "title": "Structure and Interpretation of Computer Programs",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 57,
+      "title": "Design Patterns: Elements of Reusable Object-Oriented Software",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 58,
+      "title": "Refactoring: Improving the Design of Existing Code",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 59,
+      "title": "Cracking the Coding Interview",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 60,
+      "title": "Site Reliability Engineering",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 61,
+      "title": "Fluent Python",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 62,
+      "title": "Effective Java",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 63,
+      "title": "Grokking Algorithms",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 64,
+      "title": "Domain-Driven Design",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 65,
+      "title": "Building Microservices",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 66,
+      "title": "Computer Networking: A Top-Down Approach",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 67,
+      "title": "The Fellowship of the Ring",
+      "status": "ALREADY_CLEAN",
+      "pages": 432
+    },
+    {
+      "id": 68,
+      "title": "The Hobbit",
+      "status": "ALREADY_CLEAN",
+      "pages": 366
+    },
+    {
+      "id": 69,
+      "title": "A Game of Thrones",
+      "status": "ALREADY_CLEAN",
+      "pages": 694
+    },
+    {
+      "id": 70,
+      "title": "Ender's Game",
+      "status": "ALREADY_CLEAN",
+      "pages": 324
+    },
+    {
+      "id": 71,
+      "title": "Do Androids Dream of Electric Sheep?",
+      "status": "ALREADY_CLEAN",
+      "pages": 244
+    },
+    {
+      "id": 72,
+      "title": "Hyperion",
+      "status": "ALREADY_CLEAN",
+      "pages": 482
+    },
+    {
+      "id": 73,
+      "title": "Snow Crash",
+      "status": "ALREADY_CLEAN",
+      "pages": 440
+    },
+    {
+      "id": 74,
+      "title": "The Left Hand of Darkness",
+      "status": "ALREADY_CLEAN",
+      "pages": 304
+    },
+    {
+      "id": 75,
+      "title": "Fahrenheit 451",
+      "status": "ALREADY_CLEAN",
+      "pages": 249
+    },
+    {
+      "id": 76,
+      "title": "Solaris",
+      "status": "ALREADY_CLEAN",
+      "pages": 224
+    },
+    {
+      "id": 77,
+      "title": "I, Robot",
+      "status": "ALREADY_CLEAN",
+      "pages": 224
+    },
+    {
+      "id": 78,
+      "title": "2001: A Space Odyssey",
+      "status": "ALREADY_CLEAN",
+      "pages": 297
+    },
+    {
+      "id": 79,
+      "title": "Crime and Punishment",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 550
+    },
+    {
+      "id": 80,
+      "title": "The Brothers Karamazov",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 973
+    },
+    {
+      "id": 81,
+      "title": "War and Peace",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 1760
+    },
+    {
+      "id": 82,
+      "title": "Anna Karenina",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 1026
+    },
+    {
+      "id": 83,
+      "title": "Wuthering Heights",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 351
+    },
+    {
+      "id": 84,
+      "title": "Jane Eyre",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 564
+    },
+    {
+      "id": 85,
+      "title": "The Catcher in the Rye",
+      "status": "ALREADY_CLEAN",
+      "pages": 277
+    },
+    {
+      "id": 86,
+      "title": "Les Mis\u00e9rables",
+      "status": "ALREADY_CLEAN",
+      "pages": 1463
+    },
+    {
+      "id": 87,
+      "title": "The Picture of Dorian Gray",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 229
+    },
+    {
+      "id": 88,
+      "title": "Don Quixote",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 1065
+    },
+    {
+      "id": 89,
+      "title": "The Odyssey",
+      "status": "ALREADY_CLEAN",
+      "pages": 541
+    },
+    {
+      "id": 90,
+      "title": "The Count of Monte Cristo",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 1449
+    },
+    {
+      "id": 91,
+      "title": "Man's Search for Meaning",
+      "status": "ALREADY_CLEAN",
+      "pages": 165
+    },
+    {
+      "id": 92,
+      "title": "Flow: The Psychology of Optimal Experience",
+      "status": "ALREADY_CLEAN",
+      "pages": 303
+    },
+    {
+      "id": 93,
+      "title": "Grit: The Power of Passion and Perseverance",
+      "status": "ALREADY_CLEAN",
+      "pages": 352
+    },
+    {
+      "id": 94,
+      "title": "Quiet",
+      "status": "ALREADY_CLEAN",
+      "pages": 352
+    },
+    {
+      "id": 95,
+      "title": "Essentialism",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 96,
+      "title": "Mindset: The New Psychology of Success",
+      "status": "ALREADY_CLEAN",
+      "pages": 288
+    },
+    {
+      "id": 97,
+      "title": "Influence: The Psychology of Persuasion",
+      "status": "ALREADY_CLEAN",
+      "pages": 320
+    },
+    {
+      "id": 98,
+      "title": "The Lean Startup",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 99,
+      "title": "Good to Great",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 100,
+      "title": "Principles: Life and Work",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 101,
+      "title": "Freakonomics",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 102,
+      "title": "Bad Blood",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 103,
+      "title": "Shoe Dog",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 104,
+      "title": "The Selfish Gene",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 105,
+      "title": "G\u00f6del, Escher, Bach: An Eternal Golden Braid",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 106,
+      "title": "The Elegant Universe",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 107,
+      "title": "Six Easy Pieces",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 108,
+      "title": "Silent Spring",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 109,
+      "title": "What If?",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 110,
+      "title": "The Silk Roads",
+      "status": "ALREADY_CLEAN",
+      "pages": 672
+    },
+    {
+      "id": 111,
+      "title": "The Lessons of History",
+      "status": "ALREADY_CLEAN",
+      "pages": 128
+    },
+    {
+      "id": 112,
+      "title": "A People's History of the United States",
+      "status": "ALREADY_CLEAN",
+      "pages": 729
+    },
+    {
+      "id": 113,
+      "title": "Justice: What's the Right Thing to Do?",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 114,
+      "title": "Beyond Good and Evil",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 115,
+      "title": "The Republic",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 577
+    },
+    {
+      "id": 116,
+      "title": "The Prince",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 133
+    },
+    {
+      "id": 117,
+      "title": "Clean Architecture: A Craftsman's Guide to Software Structure and Design",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 118,
+      "title": "The Phoenix Project: A Novel about IT, DevOps, and Helping Your Business Win",
+      "status": "ALREADY_CLEAN",
+      "pages": 382
+    },
+    {
+      "id": 119,
+      "title": "Kubernetes: Up and Running: Dive into the Future of Infrastructure",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 120,
+      "title": "Designing Distributed Systems: Patterns and Paradigms for Scalable, Reliable Services",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 121,
+      "title": "System Design Interview: An Insider's Guide",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 122,
+      "title": "The DevOps Handbook: How to Create World-Class Agility, Reliability, and Security",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 123,
+      "title": "Chip War: The Fight for the World's Most Critical Technology",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 124,
+      "title": "The Art of Computer Programming, Volume 1: Fundamental Algorithms",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 125,
+      "title": "Compilers: Principles, Techniques, and Tools",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 126,
+      "title": "Operating Systems: Three Easy Pieces",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 127,
+      "title": "Computer Systems: A Programmer's Perspective",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 128,
+      "title": "Introduction to the Theory of Computation",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 129,
+      "title": "Database System Concepts",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 130,
+      "title": "The Mythical Man-Month: Essays on Software Engineering",
+      "status": "ALREADY_CLEAN",
+      "pages": 31
+    },
+    {
+      "id": 131,
+      "title": "Deep Learning with Python",
+      "status": "ALREADY_CLEAN",
+      "pages": 22
+    },
+    {
+      "id": 132,
+      "title": "Project Hail Mary",
+      "status": "ALREADY_CLEAN",
+      "pages": 496
+    },
+    {
+      "id": 133,
+      "title": "The Martian",
+      "status": "ALREADY_CLEAN",
+      "pages": 384
+    },
+    {
+      "id": 134,
+      "title": "Rendezvous with Rama",
+      "status": "ALREADY_CLEAN",
+      "pages": 256
+    },
+    {
+      "id": 135,
+      "title": "Contact",
+      "status": "ALREADY_CLEAN",
+      "pages": 448
+    },
+    {
+      "id": 136,
+      "title": "Children of Time",
+      "status": "ALREADY_CLEAN",
+      "pages": 608
+    },
+    {
+      "id": 137,
+      "title": "The Forever War",
+      "status": "ALREADY_CLEAN",
+      "pages": 272
+    },
+    {
+      "id": 138,
+      "title": "Station Eleven",
+      "status": "ALREADY_CLEAN",
+      "pages": 352
+    },
+    {
+      "id": 139,
+      "title": "Childhood's End",
+      "status": "ALREADY_CLEAN",
+      "pages": 224
+    },
+    {
+      "id": 140,
+      "title": "The Old Man and the Sea",
+      "status": "ALREADY_CLEAN",
+      "pages": 128
+    },
+    {
+      "id": 141,
+      "title": "The Road",
+      "status": "ALREADY_CLEAN",
+      "pages": 287
+    },
+    {
+      "id": 142,
+      "title": "The Stranger",
+      "status": "ALREADY_CLEAN",
+      "pages": 123
+    },
+    {
+      "id": 143,
+      "title": "Catch-22",
+      "status": "ALREADY_CLEAN",
+      "pages": 453
+    },
+    {
+      "id": 144,
+      "title": "Slaughterhouse-Five",
+      "status": "ALREADY_CLEAN",
+      "pages": 275
+    },
+    {
+      "id": 145,
+      "title": "Things Fall Apart",
+      "status": "ALREADY_CLEAN",
+      "pages": 209
+    },
+    {
+      "id": 146,
+      "title": "The Master and Margarita",
+      "status": "ALREADY_CLEAN",
+      "pages": 412
+    },
+    {
+      "id": 147,
+      "title": "Blindness",
+      "status": "ALREADY_CLEAN",
+      "pages": 352
+    },
+    {
+      "id": 148,
+      "title": "SPQR: A History of Ancient Rome",
+      "status": "ALREADY_CLEAN",
+      "pages": 608
+    },
+    {
+      "id": 149,
+      "title": "Team of Rivals: The Political Genius of Abraham Lincoln",
+      "status": "ALREADY_CLEAN",
+      "pages": 944
+    },
+    {
+      "id": 150,
+      "title": "The Wright Brothers",
+      "status": "ALREADY_CLEAN",
+      "pages": 336
+    },
+    {
+      "id": 151,
+      "title": "Churchill: A Life",
+      "status": "ALREADY_CLEAN",
+      "pages": 1088
+    },
+    {
+      "id": 152,
+      "title": "Genghis Khan and the Making of the Modern World",
+      "status": "ALREADY_CLEAN",
+      "pages": 352
+    },
+    {
+      "id": 153,
+      "title": "Alexander Hamilton",
+      "status": "ALREADY_CLEAN",
+      "pages": 832
+    },
+    {
+      "id": 154,
+      "title": "The Crusades: The Authoritative History of the War for the Holy Land",
+      "status": "ALREADY_CLEAN",
+      "pages": 784
+    },
+    {
+      "id": 155,
+      "title": "Postwar: A History of Europe Since 1945",
+      "status": "ALREADY_CLEAN",
+      "pages": 933
+    },
+    {
+      "id": 156,
+      "title": "Nicomachean Ethics",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 345
+    },
+    {
+      "id": 157,
+      "title": "Letters from a Stoic",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 158,
+      "title": "Critique of Pure Reason",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 159,
+      "title": "Thus Spoke Zarathustra",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 392
+    },
+    {
+      "id": 160,
+      "title": "Discourse on Method and Meditations on First Philosophy",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 201
+    },
+    {
+      "id": 161,
+      "title": "The Myth of Sisyphus",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 162,
+      "title": "Existentialism Is a Humanism",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 163,
+      "title": "Predictably Irrational: The Hidden Forces That Shape Our Decisions",
+      "status": "ALREADY_CLEAN",
+      "pages": 384
+    },
+    {
+      "id": 164,
+      "title": "The Power of Habit: Why We Do What We Do in Life and Business",
+      "status": "ALREADY_CLEAN",
+      "pages": 416
+    },
+    {
+      "id": 165,
+      "title": "Blink: The Power of Thinking Without Thinking",
+      "status": "ALREADY_CLEAN",
+      "pages": 320
+    },
+    {
+      "id": 166,
+      "title": "Drive: The Surprising Truth About What Motivates Us",
+      "status": "ALREADY_CLEAN",
+      "pages": 256
+    },
+    {
+      "id": 167,
+      "title": "The Man Who Mistook His Wife for a Hat",
+      "status": "ALREADY_CLEAN",
+      "pages": 243
+    },
+    {
+      "id": 168,
+      "title": "Behave: The Biology of Humans at Our Best and Worst",
+      "status": "ALREADY_CLEAN",
+      "pages": 800
+    },
+    {
+      "id": 169,
+      "title": "Stumbling on Happiness",
+      "status": "ALREADY_CLEAN",
+      "pages": 336
+    },
+    {
+      "id": 170,
+      "title": "The Innovator's Dilemma: When New Technologies Cause Great Firms to Fail",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 171,
+      "title": "Thinking in Bets: Making Smarter Decisions When You Don't Have All the Facts",
+      "status": "ALREADY_CLEAN",
+      "pages": 288
+    },
+    {
+      "id": 172,
+      "title": "The Hard Thing About Hard Things: Building a Business When There Are No Easy Answers",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 173,
+      "title": "Capital in the Twenty-First Century",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 174,
+      "title": "Liar's Poker: Rising Through the Wreckage on Wall Street",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 175,
+      "title": "Built to Last: Successful Habits of Visionary Companies",
+      "status": "ALREADY_CLEAN",
+      "pages": 368
+    },
+    {
+      "id": 176,
+      "title": "Rework",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 177,
+      "title": "The Gene: An Intimate History",
+      "status": "ALREADY_CLEAN",
+      "pages": 608
+    },
+    {
+      "id": 178,
+      "title": "The Emperor of All Maladies: A Biography of Cancer",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 179,
+      "title": "Seven Brief Lessons on Physics",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 180,
+      "title": "Chaos: Making a New Science",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 181,
+      "title": "Fermat's Enigma: The Epic Quest to Solve the World's Greatest Mathematical Problem",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 182,
+      "title": "The Character of Physical Law",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 183,
+      "title": "The Fabric of the Cosmos: Space, Time, and the Texture of Reality",
+      "status": "ALREADY_CLEAN",
+      "pages": 18
+    },
+    {
+      "id": 605,
+      "title": "Echoes of Antiquity",
+      "status": "ALREADY_CLEAN",
+      "pages": 340
+    },
+    {
+      "id": 606,
+      "title": "The Three Musketeers",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 760
+    },
+    {
+      "id": 607,
+      "title": "The Hunchback of Notre-Dame",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 547
+    },
+    {
+      "id": 608,
+      "title": "The Iliad",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 520
+    },
+    {
+      "id": 609,
+      "title": "The Divine Comedy",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 166
+    },
+    {
+      "id": 610,
+      "title": "Madame Bovary",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 372
+    },
+    {
+      "id": 611,
+      "title": "The Idiot",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 709
+    },
+    {
+      "id": 612,
+      "title": "Notes from Underground",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 100
+    },
+    {
+      "id": 613,
+      "title": "Fathers and Sons",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 112
+    },
+    {
+      "id": 614,
+      "title": "Candide",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 117
+    },
+    {
+      "id": 615,
+      "title": "Faust",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 107
+    },
+    {
+      "id": 616,
+      "title": "The Sorrows of Young Werther",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 111
+    },
+    {
+      "id": 617,
+      "title": "Sense and Sensibility",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 357
+    },
+    {
+      "id": 618,
+      "title": "Emma",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 463
+    },
+    {
+      "id": 619,
+      "title": "Persuasion",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 244
+    },
+    {
+      "id": 620,
+      "title": "Northanger Abbey",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 217
+    },
+    {
+      "id": 621,
+      "title": "Mansfield Park",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 450
+    },
+    {
+      "id": 622,
+      "title": "Villette",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 146
+    },
+    {
+      "id": 623,
+      "title": "The Tenant of Wildfell Hall",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 505
+    },
+    {
+      "id": 624,
+      "title": "Little Women",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 582
+    },
+    {
+      "id": 625,
+      "title": "Little Men",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 332
+    },
+    {
+      "id": 626,
+      "title": "Middlemarch",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 897
+    },
+    {
+      "id": 627,
+      "title": "Silas Marner",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 184
+    },
+    {
+      "id": 628,
+      "title": "The Mill on the Floss",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 566
+    },
+    {
+      "id": 629,
+      "title": "The Hound of the Baskervilles",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 180
+    },
+    {
+      "id": 630,
+      "title": "A Study in Scarlet",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 133
+    },
+    {
+      "id": 631,
+      "title": "The Sign of the Four",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 127
+    },
+    {
+      "id": 632,
+      "title": "The Memoirs of Sherlock Holmes",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 291
+    },
+    {
+      "id": 633,
+      "title": "The Return of Sherlock Holmes",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 332
+    },
+    {
+      "id": 634,
+      "title": "The Valley of Fear",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 188
+    },
+    {
+      "id": 635,
+      "title": "His Last Bow",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 179
+    },
+    {
+      "id": 636,
+      "title": "The Mysterious Affair at Styles",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 189
+    },
+    {
+      "id": 637,
+      "title": "The Secret Adversary",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 255
+    },
+    {
+      "id": 638,
+      "title": "The Murder on the Links",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 215
+    },
+    {
+      "id": 639,
+      "title": "The Murders in the Rue Morgue",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 229
+    },
+    {
+      "id": 640,
+      "title": "The Mystery of Marie Rog\u00eat",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 260
+    },
+    {
+      "id": 641,
+      "title": "The Purloined Letter",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 251
+    },
+    {
+      "id": 642,
+      "title": "The Moonstone",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 575
+    },
+    {
+      "id": 643,
+      "title": "The Woman in White",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 716
+    },
+    {
+      "id": 644,
+      "title": "The Innocence of Father Brown",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 232
+    },
+    {
+      "id": 645,
+      "title": "The Wisdom of Father Brown",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 212
+    },
+    {
+      "id": 646,
+      "title": "The Man Who Was Thursday",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 179
+    },
+    {
+      "id": 647,
+      "title": "The Mystery of the Yellow Room",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 184
+    },
+    {
+      "id": 648,
+      "title": "The Phantom of the Opera",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 275
+    },
+    {
+      "id": 649,
+      "title": "Trent's Last Case",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 102
+    },
+    {
+      "id": 650,
+      "title": "The Red House Mystery",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 197
+    },
+    {
+      "id": 651,
+      "title": "The Jewel of Seven Stars",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 246
+    },
+    {
+      "id": 652,
+      "title": "The Lair of the White Worm",
+      "status": "ALREADY_CLEAN",
+      "pages": 260
+    },
+    {
+      "id": 653,
+      "title": "Strange Case of Dr Jekyll and Mr Hyde",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 69
+    },
+    {
+      "id": 654,
+      "title": "The Castle of Otranto",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 45
+    },
+    {
+      "id": 655,
+      "title": "The Mysteries of Udolpho",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 799
+    },
+    {
+      "id": 656,
+      "title": "The Monk",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 369
+    },
+    {
+      "id": 657,
+      "title": "Vathek",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 363
+    },
+    {
+      "id": 658,
+      "title": "Carmilla",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 91
+    },
+    {
+      "id": 659,
+      "title": "The King in Yellow",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 214
+    },
+    {
+      "id": 660,
+      "title": "The Fall of the House of Usher",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 20
+    },
+    {
+      "id": 661,
+      "title": "The Pit and the Pendulum",
+      "status": "ALREADY_CLEAN",
+      "pages": 160
+    },
+    {
+      "id": 662,
+      "title": "The Turn of the Screw",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 121
+    },
+    {
+      "id": 663,
+      "title": "The Wonderful Wizard of Oz",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 133
+    },
+    {
+      "id": 664,
+      "title": "The Marvelous Land of Oz",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 145
+    },
+    {
+      "id": 665,
+      "title": "Ozma of Oz",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 128
+    },
+    {
+      "id": 666,
+      "title": "The Wind in the Willows",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 175
+    },
+    {
+      "id": 667,
+      "title": "Peter and Wendy",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 32
+    },
+    {
+      "id": 668,
+      "title": "The Secret Garden",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 261
+    },
+    {
+      "id": 669,
+      "title": "A Little Princess",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 208
+    },
+    {
+      "id": 670,
+      "title": "Through the Looking-Glass",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 97
+    },
+    {
+      "id": 671,
+      "title": "Grimms' Fairy Tales",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 284
+    },
+    {
+      "id": 672,
+      "title": "Andersen's Fairy Tales",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 60
+    },
+    {
+      "id": 673,
+      "title": "The Blue Fairy Book",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 11
+    },
+    {
+      "id": 674,
+      "title": "The Water-Babies",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 210
+    },
+    {
+      "id": 675,
+      "title": "The Princess and the Goblin",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 151
+    },
+    {
+      "id": 676,
+      "title": "Adventures of Huckleberry Finn",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 335
+    },
+    {
+      "id": 677,
+      "title": "The Adventures of Tom Sawyer",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 226
+    },
+    {
+      "id": 678,
+      "title": "A Connecticut Yankee in King Arthur's Court",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 345
+    },
+    {
+      "id": 679,
+      "title": "The Prince and the Pauper",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 209
+    },
+    {
+      "id": 680,
+      "title": "Treasure Island",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 221
+    },
+    {
+      "id": 681,
+      "title": "Kidnapped",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 258
+    },
+    {
+      "id": 682,
+      "title": "Robinson Crusoe",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 321
+    },
+    {
+      "id": 683,
+      "title": "Gulliver's Travels",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 252
+    },
+    {
+      "id": 684,
+      "title": "The Call of the Wild",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 92
+    },
+    {
+      "id": 685,
+      "title": "White Fang",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 217
+    },
+    {
+      "id": 686,
+      "title": "The Sea-Wolf",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 336
+    },
+    {
+      "id": 687,
+      "title": "The Red Badge of Courage",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 151
+    },
+    {
+      "id": 688,
+      "title": "The Last of the Mohicans",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 433
+    },
+    {
+      "id": 689,
+      "title": "King Solomon's Mines",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 250
+    },
+    {
+      "id": 690,
+      "title": "The Prisoner of Zenda",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 172
+    },
+    {
+      "id": 691,
+      "title": "Captains Courageous",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 160
+    },
+    {
+      "id": 692,
+      "title": "Kim",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 321
+    },
+    {
+      "id": 693,
+      "title": "The Jungle Book",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 153
+    },
+    {
+      "id": 694,
+      "title": "The War of the Worlds",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 183
+    },
+    {
+      "id": 695,
+      "title": "The Invisible Man",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 160
+    },
+    {
+      "id": 696,
+      "title": "The Island of Doctor Moreau",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 134
+    },
+    {
+      "id": 697,
+      "title": "The First Men in the Moon",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 208
+    },
+    {
+      "id": 698,
+      "title": "Twenty Thousand Leagues Under the Sea",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 321
+    },
+    {
+      "id": 699,
+      "title": "Journey to the Center of the Earth",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 287
+    },
+    {
+      "id": 700,
+      "title": "Around the World in Eighty Days",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 206
+    },
+    {
+      "id": 701,
+      "title": "From the Earth to the Moon",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 298
+    },
+    {
+      "id": 702,
+      "title": "The Lost World",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 212
+    },
+    {
+      "id": 703,
+      "title": "A Princess of Mars",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 214
+    },
+    {
+      "id": 704,
+      "title": "Flatland: A Romance of Many Dimensions",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 100
+    },
+    {
+      "id": 705,
+      "title": "Looking Backward: 2000-1887",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 215
+    },
+    {
+      "id": 706,
+      "title": "R.U.R. (Rossum\u2019s Universal Robots)",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 82
+    },
+    {
+      "id": 707,
+      "title": "The Symposium",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 66
+    },
+    {
+      "id": 708,
+      "title": "The Nicomachean Ethics",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 345
+    },
+    {
+      "id": 709,
+      "title": "Discourse on the Method",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 44
+    },
+    {
+      "id": 710,
+      "title": "Leviathan",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 536
+    },
+    {
+      "id": 711,
+      "title": "Ethics",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 240
+    },
+    {
+      "id": 712,
+      "title": "Second Treatise of Government",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 143
+    },
+    {
+      "id": 713,
+      "title": "The Social Contract",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 319
+    },
+    {
+      "id": 714,
+      "title": "Thus Spake Zarathustra",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 392
+    },
+    {
+      "id": 715,
+      "title": "Utilitarianism",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 58
+    },
+    {
+      "id": 716,
+      "title": "On Liberty",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 99
+    },
+    {
+      "id": 717,
+      "title": "Walden",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 262
+    },
+    {
+      "id": 718,
+      "title": "On the Origin of Species",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 372
+    },
+    {
+      "id": 719,
+      "title": "The Voyage of the Beagle",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 520
+    },
+    {
+      "id": 720,
+      "title": "Relativity: The Special and General Theory",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 90
+    },
+    {
+      "id": 721,
+      "title": "The Chemical History of a Candle",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 95
+    },
+    {
+      "id": 722,
+      "title": "Micrographia",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 393
+    },
+    {
+      "id": 723,
+      "title": "Opticks",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 216
+    },
+    {
+      "id": 724,
+      "title": "The Interpretation of Dreams",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 112
+    },
+    {
+      "id": 725,
+      "title": "Psychopathology of Everyday Life",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 119
+    },
+    {
+      "id": 726,
+      "title": "The Varieties of Religious Experience",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 470
+    },
+    {
+      "id": 727,
+      "title": "The Crowd: A Study of the Popular Mind",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 161
+    },
+    {
+      "id": 728,
+      "title": "The Wealth of Nations",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 897
+    },
+    {
+      "id": 729,
+      "title": "The Theory of Moral Sentiments",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 20
+    },
+    {
+      "id": 730,
+      "title": "The Theory of the Leisure Class",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 252
+    },
+    {
+      "id": 731,
+      "title": "The Protestant Ethic and the Spirit of Capitalism",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 15
+    },
+    {
+      "id": 732,
+      "title": "The Histories",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 425
+    },
+    {
+      "id": 733,
+      "title": "The History of the Peloponnesian War",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 498
+    },
+    {
+      "id": 734,
+      "title": "The Decline and Fall of the Roman Empire",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 425
+    },
+    {
+      "id": 735,
+      "title": "Narrative of the Life of Frederick Douglass",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 95
+    },
+    {
+      "id": 736,
+      "title": "The Souls of Black Folk",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 183
+    },
+    {
+      "id": 737,
+      "title": "The Autobiography of Benjamin Franklin",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 301
+    },
+    {
+      "id": 738,
+      "title": "The Scarlet Letter",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 225
+    },
+    {
+      "id": 739,
+      "title": "The House of the Seven Gables",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 288
+    },
+    {
+      "id": 740,
+      "title": "Leaves of Grass",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 273
+    },
+    {
+      "id": 741,
+      "title": "Dubliners",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 205
+    },
+    {
+      "id": 742,
+      "title": "A Portrait of the Artist as a Young Man",
+      "status": "AUTHENTIC_GUTENBERG",
+      "pages": 253
+    },
+    {
+      "id": 772,
+      "title": "Winnie-the-Pooh",
+      "status": "VALID_EPUB",
+      "pages": 168
+    }
+  ]
+}

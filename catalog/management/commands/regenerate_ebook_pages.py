@@ -88,7 +88,7 @@ class Command(BaseCommand):
             }
 
             try:
-                document_html = BookContentSynthesizer.generate_full_edition(book_payload)
+                document_html, actual_pages = BookContentSynthesizer.generate_edition_with_pages(book_payload)
                 encoded = document_html.encode('utf-8')
 
                 # Ensure filename
@@ -102,7 +102,7 @@ class Command(BaseCommand):
 
                 ebook.protected_filename = filename
                 ebook.format = 'HTML'
-                ebook.page_count = target_pages
+                ebook.page_count = actual_pages
                 ebook.file_size = len(encoded)
                 ebook.original_file_name = f"{re.sub(r'[^a-zA-Z0-9_-]', '_', title)[:60]}.html"
                 ebook.save(update_fields=['protected_filename', 'format', 'page_count', 'file_size', 'original_file_name'])

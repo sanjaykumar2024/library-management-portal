@@ -542,7 +542,7 @@ class OpenSourceEBookService:
             target_pages = max(int(book_data['pages']), target_pages)
 
         # Synthesize complete unabridged digital publication
-        full_document = BookContentSynthesizer.generate_full_edition({
+        full_document, target_pages = BookContentSynthesizer.generate_edition_with_pages({
             'title': book.title,
             'author': clean_author_name,
             'category': category.name if category else 'Literature',

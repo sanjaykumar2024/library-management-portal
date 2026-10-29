@@ -273,6 +273,17 @@ class GutenbergService:
         'house of the seven gables': 77,
         'a portrait of the artist as a young man': 4217,
         'portrait of the artist as a young man': 4217,
+        'discourse on the method': 59,
+        'letters from a stoic': 56075,
+        'thus spoke zarathustra': 1998,
+        'the pit and the pendulum': 1064,
+        'pit and the pendulum': 1064,
+        'the lair of the white worm': 11805,
+        'lair of the white worm': 11805,
+        'monster no more': 69733,
+        'the project gutenberg ebook of monster no more': 69733,
+        'winnie-the-pooh': 67098,
+        'winnie the pooh': 67098,
     }
 
     @classmethod

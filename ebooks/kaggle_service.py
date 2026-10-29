@@ -97,9 +97,8 @@ class KaggleEBookService:
             if res:
                 return res[0], res[1]
 
-        target_pages = book_data.get('pages', 350)
-        doc = BookContentSynthesizer.generate_full_edition(book_data)
-        return doc, target_pages
+        doc, actual_pages = BookContentSynthesizer.generate_edition_with_pages(book_data)
+        return doc, actual_pages
 
     @classmethod
     def import_single_book(cls, row: dict, uploaded_by=None, access_mode='READ_AND_DOWNLOAD', rights_status='LIBRARY_LICENSED', overwrite=False):

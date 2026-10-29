@@ -247,9 +247,16 @@ def ebook_stream_view(request, ebook_id):
         
     try:
         file_path = services.get_protected_file_path(ebook)
-        is_html = ebook.format == 'HTML' or str(file_path).endswith('.html') or str(file_path).endswith('.htm')
-        content_type = 'text/html; charset=utf-8' if is_html else 'application/pdf'
-        default_ext = '.html' if is_html else '.pdf'
+        ext_lower = str(file_path).lower()
+        if ebook.format == 'EPUB' or ext_lower.endswith('.epub'):
+            content_type = 'application/epub+zip'
+            default_ext = '.epub'
+        elif ebook.format == 'HTML' or ext_lower.endswith('.html') or ext_lower.endswith('.htm'):
+            content_type = 'text/html; charset=utf-8'
+            default_ext = '.html'
+        else:
+            content_type = 'application/pdf'
+            default_ext = '.pdf'
         
         response = FileResponse(open(file_path, 'rb'), content_type=content_type)
         response['Content-Disposition'] = f'inline; filename="{ebook.original_file_name or "ebook" + default_ext}"'
@@ -279,9 +286,16 @@ def ebook_download_view(request, ebook_id):
         
     try:
         file_path = services.get_protected_file_path(ebook)
-        is_html = ebook.format == 'HTML' or str(file_path).endswith('.html') or str(file_path).endswith('.htm')
-        content_type = 'text/html; charset=utf-8' if is_html else 'application/pdf'
-        default_ext = '.html' if is_html else '.pdf'
+        ext_lower = str(file_path).lower()
+        if ebook.format == 'EPUB' or ext_lower.endswith('.epub'):
+            content_type = 'application/epub+zip'
+            default_ext = '.epub'
+        elif ebook.format == 'HTML' or ext_lower.endswith('.html') or ext_lower.endswith('.htm'):
+            content_type = 'text/html; charset=utf-8'
+            default_ext = '.html'
+        else:
+            content_type = 'application/pdf'
+            default_ext = '.pdf'
         
         # Log download access
         services.log_ebook_access(request.user, ebook, 'DOWNLOAD', get_client_ip(request))
