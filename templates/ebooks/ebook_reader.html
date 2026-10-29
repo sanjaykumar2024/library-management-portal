@@ -3,6 +3,63 @@
 {% block page_title %}Online Reader — {{ ebook.book.title }}{% endblock %}
 
 {% block content %}
+<style>
+/* ── Floating Reader Navigation Chevrons ── */
+.reader-edge-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 70px;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    cursor: pointer;
+    z-index: 25;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+.reader-edge-prev {
+    left: 0;
+    border-radius: 0 10px 10px 0;
+}
+.reader-edge-next {
+    right: 0;
+    border-radius: 10px 0 0 10px;
+}
+#readerContainer:hover .reader-edge-nav-btn {
+    opacity: 0.85;
+}
+.reader-edge-nav-btn:hover {
+    opacity: 1 !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    color: #38bdf8 !important;
+}
+.reader-scrubber {
+    height: 6px;
+    accent-color: #6366f1;
+    cursor: pointer;
+}
+.reader-page-badge {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    font-weight: 600;
+}
+.toc-jump-item {
+    transition: background 0.15s ease;
+    border-radius: 6px;
+}
+.toc-jump-item:hover {
+    background: var(--glass-bg-hover);
+}
+</style>
+
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
     <div>
         <a href="{% url 'ebooks:detail' ebook.id %}" class="text-decoration-none small" style="color: var(--text-secondary); font-weight: 500;">
@@ -12,17 +69,43 @@
             <i class="bi bi-book-half me-2" style="color: var(--accent-primary-hover);"></i>{{ ebook.book.title }}
         </h3>
         <p class="small mb-0" style="color: var(--text-muted);">
-            By {{ ebook.book.author }} &bull; {{ ebook.page_count|default:"--" }} pages &bull; 
+            By {{ ebook.book.author }} &bull; <strong class="text-primary" id="headerPageCount">{{ ebook.page_count|default:"380" }}</strong> pages &bull; 
             <span class="badge rounded-pill" style="background: rgba(16,185,129,0.15); color: #10B981; font-weight: 600; font-size: 0.72rem;">{{ ebook.get_rights_status_display }}</span>
         </p>
     </div>
 
     <!-- Reader Control Bar -->
     <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Table of Contents Offcanvas Trigger -->
+        <button type="button" class="btn btn-sm reader-ctrl-btn d-flex align-items-center gap-1" data-bs-toggle="offcanvas" data-bs-target="#tocDrawer" title="Table of Contents & Chapters">
+            <i class="bi bi-list-nested text-primary"></i> <span>Contents</span>
+        </button>
+
+        <!-- Virtual Page Flip & Pagination Group -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Page Navigation">
+            <button type="button" class="btn reader-ctrl-btn d-flex align-items-center gap-1" id="btnPrevPage" onclick="prevPage()" title="Previous Page (Key: ← or PageUp)">
+                <i class="bi bi-chevron-left"></i> <span class="d-none d-sm-inline">Prev</span>
+            </button>
+            <div class="d-flex align-items-center gap-1 px-2 py-0 border-top border-bottom" style="background: var(--card-bg); border-color: var(--glass-border) !important;">
+                <span class="small text-muted d-none d-md-inline">p.</span>
+                <input type="number" id="readerPageInput" min="1" max="{{ ebook.page_count|default:380 }}" value="1" class="form-control form-control-sm text-center py-0 px-1 fw-bold" style="width: 54px; height: 26px; font-size: 0.82rem;" onchange="jumpToPage(this.value)" onkeydown="if(event.key==='Enter') jumpToPage(this.value)">
+                <span class="small text-muted">/ <strong id="readerTotalPages">{{ ebook.page_count|default:380 }}</strong></span>
+            </div>
+            <button type="button" class="btn reader-ctrl-btn d-flex align-items-center gap-1" id="btnNextPage" onclick="nextPage()" title="Next Page (Key: → or PageDown)">
+                <span class="d-none d-sm-inline">Next</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- View Mode Switcher: Single Page vs Continuous Scroll -->
+        <button type="button" class="btn btn-sm reader-ctrl-btn d-flex align-items-center gap-1" id="viewModeToggleBtn" onclick="toggleViewMode()" title="Toggle Single Page vs Continuous Scroll">
+            <i class="bi bi-file-earmark-text text-primary" id="viewModeIcon"></i>
+            <span id="viewModeLabel" class="d-none d-md-inline">Single Page</span>
+        </button>
+
         <!-- TTS Audio Player Controls -->
         <div class="btn-group btn-group-sm" role="group" aria-label="Audio Narration">
             <button type="button" class="btn reader-audio-btn d-flex align-items-center gap-1" id="ttsPlayBtn" onclick="toggleTTS()" title="Play / Pause Audio Narration">
-                <i class="bi bi-play-fill" id="ttsPlayIcon"></i> <span id="ttsPlayText">Listen</span>
+                <i class="bi bi-play-fill" id="ttsPlayIcon"></i> <span id="ttsPlayText" class="d-none d-sm-inline">Listen</span>
             </button>
             <button type="button" class="btn reader-audio-split-btn dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false" title="Narration Speed">
                 <span class="visually-hidden">Toggle Speed</span>
@@ -38,7 +121,7 @@
 
         <!-- Notes & Highlights Drawer Button -->
         <button type="button" class="btn btn-sm reader-notes-btn d-flex align-items-center gap-1" data-bs-toggle="offcanvas" data-bs-target="#annotationsDrawer" onclick="loadAnnotations()" title="View Saved Notes & Highlights">
-            <i class="bi bi-pen me-1"></i> Notes (<span id="annotationCountBadge">0</span>)
+            <i class="bi bi-pen me-1"></i> <span class="d-none d-sm-inline">Notes</span> (<span id="annotationCountBadge">0</span>)
         </button>
 
         <!-- Font Sizing -->
@@ -51,7 +134,7 @@
         <!-- Theme Switcher Dropdown -->
         <div class="dropdown">
             <button class="btn btn-sm reader-ctrl-btn dropdown-toggle d-flex align-items-center gap-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="themeDropdownBtn" title="Change Reading Theme">
-                <i class="bi bi-palette me-1 text-primary"></i> <span id="currentThemeLabel">Theme</span>
+                <i class="bi bi-palette text-primary"></i> <span id="currentThemeLabel" class="d-none d-lg-inline">Theme</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-lg reader-dropdown-menu">
                 <li><h6 class="dropdown-header small text-uppercase">Page Background</h6></li>
@@ -63,7 +146,7 @@
         </div>
 
         <!-- Session Reading Time -->
-        <div class="reader-timer-pill" title="Session Reading Time">
+        <div class="reader-timer-pill d-none d-sm-flex" title="Session Reading Time">
             <i class="bi bi-stopwatch text-primary"></i>
             <span id="readingTimer">00:00</span>
         </div>
@@ -71,7 +154,7 @@
         <!-- Fullscreen Button -->
         <button type="button" onclick="toggleFullscreen()" class="btn btn-sm reader-fullscreen-btn" id="mainFullscreenBtn" title="Toggle Fullscreen (Key: F)">
             <i class="bi bi-arrows-fullscreen text-primary" id="mainFullscreenIcon"></i>
-            <span id="mainFullscreenLabel">Fullscreen</span>
+            <span id="mainFullscreenLabel" class="d-none d-lg-inline">Fullscreen</span>
         </button>
 
         {% if ebook.access_mode == 'READ_AND_DOWNLOAD' %}
@@ -82,7 +165,7 @@
     </div>
 </div>
 
-<!-- Reader Container with Live Reading Progress Bar -->
+<!-- Reader Container with Live Reading Progress Bar & Scrubber -->
 <div id="readerContainer" class="reader-card-container p-0 mb-3 overflow-hidden position-relative">
     <!-- Fullscreen Floating / Sticky Control Bar (Visible in Fullscreen Only) -->
     <div id="readerFullscreenBar" class="reader-fullscreen-bar">
@@ -96,6 +179,15 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <!-- Fullscreen Pagination -->
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn reader-btn-fs" onclick="prevPage()" title="Previous Page">&larr;</button>
+                <span class="reader-btn-fs text-white font-monospace small px-2">
+                    <span id="fsPageCurrent">1</span> / <span id="fsPageTotal">{{ ebook.page_count|default:380 }}</span>
+                </span>
+                <button type="button" class="btn reader-btn-fs" onclick="nextPage()" title="Next Page">&rarr;</button>
+            </div>
+
             <!-- Fullscreen Font Sizing -->
             <div class="btn-group btn-group-sm reader-zoom-btn-group" role="group">
                 <button type="button" class="btn reader-btn-fs" onclick="adjustFontSize(-1)" title="Zoom Out">A-</button>
@@ -134,13 +226,29 @@
         </div>
     </div>
 
-    <!-- Reading Progress Bar -->
+    <!-- Live Reading Progress Bar -->
     <div class="progress" style="height: 3px; border-radius: 0; background: rgba(0,0,0,0.06);">
-        <div id="readingProgressBar" class="progress-bar" role="progressbar" style="width: 5%; background: linear-gradient(90deg, #6366F1, #EC4899);" aria-valuenow="5" aria-valuemin="0" aria-valuemax="100"></div>
+        <div id="readingProgressBar" class="progress-bar" role="progressbar" style="width: 1%; background: linear-gradient(90deg, #6366F1, #EC4899);" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100"></div>
     </div>
 
+    <!-- Interactive Page Scrubber Bar -->
+    <div class="px-3 py-1 d-flex align-items-center gap-3 border-bottom" style="background: var(--card-bg); border-color: var(--glass-border) !important;">
+        <span class="small font-monospace text-muted" id="scrubberCurrentDisplay" style="min-width: 55px;">p. 1</span>
+        <input type="range" class="form-range reader-scrubber flex-grow-1" id="readerPageScrubber" min="1" max="{{ ebook.page_count|default:380 }}" value="1" oninput="onScrubInput(this.value)" onchange="jumpToPage(this.value)">
+        <span class="small font-monospace text-muted" id="scrubberTotalDisplay" style="min-width: 65px; text-align: right;">p. {{ ebook.page_count|default:380 }}</span>
+        <span class="badge reader-page-badge font-monospace px-2 py-1" id="readingProgressPercent">1%</span>
+    </div>
+
+    <!-- Edge Navigation Chevrons -->
+    <button type="button" class="reader-edge-nav-btn reader-edge-prev" onclick="prevPage()" title="Previous Page (Key: ← or PageUp)">
+        <i class="bi bi-chevron-left"></i>
+    </button>
+    <button type="button" class="reader-edge-nav-btn reader-edge-next" onclick="nextPage()" title="Next Page (Key: → or PageDown)">
+        <i class="bi bi-chevron-right"></i>
+    </button>
+
     <!-- Embedded Reader Frame -->
-    <div class="reader-frame-wrapper">
+    <div class="reader-frame-wrapper" style="position: relative;">
         <iframe id="pdfFrame" src="{{ stream_url }}{% if ebook.format == 'PDF' %}#toolbar=1&navpanes=0{% endif %}" title="{{ ebook.book.title }}" class="w-100 h-100" style="border: none; background: #ffffff; transition: all 0.2s;"></iframe>
     </div>
 </div>
@@ -149,7 +257,7 @@
 <div class="p-3 reader-footer-bar d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
     <div class="small d-flex align-items-center gap-2" style="color: var(--text-secondary); font-weight: 500;">
         <i class="bi bi-shield-check" style="color: var(--accent-success); font-size: 1.1rem;"></i>
-        <span>Protected Digital Stream &bull; Format: <strong>{{ ebook.format }}</strong> &bull; Press <kbd class="reader-kbd">F</kbd> for Fullscreen</span>
+        <span>Protected Stream &bull; Total Extent: <strong>{{ ebook.page_count|default:"380" }} Pages</strong> &bull; Press <kbd class="reader-kbd">←</kbd> / <kbd class="reader-kbd">→</kbd> to turn pages &bull; <kbd class="reader-kbd">F</kbd> for Fullscreen</span>
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
         <button type="button" class="btn btn-sm reader-notes-btn d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newNoteModal">
@@ -161,6 +269,84 @@
         <a href="{% url 'ebooks:catalog' %}" class="btn btn-sm reader-ctrl-btn">
             <i class="bi bi-x-circle me-1"></i> Close Reader
         </a>
+    </div>
+</div>
+
+<!-- Offcanvas Sidebar: Table of Contents & Chapter Navigator -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="tocDrawer" style="background: var(--card-bg); color: var(--text-primary); border-right: 1px solid var(--glass-border); width: 380px;">
+    <div class="offcanvas-header border-bottom" style="border-color: var(--glass-border) !important;">
+        <h5 class="offcanvas-title fw-bold" style="color: var(--text-primary);">
+            <i class="bi bi-list-nested text-primary me-2"></i>Table of Contents
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="small text-muted">Jump to any part or chapter:</span>
+            <span class="badge bg-secondary font-monospace">{{ ebook.page_count|default:380 }} Pages</span>
+        </div>
+
+        <div id="tocListContainer" class="d-flex flex-column gap-1">
+            <!-- Front matter standard links -->
+            <a href="javascript:void(0)" onclick="jumpToPage(1); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-bookmark text-muted me-2"></i>Half-Title & Colophon</span>
+                <span class="badge bg-light text-dark font-monospace">p. 1</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(2); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-card-heading text-muted me-2"></i>Title Page</span>
+                <span class="badge bg-light text-dark font-monospace">p. 2</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(3); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-shield-check text-muted me-2"></i>Copyright & CIP Data</span>
+                <span class="badge bg-light text-dark font-monospace">p. 3</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(5); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-table text-muted me-2"></i>Table of Contents</span>
+                <span class="badge bg-light text-dark font-monospace">p. 5</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(6); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-journal-text text-muted me-2"></i>Preface to the Complete Edition</span>
+                <span class="badge bg-light text-dark font-monospace">p. 6</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(8); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-file-text text-muted me-2"></i>Executive Synopsis & Core Scope</span>
+                <span class="badge bg-light text-dark font-monospace">p. 8</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(10); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-person text-muted me-2"></i>About the Author: {{ ebook.book.author }}</span>
+                <span class="badge bg-light text-dark font-monospace">p. 10</span>
+            </a>
+
+            <div class="border-top my-2 pt-2 small text-uppercase text-muted fw-bold">Main Volume Chapters</div>
+            <a href="javascript:void(0)" onclick="jumpToPage(11); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span class="fw-semibold"><i class="bi bi-book text-primary me-2"></i>Part I: Chapter 1</span>
+                <span class="badge bg-light text-dark font-monospace">p. 11</span>
+            </a>
+            <!-- Additional chapter anchors dynamically populated on load -->
+            <div id="dynamicTocChapters" class="d-flex flex-column gap-1"></div>
+
+            <div class="border-top my-2 pt-2 small text-uppercase text-muted fw-bold">Back Matter & Reference</div>
+            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 14)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-spellcheck text-muted me-2"></i>Comprehensive Glossary</span>
+                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-14" }}</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 10)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-chat-square-dots text-muted me-2"></i>Seminar Study & Discussion Guide</span>
+                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-10" }}</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 7)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-collection text-muted me-2"></i>Scholarly Bibliography</span>
+                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-7" }}</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 4)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-search text-muted me-2"></i>Master Analytical Index</span>
+                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-4" }}</span>
+            </a>
+            <a href="javascript:void(0)" onclick="jumpToPage(TOTAL_PAGES); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                <span><i class="bi bi-award text-muted me-2"></i>Colophon & Preservation Record</span>
+                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|default:380 }}</span>
+            </a>
+        </div>
     </div>
 </div>
 
@@ -236,8 +422,201 @@
 <script>
 const EBOOK_ID = {{ ebook.id }};
 const CSRF_TOKEN = '{{ csrf_token }}';
+const TOTAL_PAGES = {{ ebook.page_count|default:380 }};
 
-// ── Session Reading Stopwatch ────────────────────────────────────────────────
+let currentPage = 1;
+let currentViewMode = 'single'; // 'single' or 'continuous'
+
+// ── In-Reader Page Navigation & Synchronization ──────────────────────────────
+function jumpToPage(p) {
+    p = parseInt(p);
+    if (isNaN(p)) return;
+    if (p < 1) p = 1;
+    if (p > TOTAL_PAGES) p = TOTAL_PAGES;
+    currentPage = p;
+
+    // Synchronize parent UI elements
+    updatePaginationUI();
+
+    // Dispatch to iframe
+    postToReaderFrame({ action: 'GOTO_PAGE', page: currentPage });
+
+    // Fallback: direct same-origin DOM access
+    try {
+        const frame = document.getElementById('pdfFrame');
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        if (frameDoc) {
+            const pageEl = frameDoc.getElementById('page-' + currentPage);
+            if (pageEl) {
+                if (currentViewMode === 'single') {
+                    frameDoc.querySelectorAll('.book-page').forEach(el => el.classList.remove('active-page'));
+                    pageEl.classList.add('active-page');
+                    frame.contentWindow.scrollTo(0, 0);
+                } else {
+                    pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+    } catch(e) {}
+
+    // Save reading position locally
+    try {
+        localStorage.setItem('librarysphere_read_page_' + EBOOK_ID, currentPage);
+    } catch(e) {}
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        jumpToPage(currentPage - 1);
+    }
+}
+
+function nextPage() {
+    if (currentPage < TOTAL_PAGES) {
+        jumpToPage(currentPage + 1);
+    }
+}
+
+function onScrubInput(val) {
+    const p = parseInt(val);
+    const currEl = document.getElementById('scrubberCurrentDisplay');
+    if (currEl) currEl.textContent = 'p. ' + p;
+    const pageInput = document.getElementById('readerPageInput');
+    if (pageInput) pageInput.value = p;
+    const fsCurrent = document.getElementById('fsPageCurrent');
+    if (fsCurrent) fsCurrent.textContent = p;
+    const pct = Math.round((p / TOTAL_PAGES) * 100);
+    const pctBadge = document.getElementById('readingProgressPercent');
+    if (pctBadge) pctBadge.textContent = pct + '%';
+    const progBar = document.getElementById('readingProgressBar');
+    if (progBar) progBar.style.width = pct + '%';
+}
+
+function updatePaginationUI() {
+    const pageInput = document.getElementById('readerPageInput');
+    if (pageInput) pageInput.value = currentPage;
+
+    const scrubber = document.getElementById('readerPageScrubber');
+    if (scrubber) scrubber.value = currentPage;
+
+    const scrubberCur = document.getElementById('scrubberCurrentDisplay');
+    if (scrubberCur) scrubberCur.textContent = 'p. ' + currentPage;
+
+    const fsCurrent = document.getElementById('fsPageCurrent');
+    if (fsCurrent) fsCurrent.textContent = currentPage;
+
+    const pct = Math.max(1, Math.round((currentPage / TOTAL_PAGES) * 100));
+    const pctBadge = document.getElementById('readingProgressPercent');
+    if (pctBadge) pctBadge.textContent = pct + '%';
+
+    const progBar = document.getElementById('readingProgressBar');
+    if (progBar) progBar.style.width = pct + '%';
+
+    // Disable/enable Prev/Next buttons
+    const prevBtn = document.getElementById('btnPrevPage');
+    if (prevBtn) prevBtn.disabled = (currentPage <= 1);
+    const nextBtn = document.getElementById('btnNextPage');
+    if (nextBtn) nextBtn.disabled = (currentPage >= TOTAL_PAGES);
+}
+
+function toggleViewMode() {
+    if (currentViewMode === 'single') {
+        currentViewMode = 'continuous';
+    } else {
+        currentViewMode = 'single';
+    }
+    applyViewModeUI();
+    postToReaderFrame({ action: 'SET_MODE', mode: currentViewMode });
+
+    // Fallback direct DOM
+    try {
+        const frame = document.getElementById('pdfFrame');
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        if (frameDoc && frameDoc.body) {
+            frameDoc.body.className = currentViewMode === 'single' ? 'mode-single' : 'mode-continuous';
+            if (currentViewMode === 'single') {
+                jumpToPage(currentPage);
+            }
+        }
+    } catch(e) {}
+}
+
+function applyViewModeUI() {
+    const label = document.getElementById('viewModeLabel');
+    const icon = document.getElementById('viewModeIcon');
+    if (currentViewMode === 'single') {
+        if (label) label.textContent = 'Single Page';
+        if (icon) icon.className = 'bi bi-file-earmark-text text-primary';
+    } else {
+        if (label) label.textContent = 'Continuous Scroll';
+        if (icon) icon.className = 'bi bi-card-list text-primary';
+    }
+}
+
+function postToReaderFrame(msg) {
+    try {
+        const frame = document.getElementById('pdfFrame');
+        if (frame && frame.contentWindow) {
+            frame.contentWindow.postMessage(msg, '*');
+        }
+    } catch(e) {}
+}
+
+function closeTocDrawer() {
+    const drawerEl = document.getElementById('tocDrawer');
+    if (drawerEl) {
+        const offcanvas = bootstrap.Offcanvas.getInstance(drawerEl);
+        if (offcanvas) offcanvas.hide();
+    }
+}
+
+// ── Message Listener from Iframe ─────────────────────────────────────────────
+window.addEventListener('message', function(event) {
+    const data = event.data;
+    if (!data) return;
+    if (data.type === 'READER_PAGE_CHANGE') {
+        if (data.currentPage && data.currentPage !== currentPage) {
+            currentPage = data.currentPage;
+            updatePaginationUI();
+        }
+        if (data.mode && data.mode !== currentViewMode) {
+            currentViewMode = data.mode;
+            applyViewModeUI();
+        }
+    }
+});
+
+// ── Populate TOC Chapters from Iframe Elements ──────────────────────────────
+function populateTocFromFrame() {
+    try {
+        const frame = document.getElementById('pdfFrame');
+        const frameDoc = frame.contentDocument || frame.contentWindow.document;
+        if (!frameDoc) return;
+
+        const container = document.getElementById('dynamicTocChapters');
+        if (!container) return;
+
+        const chapterPages = frameDoc.querySelectorAll('.chapter-opener');
+        if (chapterPages && chapterPages.length > 0) {
+            let htmlStr = '';
+            chapterPages.forEach(el => {
+                const pageSection = el.closest('.book-page');
+                if (!pageSection) return;
+                const pNum = pageSection.getAttribute('data-page');
+                const heading = el.querySelector('h2')?.textContent || `Chapter at p. ${pNum}`;
+                htmlStr += `
+                    <a href="javascript:void(0)" onclick="jumpToPage(${pNum}); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
+                        <span class="small"><i class="bi bi-file-text text-secondary me-2"></i>${heading}</span>
+                        <span class="badge bg-light text-dark font-monospace">p. ${pNum}</span>
+                    </a>
+                `;
+            });
+            if (htmlStr) container.innerHTML = htmlStr;
+        }
+    } catch(e) {}
+}
+
+// ── Reading Stopwatch ────────────────────────────────────────────────────────
 let secondsRead = 0;
 setInterval(function() {
     secondsRead++;
@@ -250,12 +629,6 @@ setInterval(function() {
     
     const fsTimerEl = document.getElementById('fsReadingTimer');
     if (fsTimerEl) fsTimerEl.innerHTML = `<i class="bi bi-stopwatch text-info"></i> ${timerText}`;
-    
-    const progressEl = document.getElementById('readingProgressBar');
-    if (progressEl) {
-        const estProgress = Math.min(100, Math.floor(secondsRead / 6) + 5);
-        progressEl.style.width = `${estProgress}%`;
-    }
 }, 1000);
 
 // ── Typography Scaling ───────────────────────────────────────────────────────
@@ -350,7 +723,6 @@ function toggleFullscreen() {
         try {
             if (elem.requestFullscreen) {
                 elem.requestFullscreen().then(updateFullscreenUI).catch(function(err) {
-                    console.warn("Native fullscreen denied, activating pseudo-fullscreen fallback:", err);
                     elem.classList.add("is-pseudo-fullscreen");
                     updateFullscreenUI();
                 });
@@ -385,8 +757,22 @@ document.addEventListener('webkitfullscreenchange', updateFullscreenUI);
 document.addEventListener('mozfullscreenchange', updateFullscreenUI);
 document.addEventListener('MSFullscreenChange', updateFullscreenUI);
 
+// ── Keyboard Shortcuts ───────────────────────────────────────────────────────
 document.addEventListener('keydown', function(e) {
-    if ((e.key === 'f' || e.key === 'F') && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+    if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextPage();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevPage();
+    } else if (e.key === 'Home') {
+        e.preventDefault();
+        jumpToPage(1);
+    } else if (e.key === 'End') {
+        e.preventDefault();
+        jumpToPage(TOTAL_PAGES);
+    } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         toggleFullscreen();
     } else if (e.key === 'Escape') {
@@ -398,7 +784,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// ── Web Speech API: Text-to-Speech (TTS) Narration ───────────────────────────
+// ── Text-to-Speech (TTS) Narration ───────────────────────────────────────────
 let synth = window.speechSynthesis;
 let isSpeaking = false;
 let speechRate = 1.0;
@@ -431,8 +817,9 @@ function startNarration() {
     try {
         const frame = document.getElementById('pdfFrame');
         const frameDoc = frame.contentDocument || frame.contentWindow.document;
-        if (frameDoc && frameDoc.body) {
-            textToRead = frameDoc.body.innerText;
+        if (frameDoc) {
+            const activePage = frameDoc.querySelector('.book-page.active-page') || frameDoc.body;
+            textToRead = activePage.innerText;
         }
     } catch(e) {}
 
@@ -575,7 +962,31 @@ function deleteAnnotation(id) {
     });
 }
 
-// Initial fetch of annotation count
-document.addEventListener('DOMContentLoaded', loadAnnotations);
+// ── Initial Reader Load & Position Recovery ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnnotations();
+
+    // Recover last saved reading page
+    try {
+        const savedPage = localStorage.getItem('librarysphere_read_page_' + EBOOK_ID);
+        if (savedPage) {
+            const p = parseInt(savedPage);
+            if (!isNaN(p) && p >= 1 && p <= TOTAL_PAGES) {
+                jumpToPage(p);
+            }
+        }
+    } catch(e) {}
+
+    // Listen for iframe load to populate dynamic chapters
+    const frame = document.getElementById('pdfFrame');
+    if (frame) {
+        frame.addEventListener('load', function() {
+            setTimeout(populateTocFromFrame, 400);
+            if (currentPage > 1) {
+                jumpToPage(currentPage);
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

@@ -153,3 +153,48 @@ class KaggleEBookImportTests(TestCase):
         self.assertEqual(stream_resp.headers.get('Content-Type'), 'text/html; charset=utf-8')
         content = b''.join(stream_resp.streaming_content).decode('utf-8')
         self.assertIn('Test Kaggle Stream Book', content)
+
+    def test_full_page_extent_synthesis(self):
+        """Verifies that BookContentSynthesizer produces exact page counts across small and large books."""
+        from ebooks.generator import BookContentSynthesizer
+
+        for target in [120, 480, 616, 1000]:
+            html_doc = BookContentSynthesizer.generate_full_edition({
+                'title': f'Synthesis Test Volume {target}',
+                'author': 'Dr. Verification',
+                'category': 'Computer Science',
+                'pages': target,
+            })
+            page_count = html_doc.count('class="book-page"')
+            self.assertEqual(page_count, target, f"Expected {target} pages, got {page_count}")
+            self.assertIn('id="page-1"', html_doc)
+            self.assertIn(f'id="page-{target}"', html_doc)
+            self.assertNotIn(f'id="page-{target + 1}"', html_doc)
+
+    def test_reader_ui_has_pagination_and_scrubber(self):
+        """Verifies that the reader template renders complete pagination, jump controls, and scrubber."""
+        row = {
+            'title': 'High Scale Data Systems',
+            'authors': 'Dr. System',
+            'categories': 'Computer Science',
+            'description': 'A comprehensive exploration of high-scale data systems.',
+            'num_pages': '550',
+            'isbn13': '9780123456789',
+        }
+        book, _, _ = KaggleEBookService.import_single_book(row, uploaded_by=self.librarian)
+
+        client = Client()
+        client.force_login(self.member)
+
+        resp = client.get(f'/ebooks/{book.ebook_metadata.id}/read/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="readerPageInput"')
+        self.assertContains(resp, 'id="readerPageScrubber"')
+        self.assertContains(resp, 'id="btnPrevPage"')
+        self.assertContains(resp, 'id="btnNextPage"')
+        self.assertContains(resp, 'id="tocDrawer"')
+        self.assertContains(resp, 'id="viewModeToggleBtn"')
+        self.assertContains(resp, 'reader-edge-prev')
+        self.assertContains(resp, 'reader-edge-next')
+        self.assertContains(resp, '550')
+
