@@ -30,8 +30,8 @@
         (function() {
             try {
                 var stored = localStorage.getItem('theme_preference');
-                var server = '{{ theme_preference|default:"light" }}';
-                var theme = stored || server || 'light';
+                var server = '{{ theme_preference|default:"dark" }}';
+                var theme = stored || server || 'dark';
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.setAttribute('data-bs-theme', theme);
             } catch(e) {}

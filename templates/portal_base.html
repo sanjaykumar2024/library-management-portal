@@ -28,8 +28,8 @@
         (function() {
             try {
                 var stored = localStorage.getItem('theme_preference');
-                var server = '{{ theme_preference|default:"light" }}';
-                var theme = stored || server || 'light';
+                var server = '{{ theme_preference|default:"dark" }}';
+                var theme = stored || server || 'dark';
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.setAttribute('data-bs-theme', theme);
             } catch(e) {}
@@ -67,7 +67,7 @@
 
     <!-- Main Content Area (Spacious Container Layout without Sidebar) -->
     <main id="main-content" class="flex-grow-1">
-        <div class="container py-4">
+        <div class="container pt-2 pt-md-3 pb-4">
             {% block content %}{% endblock %}
         </div>
     </main>

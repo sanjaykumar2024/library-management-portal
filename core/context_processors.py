@@ -11,16 +11,16 @@ def notification_count(request):
 
 def theme_context(request):
     """Provide active theme ('light' or 'dark') to all templates."""
-    theme = 'light'
+    theme = request.GET.get('theme') or 'dark'
     session = getattr(request, 'session', None)
     if hasattr(request, 'user') and request.user.is_authenticated:
         try:
-            theme = request.user.profile.theme_preference or 'light'
+            theme = request.user.profile.theme_preference or theme
         except Exception:
             if session:
-                theme = session.get('theme_preference', 'light')
+                theme = session.get('theme_preference', theme)
     elif session:
-        theme = session.get('theme_preference', 'light')
+        theme = session.get('theme_preference', theme)
     return {
         'theme_preference': theme,
         'is_dark_mode': theme == 'dark',

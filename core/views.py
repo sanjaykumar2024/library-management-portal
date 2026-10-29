@@ -279,6 +279,19 @@ def help_faq_view(request):
 
 # ── Custom Error Handlers ────────────────────────────────────────────────────
 
+def dev_quick_login(request, username):
+    """Developer fast-login helper in debug mode."""
+    from django.conf import settings
+    if settings.DEBUG:
+        from django.contrib.auth import login
+        from django.contrib.auth.models import User
+        user = User.objects.filter(username=username).first()
+        if user:
+            login(request, user)
+            return redirect(request.GET.get('next') or '/circulation/kiosk/')
+    return redirect('/')
+
+
 def custom_404_view(request, exception):
     """Custom 404 handler that works for both authenticated and anonymous users."""
     return render(request, '404.html', status=404)

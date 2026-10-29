@@ -13,4 +13,5 @@ urlpatterns = [
     path('privacy/', views.privacy_policy_view, name='privacy'),
     path('terms/', views.terms_of_service_view, name='terms'),
     path('help/', views.help_faq_view, name='help'),
+    path('dev-login/<str:username>/', views.dev_quick_login, name='dev_quick_login'),
 ]

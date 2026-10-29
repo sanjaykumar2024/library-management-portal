@@ -1,26 +1,40 @@
 {% load static %}
-<!-- Top Institutional Banner (Open Library & NDLI style) -->
-<div class="institutional-topbar py-1 px-3 d-none d-md-block">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <span class="fw-semibold"><i class="bi bi-bank2 me-1 text-primary"></i> <strong>LibrarySphere</strong> &bull; Public Digital &amp; Physical Library</span>
-            <span class="opacity-50">|</span>
-            <span class="small"><i class="bi bi-check-circle-fill me-1 text-success"></i> Free In-Browser E-Books &bull; Zero Waitlists</span>
+<!-- Top Institutional Banner (Row 1 — Announcement Strip) -->
+<div class="institutional-topbar d-none d-md-block">
+    <div class="header-inner container-fluid px-2 px-sm-3 px-xl-3 px-xxl-4 d-flex justify-content-between align-items-center h-100" style="max-width: 1600px;">
+        <!-- Left: Brand Descriptor & Live Status -->
+        <div class="d-flex align-items-center gap-2 gap-lg-3 text-truncate">
+            <span class="topbar-brand-desc d-flex align-items-center gap-1">
+                <i class="bi bi-bank2 text-primary" style="font-size: 0.85rem;"></i>
+                <strong style="color: var(--text-primary);">LibrarySphere</strong>
+                <span class="opacity-50 mx-1">&bull;</span>
+                <span>Public Digital &amp; Physical Library</span>
+            </span>
+            <span class="opacity-30 d-none d-lg-inline">|</span>
+            <span class="topbar-status-desc d-none d-lg-flex align-items-center gap-1.5">
+                <span class="topbar-status-dot"></span>
+                <span>Free In-Browser E-Books</span>
+                <span class="opacity-50 mx-1">&bull;</span>
+                <span>Zero Waitlists</span>
+            </span>
         </div>
-        <div class="d-flex align-items-center gap-3">
+
+        <!-- Right: Utility Links -->
+        <div class="d-flex align-items-center gap-3 flex-shrink-0">
             {% if not user.is_authenticated %}
-            <a href="{% url 'accounts:login' %}" class="text-decoration-none fw-semibold" style="font-size: 0.82rem; color: #02599C;">
-                <i class="bi bi-key-fill me-1"></i> Demo Logins (Admin / Staff / Patron)
+            <a href="{% url 'accounts:login' %}" class="topbar-link topbar-link-accent">
+                <i class="bi bi-key-fill me-1"></i> Demo Logins
             </a>
-            <span class="opacity-50">&bull;</span>
+            <span class="opacity-40">&bull;</span>
             {% endif %}
-            <a href="{% url 'core:help' %}" class="text-decoration-none" style="font-size: 0.82rem; color: inherit;">
+            <a href="{% url 'core:help' %}" class="topbar-link">
                 <i class="bi bi-question-circle me-1"></i> Help &amp; FAQ
             </a>
-            <span class="opacity-50">&bull;</span>
-            <a href="{% url 'circulation:kiosk' %}" class="text-decoration-none" style="font-size: 0.82rem; color: inherit;">
+            <span class="opacity-40">&bull;</span>
+            <a href="{% url 'circulation:kiosk' %}" class="topbar-link">
                 <i class="bi bi-upc-scan me-1"></i> Express Kiosk
             </a>
         </div>
     </div>
 </div>
+
