@@ -12,16 +12,30 @@ echo "🗄️ Applying database migrations..."
 python manage.py migrate
 
 echo "📥 Loading initial system data (users, profiles, loans, reservations, reviews, badges)..."
-python manage.py loaddata data/complete_library_fixture.json || true
+python manage.py shell -c "
+from django.contrib.auth.models import User
+from django.core.management import call_command
+if User.objects.count() == 0:
+    print('Database is fresh, loading initial fixture data...')
+    try:
+        call_command('loaddata', 'data/complete_library_fixture.json')
+    except Exception as e:
+        print('Fixture load notice:', e)
+else:
+    print('Database already contains records, preserving existing data.')
+"
 
-echo "📚 Populating complete library catalog (173 books, 378 copies, covers & e-books)..."
+echo "📚 Populating complete library catalog (physical copies & curated e-books)..."
 python populate_expanded_library.py
 
-echo "🎨 Generating book covers for all 173 books..."
+echo "🎨 Generating book covers for all catalog books..."
 python manage.py regenerate_book_covers
 
-echo "📖 Syncing protected e-book reader documents for all 172 e-books..."
-python manage.py regenerate_ebook_files --force
+echo "📖 Syncing protected e-book reader documents..."
+python manage.py regenerate_ebook_files
+
+echo "🚀 Ensuring 300+ complete e-book library is fully populated..."
+python manage.py expand_ebook_catalog
 
 echo "👤 Ensuring default demo accounts (admin, librarian, member) are active..."
 python manage.py shell -c "

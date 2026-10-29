@@ -1156,7 +1156,11 @@ def run_expansion():
                 'pages': b_data['pages'],
                 'average_rating': b_data['rating'],
             }
-            doc_html = KaggleEBookService._generate_reader_document(doc_info)
+            doc_result = KaggleEBookService._generate_reader_document(doc_info)
+            if isinstance(doc_result, tuple):
+                doc_html, actual_pages = doc_result
+            else:
+                doc_html, actual_pages = doc_result, b_data['pages']
             filename = f"{uuid.uuid4().hex}.html"
             file_path = protected_root / filename
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -1168,7 +1172,7 @@ def run_expansion():
                 original_file_name=f"{re.sub(r'[^a-zA-Z0-9_-]', '_', title)[:60]}.html",
                 uploaded_by=admin_user,
                 file_size=len(doc_html.encode('utf-8')),
-                page_count=b_data['pages'],
+                page_count=actual_pages,
                 format='HTML',
                 rental_price=Decimal('0.00'),
                 access_mode='READ_AND_DOWNLOAD',
@@ -1192,10 +1196,16 @@ def run_expansion():
                 'pages': b_data['pages'],
                 'average_rating': b_data['rating'],
             }
-            doc_html = KaggleEBookService._generate_reader_document(doc_info)
+            doc_result = KaggleEBookService._generate_reader_document(doc_info)
+            if isinstance(doc_result, tuple):
+                doc_html, actual_pages = doc_result
+            else:
+                doc_html, actual_pages = doc_result, b_data['pages']
             fn = book.ebook_metadata.protected_filename or f"{uuid.uuid4().hex}.html"
             book.ebook_metadata.protected_filename = fn
-            book.ebook_metadata.save(update_fields=['protected_filename'])
+            book.ebook_metadata.page_count = actual_pages
+            book.ebook_metadata.file_size = len(doc_html.encode('utf-8'))
+            book.ebook_metadata.save(update_fields=['protected_filename', 'page_count', 'file_size'])
             with open(protected_root / fn, 'w', encoding='utf-8') as f:
                 f.write(doc_html)
 

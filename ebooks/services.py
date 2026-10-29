@@ -164,11 +164,16 @@ def get_protected_file_path(ebook):
                 'pages': ebook.page_count or 300,
                 'average_rating': 4.5,
             }
-            doc_html = KaggleEBookService._generate_reader_document(book_info)
+            doc_result = KaggleEBookService._generate_reader_document(book_info)
+            if isinstance(doc_result, tuple):
+                doc_html, authentic_pages = doc_result
+            else:
+                doc_html, authentic_pages = doc_result, (ebook.page_count or 300)
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(doc_html)
             ebook.file_size = len(doc_html.encode('utf-8'))
-            ebook.save(update_fields=['file_size'])
+            ebook.page_count = authentic_pages
+            ebook.save(update_fields=['file_size', 'page_count'])
         except Exception:
             raise FileNotFoundError("Protected e-book file was not found on server storage.")
 
