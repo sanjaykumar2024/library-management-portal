@@ -241,7 +241,7 @@
             </div>
 
             <!-- Scanned Books Cart Card -->
-            <div class="glass-card p-4 rounded-4" style="border: 2px solid rgba(99,102,241,0.2);">
+            <div class="glass-card p-4 rounded-4" id="scannedCartCard" style="border: 2px solid rgba(99,102,241,0.2);">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="text-uppercase small fw-bold mb-0 text-muted" style="letter-spacing: 1px;">
                         Scanned Items (<span id="cartCount">0</span>)
@@ -264,6 +264,26 @@
                 <button type="button" id="btnCheckout" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3" onclick="submitCheckout()" disabled>
                     <i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (<span id="checkoutTotalCount">0</span>)
                 </button>
+            </div>
+
+            <!-- Step 3 Checkout Complete Summary Card (Visible on Step 3) -->
+            <div class="glass-card p-4 rounded-4 d-none" id="receiptSummaryCard" style="border: 2px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.05);">
+                <div class="text-center py-3 mb-3">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: rgba(16,185,129,0.2); border: 2px solid rgba(16,185,129,0.5);">
+                        <i class="bi bi-check-lg fs-1 text-success"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color: var(--text-primary);">Transaction Complete</h5>
+                    <div class="small text-muted mb-0" id="summaryLoanCount">Items Issued to Account</div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary rounded-pill py-2 fw-semibold" onclick="resetKiosk()">
+                        <i class="bi bi-person-plus me-1"></i> Finish / Next Member
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill py-2 small" onclick="if(currentMember && currentMember.remaining_quota > 0) setStep(2); else alert('You have reached your maximum borrowing allowance.');">
+                        <i class="bi bi-plus-circle me-1"></i> Borrow Another Book
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -330,13 +350,39 @@ let currentScannerElement = null;
 
 // ── Step Navigation ──────────────────────────────────────────────────────────
 function setStep(step) {
-    document.getElementById('stepPill1').classList.toggle('active-pill', step >= 1);
-    document.getElementById('stepPill2').classList.toggle('active-pill', step >= 2);
-    document.getElementById('stepPill3').classList.toggle('active-pill', step >= 3);
+    const pill1 = document.getElementById('stepPill1');
+    const pill2 = document.getElementById('stepPill2');
+    const pill3 = document.getElementById('stepPill3');
+
+    if (pill1) {
+        pill1.classList.toggle('active-pill', step === 1);
+        pill1.style.opacity = step >= 1 ? '1' : '0.5';
+    }
+    if (pill2) {
+        pill2.classList.toggle('active-pill', step === 2);
+        pill2.style.opacity = step >= 2 ? '1' : '0.5';
+    }
+    if (pill3) {
+        pill3.classList.toggle('active-pill', step === 3);
+        pill3.style.opacity = step >= 3 ? '1' : '0.5';
+    }
 
     document.getElementById('stagePatron').classList.toggle('d-none', step !== 1);
     document.getElementById('stageBooks').classList.toggle('d-none', step !== 2);
     document.getElementById('stageSuccess').classList.toggle('d-none', step !== 3);
+
+    // Toggle right-hand panel: show cart during scanning, show confirmation card on step 3
+    const cartCard = document.getElementById('scannedCartCard');
+    const summaryCard = document.getElementById('receiptSummaryCard');
+    if (cartCard && summaryCard) {
+        if (step === 3) {
+            cartCard.classList.add('d-none');
+            summaryCard.classList.remove('d-none');
+        } else {
+            cartCard.classList.remove('d-none');
+            summaryCard.classList.add('d-none');
+        }
+    }
 }
 
 // ── Camera Scanner ───────────────────────────────────────────────────────────
@@ -582,12 +628,16 @@ function renderCart() {
         emptyState.classList.remove('d-none');
         clearBtn.classList.add('d-none');
         checkoutBtn.disabled = true;
+        checkoutBtn.className = 'btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3';
+        checkoutBtn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (0)`;
         return;
     }
 
     emptyState.classList.add('d-none');
     clearBtn.classList.remove('d-none');
     checkoutBtn.disabled = false;
+    checkoutBtn.className = 'btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3';
+    checkoutBtn.innerHTML = `<i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (${count})`;
 
     list.innerHTML = scannedCopies.map((item, idx) => `
         <div class="d-flex align-items-center justify-content-between p-2 rounded-3" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
@@ -647,7 +697,29 @@ function submitCheckout() {
         }
 
         playSuccessChime();
+
+        // 1. Update Patron State & Quota UI
+        if (currentMember && data.loans) {
+            currentMember.active_loans_count = (currentMember.active_loans_count || 0) + data.loans.length;
+            currentMember.remaining_quota = Math.max(0, (currentMember.remaining_quota || 0) - data.loans.length);
+            const loansEl = document.getElementById('patronActiveLoans');
+            const quotaEl = document.getElementById('patronQuota');
+            if (loansEl) loansEl.textContent = currentMember.active_loans_count;
+            if (quotaEl) quotaEl.textContent = currentMember.remaining_quota;
+        }
+
+        // 2. Clear scanned cart and reset button state
+        const borrowedCount = scannedCopies.length;
+        scannedCopies = [];
+        renderCart();
+
+        // 3. Switch to Step 3 (Confirmation & Receipt)
         setStep(3);
+
+        const summaryCountEl = document.getElementById('summaryLoanCount');
+        if (summaryCountEl) {
+            summaryCountEl.textContent = `${borrowedCount} Book${borrowedCount > 1 ? 's' : ''} Successfully Borrowed`;
+        }
 
         const loansListEl = document.getElementById('successLoansList');
         loansListEl.innerHTML = `
