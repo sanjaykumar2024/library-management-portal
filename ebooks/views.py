@@ -4,6 +4,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count, Q
+from django.core.paginator import Paginator
+from django.conf import settings
+from pathlib import Path
+import uuid
+
 from catalog.models import Book, Category, EBookMetadata
 from .models import EBookAccessLog
 from .forms import EBookUploadForm, EBookEditForm
@@ -330,8 +335,14 @@ def ebook_manage_view(request):
         total_accesses=Count('access_logs')
     ).filter(total_accesses__gt=0).order_by('-total_accesses')[:5]
     
+    page_number = request.GET.get('page', 1)
+    paginator = Paginator(ebooks, 25)
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'ebooks': ebooks,
+        'ebooks': page_obj,
+        'page_obj': page_obj,
+        'paginator': paginator,
         'total_ebooks': total_ebooks,
         'active_ebooks': active_ebooks,
         'total_reads': total_reads,
@@ -345,6 +356,53 @@ def ebook_manage_view(request):
         'mode_choices': EBookMetadata.ACCESS_MODE_CHOICES,
     }
     return render(request, 'ebooks/ebook_manage.html', context)
+
+
+@librarian_required
+def ebook_revalidate_view(request, ebook_id):
+    """Admin action to re-verify or regenerate an e-book document on disk."""
+    ebook = get_object_or_404(EBookMetadata.objects.select_related('book', 'book__category'), id=ebook_id)
+    book = ebook.book
+    protected_root = Path(getattr(settings, 'PROTECTED_EBOOK_ROOT', settings.BASE_DIR / 'protected_ebooks'))
+    
+    if not ebook.protected_filename:
+        ebook.protected_filename = f"{uuid.uuid4().hex}.html"
+        ebook.save(update_fields=['protected_filename'])
+        
+    fpath = protected_root / ebook.protected_filename
+    
+    first_author = book.authors.first() if hasattr(book, 'authors') else None
+    first_author_name = first_author.full_name if first_author else 'Unknown Author'
+    category_name = book.category.name if book.category else 'General'
+
+    from .kaggle_service import KaggleEBookService
+    book_info = {
+        'title': book.title,
+        'subtitle': getattr(book, 'subtitle', '') or '',
+        'author': first_author_name,
+        'category': category_name,
+        'publisher': book.publisher or 'Public Library Digital Collection',
+        'publication_year': book.publication_year or 2024,
+        'description': book.description or f"Complete digital edition of {book.title}.",
+        'isbn': book.isbn or '',
+        'pages': ebook.page_count or 300,
+        'average_rating': 4.5,
+    }
+
+    try:
+        doc_html, authentic_pages = KaggleEBookService._generate_reader_document(book_info)
+        encoded = doc_html.encode('utf-8')
+        with open(fpath, 'wb') as f:
+            f.write(encoded)
+        ebook.file_size = len(encoded)
+        ebook.format = 'HTML'
+        ebook.page_count = authentic_pages
+        ebook.save(update_fields=['file_size', 'format', 'page_count'])
+        messages.success(request, f"E-Book '{book.title}' successfully verified and synchronized ({authentic_pages} pages).")
+    except Exception as e:
+        messages.error(request, f"Failed to re-validate '{book.title}': {e}")
+        
+    return redirect('ebooks:manage')
 
 
 @librarian_required

@@ -280,72 +280,23 @@
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
-    <div class="offcanvas-body p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="offcanvas-body p-3 d-flex flex-column" style="overflow-y: auto;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="small text-muted">Jump to any part or chapter:</span>
-            <span class="badge bg-secondary font-monospace">{{ ebook.page_count|default:380 }} Pages</span>
+            <span class="badge bg-secondary font-monospace" id="tocBadgeTotalPages">{{ ebook.page_count|default:380 }} Pages</span>
         </div>
 
-        <div id="tocListContainer" class="d-flex flex-column gap-1">
-            <!-- Front matter standard links -->
-            <a href="javascript:void(0)" onclick="jumpToPage(1); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-bookmark text-muted me-2"></i>Half-Title & Colophon</span>
-                <span class="badge bg-light text-dark font-monospace">p. 1</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(2); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-card-heading text-muted me-2"></i>Title Page</span>
-                <span class="badge bg-light text-dark font-monospace">p. 2</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(3); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-shield-check text-muted me-2"></i>Copyright & CIP Data</span>
-                <span class="badge bg-light text-dark font-monospace">p. 3</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(5); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-table text-muted me-2"></i>Table of Contents</span>
-                <span class="badge bg-light text-dark font-monospace">p. 5</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(6); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-journal-text text-muted me-2"></i>Preface to the Complete Edition</span>
-                <span class="badge bg-light text-dark font-monospace">p. 6</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(8); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-file-text text-muted me-2"></i>Executive Synopsis & Core Scope</span>
-                <span class="badge bg-light text-dark font-monospace">p. 8</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(10); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-person text-muted me-2"></i>About the Author: {{ ebook.book.author }}</span>
-                <span class="badge bg-light text-dark font-monospace">p. 10</span>
-            </a>
+        <!-- Live Chapter Search & Page Quick-Jump -->
+        <div class="input-group input-group-sm mb-3">
+            <span class="input-group-text bg-transparent border-end-0" style="border-color: var(--glass-border);"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" id="tocSearchInput" class="form-control border-start-0" placeholder="Search chapters or type page #..." style="border-color: var(--glass-border); background: var(--glass-bg);" oninput="filterTocItems(this.value)" onkeydown="if(event.key==='Enter') handleTocSearchEnter(this.value)">
+        </div>
 
-            <div class="border-top my-2 pt-2 small text-uppercase text-muted fw-bold">Main Volume Chapters</div>
-            <a href="javascript:void(0)" onclick="jumpToPage(11); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span class="fw-semibold"><i class="bi bi-book text-primary me-2"></i>Part I: Chapter 1</span>
-                <span class="badge bg-light text-dark font-monospace">p. 11</span>
-            </a>
-            <!-- Additional chapter anchors dynamically populated on load -->
-            <div id="dynamicTocChapters" class="d-flex flex-column gap-1"></div>
-
-            <div class="border-top my-2 pt-2 small text-uppercase text-muted fw-bold">Back Matter & Reference</div>
-            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 14)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-spellcheck text-muted me-2"></i>Comprehensive Glossary</span>
-                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-14" }}</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 10)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-chat-square-dots text-muted me-2"></i>Seminar Study & Discussion Guide</span>
-                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-10" }}</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 7)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-collection text-muted me-2"></i>Scholarly Bibliography</span>
-                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-7" }}</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(Math.max(1, TOTAL_PAGES - 4)); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-search text-muted me-2"></i>Master Analytical Index</span>
-                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|add:"-4" }}</span>
-            </a>
-            <a href="javascript:void(0)" onclick="jumpToPage(TOTAL_PAGES); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                <span><i class="bi bi-award text-muted me-2"></i>Colophon & Preservation Record</span>
-                <span class="badge bg-light text-dark font-monospace">p. {{ ebook.page_count|default:380 }}</span>
-            </a>
+        <div id="tocListContainer" class="d-flex flex-column gap-1 flex-grow-1">
+            <div id="tocLoadingMsg" class="text-center py-4 text-muted small">
+                <span class="spinner-border spinner-border-sm me-2 text-primary"></span>Scanning document structure...
+            </div>
+            <div id="dynamicTocItems" class="d-flex flex-column gap-1"></div>
         </div>
     </div>
 </div>
@@ -586,34 +537,153 @@ window.addEventListener('message', function(event) {
     }
 });
 
-// ── Populate TOC Chapters from Iframe Elements ──────────────────────────────
+// ── Populate Dynamic TOC Chapters from Iframe DOM ──────────────────────────
 function populateTocFromFrame() {
     try {
         const frame = document.getElementById('pdfFrame');
         const frameDoc = frame.contentDocument || frame.contentWindow.document;
         if (!frameDoc) return;
 
-        const container = document.getElementById('dynamicTocChapters');
+        const loadingMsg = document.getElementById('tocLoadingMsg');
+        const container = document.getElementById('dynamicTocItems');
         if (!container) return;
 
-        const chapterPages = frameDoc.querySelectorAll('.chapter-opener');
-        if (chapterPages && chapterPages.length > 0) {
-            let htmlStr = '';
-            chapterPages.forEach(el => {
-                const pageSection = el.closest('.book-page');
-                if (!pageSection) return;
-                const pNum = pageSection.getAttribute('data-page');
-                const heading = el.querySelector('h2')?.textContent || `Chapter at p. ${pNum}`;
-                htmlStr += `
-                    <a href="javascript:void(0)" onclick="jumpToPage(${pNum}); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none" style="color: var(--text-primary);">
-                        <span class="small"><i class="bi bi-file-text text-secondary me-2"></i>${heading}</span>
-                        <span class="badge bg-light text-dark font-monospace">p. ${pNum}</span>
-                    </a>
-                `;
+        const pages = frameDoc.querySelectorAll('.book-page');
+        if (!pages || pages.length === 0) return;
+
+        const tocEntries = [];
+        const seenPages = new Set();
+        const seenTitles = new Set();
+
+        // 1. Scan for semantic chapter headings and openers
+        pages.forEach((pageEl, idx) => {
+            const pageNum = parseInt(pageEl.getAttribute('data-page')) || (idx + 1);
+
+            // Look for part headers, chapter openers, or prominent h1-h4 headings
+            const headingCandidates = pageEl.querySelectorAll('h1, h2, h3, .book-part-heading, .chapter-opener, .header-chapter');
+            
+            for (let el of headingCandidates) {
+                let text = el.innerText || el.textContent || '';
+                // Clean up any inner page markers like {vii} or [illustration]
+                text = text.replace(/\{[a-z0-9ivxlcdm]+\}/gi, '')
+                           .replace(/\[(?:illustration|image)[^\]]*\]/gi, '')
+                           .replace(/[\r\n]+/g, ' ')
+                           .trim();
+
+                // Skip generic or empty titles
+                if (!text || text.length < 3 || text.length > 90) continue;
+                if (/^(illustrated edition|copyright|contents|page \d+|project gutenberg)/i.test(text)) continue;
+
+                // Deduplicate
+                const norm = text.toLowerCase();
+                if (seenTitles.has(norm)) continue;
+                seenTitles.add(norm);
+
+                let icon = 'bi-book';
+                let isPart = false;
+                if (/part\s+[ivxlcdm\d]+/i.test(text) || el.classList.contains('book-part-heading')) {
+                    icon = 'bi-layers';
+                    isPart = true;
+                } else if (/preface|foreword|introduction/i.test(text)) {
+                    icon = 'bi-journal-text';
+                } else if (/glossary|appendix|index|bibliography/i.test(text)) {
+                    icon = 'bi-bookmark';
+                }
+
+                tocEntries.push({
+                    page: pageNum,
+                    title: text,
+                    icon: icon,
+                    isPart: isPart
+                });
+                seenPages.add(pageNum);
+                break; // One primary entry per page
+            }
+        });
+
+        // 2. Fallback: If document has fewer than 2 detected chapters, build milestone progression
+        if (tocEntries.length < 2) {
+            tocEntries.length = 0;
+            tocEntries.push({ page: 1, title: 'Title & Opening Page', icon: 'bi-book-half', isPart: false });
+            
+            const milestones = [
+                { pct: 0.15, label: 'Section I &bull; Opening Narrative' },
+                { pct: 0.35, label: 'Section II &bull; Core Exposition' },
+                { pct: 0.55, label: 'Section III &bull; Central Development' },
+                { pct: 0.75, label: 'Section IV &bull; Climax & Resolution' },
+                { pct: 0.95, label: 'Concluding Section & Afterword' },
+            ];
+
+            milestones.forEach(m => {
+                const targetP = Math.max(2, Math.min(TOTAL_PAGES, Math.round(TOTAL_PAGES * m.pct)));
+                if (!seenPages.has(targetP)) {
+                    tocEntries.push({
+                        page: targetP,
+                        title: m.label,
+                        icon: 'bi-bookmark-check',
+                        isPart: false
+                    });
+                    seenPages.add(targetP);
+                }
             });
-            if (htmlStr) container.innerHTML = htmlStr;
+
+            if (!seenPages.has(TOTAL_PAGES) && TOTAL_PAGES > 1) {
+                tocEntries.push({
+                    page: TOTAL_PAGES,
+                    title: 'Final Page & Colophon',
+                    icon: 'bi-award',
+                    isPart: false
+                });
+            }
         }
-    } catch(e) {}
+
+        // Always ensure Page 1 is reachable at top if not present
+        if (tocEntries[0].page > 1) {
+            tocEntries.unshift({ page: 1, title: 'Frontispiece & Title Page', icon: 'bi-card-heading', isPart: false });
+        }
+
+        // Render HTML entries
+        let htmlStr = '';
+        tocEntries.forEach(entry => {
+            const partClass = entry.isPart ? 'fw-bold border-top pt-2 mt-1' : '';
+            htmlStr += `
+                <a href="javascript:void(0)" onclick="jumpToPage(${entry.page}); closeTocDrawer();" class="toc-jump-item d-flex justify-content-between align-items-center p-2 text-decoration-none ${partClass}" style="color: var(--text-primary);" data-title="${entry.title.toLowerCase()}" data-page="${entry.page}">
+                    <span class="small text-truncate me-2"><i class="bi ${entry.icon} text-primary me-2"></i>${entry.title}</span>
+                    <span class="badge bg-light text-dark font-monospace" style="font-size: 0.72rem;">p. ${entry.page}</span>
+                </a>
+            `;
+        });
+
+        if (loadingMsg) loadingMsg.style.display = 'none';
+        container.innerHTML = htmlStr;
+    } catch(e) {
+        console.warn('TOC extraction note:', e);
+    }
+}
+
+// ── Search & Filter TOC Entries ─────────────────────────────────────────────
+function filterTocItems(query) {
+    query = (query || '').trim().toLowerCase();
+    const items = document.querySelectorAll('#dynamicTocItems .toc-jump-item');
+    if (!items) return;
+
+    items.forEach(el => {
+        const title = el.getAttribute('data-title') || '';
+        const page = el.getAttribute('data-page') || '';
+        if (!query || title.includes(query) || page === query) {
+            el.style.display = 'flex';
+        } else {
+            el.style.display = 'none';
+        }
+    });
+}
+
+function handleTocSearchEnter(val) {
+    const p = parseInt(val);
+    if (!isNaN(p) && p >= 1 && p <= TOTAL_PAGES) {
+        jumpToPage(p);
+        closeTocDrawer();
+    }
 }
 
 // ── Reading Stopwatch ────────────────────────────────────────────────────────

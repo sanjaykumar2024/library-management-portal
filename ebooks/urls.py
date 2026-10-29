@@ -20,6 +20,7 @@ urlpatterns = [
     path('kaggle-import/', views.kaggle_import_view, name='kaggle_import'),
     path('api/import-open-source/', views.import_open_source_book_api, name='api_import_open_source'),
     path('<int:ebook_id>/deactivate/', views.ebook_deactivate_view, name='deactivate'),
+    path('<int:ebook_id>/revalidate/', views.ebook_revalidate_view, name='revalidate'),
     # Pillar 3: Highlights & Annotations
     path('api/<int:ebook_id>/annotations/add/', views.api_add_annotation, name='api_add_annotation'),
     path('api/<int:ebook_id>/annotations/list/', views.api_list_annotations, name='api_list_annotations'),
