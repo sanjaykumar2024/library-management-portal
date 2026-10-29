@@ -382,7 +382,7 @@ const EBOOK_ID = {{ ebook.id }};
 const CSRF_TOKEN = '{{ csrf_token }}';
 let TOTAL_PAGES = {{ ebook.page_count|default:380 }};
 const STREAM_URL = '{{ stream_url }}';
-const IS_EPUB = "{{ ebook.format }}" === "EPUB" || "{{ ebook.protected_filename }}".toLowerCase().endsWith(".epub");
+const IS_EPUB = false; // Unified interactive reader iframe engine for all digital book editions
 
 let currentPage = 1;
 let currentViewMode = 'single'; // 'single' or 'continuous'

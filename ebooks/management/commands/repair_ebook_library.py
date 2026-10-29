@@ -47,7 +47,37 @@ class Command(BaseCommand):
 
         # Ensure reference benchmark EPUB (pg67098-images-3.epub: Winnie-the-Pooh by A. A. Milne)
         epub_ref_path = protected_root / 'pg67098-images-3.epub'
+        html_companion_path = protected_root / 'pg67098-images-3.html'
+        static_img_dir = Path(settings.BASE_DIR) / 'static' / 'ebooks' / 'pg67098'
+        actual_pooh_pages = 76
+
         if epub_ref_path.exists():
+            # Extract images to static/ebooks/pg67098 if not already present
+            os.makedirs(static_img_dir, exist_ok=True)
+            try:
+                import zipfile
+                with zipfile.ZipFile(epub_ref_path, 'r') as z:
+                    for n in z.namelist():
+                        if n.startswith('OEBPS/') and (n.endswith('.jpg') or n.endswith('.png')):
+                            fname = os.path.basename(n)
+                            target_img = static_img_dir / fname
+                            if not target_img.exists():
+                                with open(target_img, 'wb') as img_out:
+                                    img_out.write(z.read(n))
+            except Exception as e:
+                self.stderr.write(f"Notice: EPUB image extraction: {e}")
+
+            # Generate HTML reading companion if missing
+            if not html_companion_path.exists():
+                try:
+                    res = GutenbergService.format_gutenberg_reader_document('Winnie-the-Pooh', 'A. A. Milne', 67098)
+                    if res:
+                        doc_html, actual_pooh_pages = res
+                        doc_html = re.sub(r'src=[\"\'](?:images/)?([^\"\']+\.jpg)[\"\']', r'src=\"/static/ebooks/pg67098/\1\"', doc_html)
+                        html_companion_path.write_text(doc_html, encoding='utf-8')
+                except Exception as e:
+                    self.stderr.write(f"Notice: EPUB companion HTML generation: {e}")
+
             cat = Category.objects.filter(name__icontains='Children').first() or Category.objects.first()
             pooh_book, _ = Book.objects.get_or_create(
                 isbn='978-0-14-036121-6',
@@ -70,7 +100,7 @@ class Command(BaseCommand):
                     'original_file_name': 'Winnie-the-Pooh_Illustrated_EPUB_pg67098.epub',
                     'format': 'EPUB',
                     'file_size': epub_ref_path.stat().st_size,
-                    'page_count': 160,
+                    'page_count': actual_pooh_pages,
                     'access_mode': 'READ_AND_DOWNLOAD',
                     'rights_status': 'PUBLIC_DOMAIN',
                     'rights_text': 'Project Gutenberg #67098 &bull; Public Domain in the United States',

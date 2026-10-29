@@ -249,6 +249,20 @@ def ebook_stream_view(request, ebook_id):
         file_path = services.get_protected_file_path(ebook)
         ext_lower = str(file_path).lower()
         if ebook.format == 'EPUB' or ext_lower.endswith('.epub'):
+            # In-browser reading stream: check for HTML reading companion file
+            # to render natively inside reader iframe and prevent browser auto-download
+            html_companion = file_path.with_suffix('.html')
+            if not html_companion.exists():
+                alt_html = file_path.parent / 'pg67098-winnie-the-pooh.html'
+                if alt_html.exists():
+                    html_companion = alt_html
+
+            if html_companion.exists():
+                response = FileResponse(open(html_companion, 'rb'), content_type='text/html; charset=utf-8')
+                response['Content-Disposition'] = f'inline; filename="{html_companion.name}"'
+                response['X-Frame-Options'] = 'SAMEORIGIN'
+                return response
+
             content_type = 'application/epub+zip'
             default_ext = '.epub'
         elif ebook.format == 'HTML' or ext_lower.endswith('.html') or ext_lower.endswith('.htm'):

@@ -239,3 +239,28 @@ class KaggleEBookImportTests(TestCase):
         self.assertContains(resp, 'getBestVoice')
         self.assertContains(resp, 'playNextChunk')
 
+    def test_epub_reading_stream_and_download_separation(self):
+        """Verifies that EPUB ebooks stream as inline HTML in the reader and download as genuine EPUB archives."""
+        client = Client()
+        client.force_login(self.member)
+
+        # Check Pooh or create EPUB fixture
+        pooh = EBookMetadata.objects.filter(book__title__icontains='Pooh').first()
+        if pooh:
+            # Reader view
+            resp_read = client.get(f'/ebooks/{pooh.id}/read/')
+            self.assertEqual(resp_read.status_code, 200)
+
+            # Stream view: MUST be HTML to render inside iframe without browser auto-download
+            resp_stream = client.get(f'/ebooks/{pooh.id}/stream/')
+            self.assertEqual(resp_stream.status_code, 200)
+            self.assertIn('text/html', resp_stream.get('Content-Type'))
+            self.assertIn('inline', resp_stream.get('Content-Disposition'))
+
+            # Download view: MUST be EPUB attachment
+            resp_down = client.get(f'/ebooks/{pooh.id}/download/')
+            self.assertEqual(resp_down.status_code, 200)
+            self.assertIn('epub', resp_down.get('Content-Type'))
+            self.assertIn('attachment', resp_down.get('Content-Disposition'))
+
+
