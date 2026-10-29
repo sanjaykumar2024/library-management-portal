@@ -205,3 +205,37 @@ class KaggleEBookImportTests(TestCase):
         self.assertContains(resp, 'reader-edge-next')
         self.assertContains(resp, str(book.ebook_metadata.page_count))
 
+    def test_reader_ui_typography_and_fluent_narration_controls(self):
+        """Verifies that the reader UI has active typography scaling (A-/A+) and fluent audio narration."""
+        row = {
+            'title': 'The Idiot',
+            'authors': 'Fyodor Dostoevsky',
+            'categories': 'Classics',
+            'description': 'A landmark classic novel.',
+            'num_pages': '709',
+            'isbn13': '9780140449402',
+        }
+        book, _, _ = KaggleEBookService.import_single_book(row, uploaded_by=self.librarian)
+
+        client = Client()
+        client.force_login(self.member)
+
+        resp = client.get(f'/ebooks/{book.ebook_metadata.id}/read/')
+        self.assertEqual(resp.status_code, 200)
+
+        # Typography scaling controls
+        self.assertContains(resp, 'id="fontSizeDisplay"')
+        self.assertContains(resp, 'adjustFontSize(-1)')
+        self.assertContains(resp, 'adjustFontSize(1)')
+        self.assertContains(resp, 'resetFontSize()')
+        self.assertContains(resp, 'librarysphere-reader-zoom-style')
+        self.assertContains(resp, 'librarysphere-reader-theme-style')
+
+        # Fluent audio narration controls
+        self.assertContains(resp, 'id="ttsPlayBtn"')
+        self.assertContains(resp, 'toggleTTS()')
+        self.assertContains(resp, 'setTTSSpeed')
+        self.assertContains(resp, 'createSpeechChunks')
+        self.assertContains(resp, 'getBestVoice')
+        self.assertContains(resp, 'playNextChunk')
+
