@@ -101,6 +101,7 @@ class Command(BaseCommand):
                     'format': 'EPUB',
                     'file_size': epub_ref_path.stat().st_size,
                     'page_count': actual_pooh_pages,
+                    'access_level': 'FREE',
                     'access_mode': 'READ_AND_DOWNLOAD',
                     'rights_status': 'PUBLIC_DOMAIN',
                     'rights_text': 'Project Gutenberg #67098 &bull; Public Domain in the United States',

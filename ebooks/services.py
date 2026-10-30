@@ -7,7 +7,7 @@ from pypdf import PdfReader
 from catalog.models import EBookMetadata
 from .models import EBookAccessLog
 
-def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_status, rights_text, access_note='', existing_ebook=None):
+def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_status, rights_text, access_note='', existing_ebook=None, access_level='MEMBERS_ONLY'):
     """
     Validates PDF file format, size, magic signature, and readability,
     saves the file to PROTECTED_EBOOK_ROOT with a randomized filename,
@@ -119,6 +119,7 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
     ebook.page_count = page_count
     ebook.format = file_format
     ebook.access_mode = access_mode
+    ebook.access_level = access_level
     ebook.rights_status = rights_status
     ebook.rights_text = rights_text
     ebook.access_note = access_note
@@ -129,13 +130,15 @@ def validate_and_save_ebook(file_obj, book, uploaded_by, access_mode, rights_sta
 
 
 
-def update_ebook_metadata_only(ebook, access_mode, rights_status, rights_text, access_note, is_active=True, rental_price=None):
+def update_ebook_metadata_only(ebook, access_mode, rights_status, rights_text, access_note, is_active=True, rental_price=None, access_level=None):
     """Updates metadata fields without changing the uploaded PDF file."""
     ebook.access_mode = access_mode
     ebook.rights_status = rights_status
     ebook.rights_text = rights_text
     ebook.access_note = access_note
     ebook.is_active = is_active
+    if access_level is not None:
+        ebook.access_level = access_level
     if rental_price is not None:
         ebook.rental_price = rental_price
     ebook.save()

@@ -205,9 +205,15 @@
                             Details
                         </a>
                         {% if book.has_ebook_access %}
-                        <a href="{% url 'ebooks:read' book.ebook_metadata.id %}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.8rem;" title="Read Online Instantly">
-                            <i class="bi bi-book-half"></i> Read
-                        </a>
+                            {% if book.ebook_metadata.access_level == 'FREE' or user.profile.is_active_member or user.is_staff %}
+                            <a href="{% url 'ebooks:read' book.ebook_metadata.id %}" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 0.8rem;" title="Read Online Instantly">
+                                <i class="bi bi-book-half"></i> Read
+                            </a>
+                            {% else %}
+                            <a href="{% url 'ebooks:detail' book.ebook_metadata.id %}" class="btn btn-sm btn-outline-warning rounded-pill px-2" style="font-size: 0.75rem; border-color: rgba(245,158,11,0.5); color: #fbbf24;" title="Active Membership Required">
+                                <i class="bi bi-shield-lock"></i> Members
+                            </a>
+                            {% endif %}
                         {% elif book.available_copies_count > 0 %}
                         <a href="{% url 'catalog:detail' book.id %}" class="btn btn-sm btn-success rounded-pill px-3" style="font-size: 0.8rem;" title="Reserve Copy">
                             <i class="bi bi-bookmark-plus"></i> Hold

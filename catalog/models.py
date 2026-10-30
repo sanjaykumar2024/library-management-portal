@@ -121,6 +121,12 @@ class BookCopy(models.Model):
 from django.utils import timezone
 
 class EBookMetadata(models.Model):
+    ACCESS_LEVEL_CHOICES = (
+        ('FREE', 'Free Access — Available to Everyone (Guests & Members)'),
+        ('MEMBERS_ONLY', 'Members Only — Active Library Membership Required'),
+        ('STAFF_ONLY', 'Staff Only — Authorized Staff & Librarians Only'),
+    )
+
     ACCESS_MODE_CHOICES = (
         ('READ_ONLY', 'Read Only'),
         ('READ_AND_DOWNLOAD', 'Read and Download'),
@@ -142,10 +148,15 @@ class EBookMetadata(models.Model):
     page_count = models.IntegerField(blank=True, null=True)
     format = models.CharField(max_length=10, default='PDF')
 
-    
     rental_price = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal('0.00'), help_text="Affordable reading pass fee in INR (₹)")
+    access_level = models.CharField(
+        max_length=20,
+        choices=ACCESS_LEVEL_CHOICES,
+        default='MEMBERS_ONLY',
+        db_index=True,
+        help_text="Access tier required to read or download this e-book"
+    )
     access_mode = models.CharField(max_length=20, choices=ACCESS_MODE_CHOICES, default='READ_ONLY')
-
 
     rights_status = models.CharField(max_length=30, choices=RIGHTS_STATUS_CHOICES, default='DEMO_ONLY')
     rights_text = models.TextField(blank=True, null=True, help_text="Rights, source, or attribution text")
@@ -161,8 +172,28 @@ class EBookMetadata(models.Model):
     def is_download_allowed(self):
         return self.access_mode == 'READ_AND_DOWNLOAD'
 
+    @property
+    def is_free_access(self):
+        return self.access_level == 'FREE'
+
+    @property
+    def is_members_only(self):
+        return self.access_level == 'MEMBERS_ONLY'
+
+    @property
+    def is_staff_only(self):
+        return self.access_level == 'STAFF_ONLY'
+
+    @property
+    def access_badge_label(self):
+        if self.access_level == 'FREE':
+            return 'FREE ACCESS'
+        elif self.access_level == 'STAFF_ONLY':
+            return 'STAFF ONLY'
+        return 'MEMBERS ONLY'
+
     def __str__(self):
-        return f"E-Book: {self.book.title} ({self.format})"
+        return f"E-Book: {self.book.title} ({self.format}) [{self.get_access_level_display()}]"
 
 
 class BookReview(models.Model):

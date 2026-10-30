@@ -31,6 +31,13 @@ class EBookUploadForm(forms.Form):
             raise forms.ValidationError("Please either select an existing book title or type a new book title manually.")
         return cleaned_data
 
+    access_level = forms.ChoiceField(
+        choices=EBookMetadata.ACCESS_LEVEL_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Book Access Level",
+        initial='MEMBERS_ONLY',
+        help_text="FREE = Anyone can read (Guests & Members); MEMBERS_ONLY = Active library card required; STAFF_ONLY = Librarians & Admins only."
+    )
     access_mode = forms.ChoiceField(
         choices=EBookMetadata.ACCESS_MODE_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -70,6 +77,13 @@ class EBookEditForm(forms.Form):
         required=False
     )
 
+    access_level = forms.ChoiceField(
+        choices=EBookMetadata.ACCESS_LEVEL_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Book Access Level",
+        initial='MEMBERS_ONLY',
+        help_text="FREE = Anyone can read (Guests & Members); MEMBERS_ONLY = Active library card required; STAFF_ONLY = Librarians & Admins only."
+    )
     access_mode = forms.ChoiceField(
         choices=EBookMetadata.ACCESS_MODE_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),

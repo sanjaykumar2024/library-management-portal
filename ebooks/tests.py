@@ -1,11 +1,13 @@
 import os
 import io
+import datetime
 from pathlib import Path
 from decimal import Decimal
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.conf import settings
+from django.utils import timezone
 
 from accounts.models import UserProfile
 from catalog.models import Book, Author, Category, EBookMetadata, BookReview
@@ -262,5 +264,296 @@ class KaggleEBookImportTests(TestCase):
             self.assertEqual(resp_down.status_code, 200)
             self.assertIn('epub', resp_down.get('Content-Type'))
             self.assertIn('attachment', resp_down.get('Content-Disposition'))
+
+
+class GuestAndMembershipAccessControlTests(TestCase):
+    """
+    Comprehensive test suite for Guest User (Non-Member) access and
+    Membership-Based Ebook Restrictions.
+    """
+    def setUp(self):
+        # 1. Staff Admin
+        self.admin = User.objects.create_superuser(
+            username='auth_admin',
+            email='admin@library.org',
+            password='adminpassword123'
+        )
+        self.admin.profile.role = 'ADMIN'
+        self.admin.profile.membership_status = 'ACTIVE'
+        self.admin.profile.is_approved = True
+        self.admin.profile.save()
+
+        # 2. Active Member
+        self.active_member = User.objects.create_user(
+            username='active_patron',
+            email='patron@example.com',
+            password='patronpassword123'
+        )
+        self.active_member.profile.role = 'MEMBER'
+        self.active_member.profile.membership_status = 'ACTIVE'
+        self.active_member.profile.is_approved = True
+        self.active_member.profile.membership_expiry_date = timezone.now().date() + datetime.timedelta(days=180)
+        self.active_member.profile.can_access_ebooks = True
+        self.active_member.profile.save()
+
+        # 3. Expired Member
+        self.expired_member = User.objects.create_user(
+            username='expired_patron',
+            email='expired@example.com',
+            password='patronpassword123'
+        )
+        self.expired_member.profile.role = 'MEMBER'
+        self.expired_member.profile.membership_status = 'EXPIRED'
+        self.expired_member.profile.membership_expiry_date = timezone.now().date() - datetime.timedelta(days=10)
+        self.expired_member.profile.save()
+
+        # 4. Suspended Member
+        self.suspended_member = User.objects.create_user(
+            username='suspended_patron',
+            email='suspended@example.com',
+            password='patronpassword123'
+        )
+        self.suspended_member.profile.role = 'MEMBER'
+        self.suspended_member.profile.membership_status = 'SUSPENDED'
+        self.suspended_member.profile.save()
+
+        # 5. Pending Member
+        self.pending_member = User.objects.create_user(
+            username='pending_patron',
+            email='pending@example.com',
+            password='patronpassword123'
+        )
+        self.pending_member.profile.role = 'MEMBER'
+        self.pending_member.profile.membership_status = 'PENDING'
+        self.pending_member.profile.is_approved = False
+        self.pending_member.profile.save()
+
+        # Test Category
+        self.category = Category.objects.create(name='Classics & Science', description='General Collection')
+
+        # Test Free Book
+        self.free_book = Book.objects.create(
+            title='The Art of Public Domain',
+            isbn='978-0-FREE-001',
+            category=self.category,
+            book_type='EBOOK',
+            description='A completely open public domain educational treatise.'
+        )
+        # Create physical HTML file for free ebook
+        protected_root = Path(getattr(settings, 'PROTECTED_EBOOK_ROOT', settings.BASE_DIR / 'protected_ebooks'))
+        protected_root.mkdir(parents=True, exist_ok=True)
+        free_file = protected_root / 'test_free_book.html'
+        free_file.write_text('<html><body><h1>Free Classic Book Content</h1></body></html>', encoding='utf-8')
+
+        self.free_ebook = EBookMetadata.objects.create(
+            book=self.free_book,
+            protected_filename='test_free_book.html',
+            original_file_name='test_free_book.html',
+            format='HTML',
+            page_count=50,
+            access_level='FREE',
+            access_mode='READ_AND_DOWNLOAD',
+            rights_status='PUBLIC_DOMAIN',
+            is_active=True
+        )
+
+        # Test Members-Only Book
+        self.restricted_book = Book.objects.create(
+            title='Advanced System Architecture',
+            isbn='978-0-RESTRICT-002',
+            category=self.category,
+            book_type='EBOOK',
+            description='A licensed modern engineering manual for active library patrons.'
+        )
+        restricted_file = protected_root / 'test_restricted_book.html'
+        restricted_file.write_text('<html><body><h1>Restricted Member Content</h1></body></html>', encoding='utf-8')
+
+        self.restricted_ebook = EBookMetadata.objects.create(
+            book=self.restricted_book,
+            protected_filename='test_restricted_book.html',
+            original_file_name='test_restricted_book.html',
+            format='HTML',
+            page_count=120,
+            access_level='MEMBERS_ONLY',
+            access_mode='READ_AND_DOWNLOAD',
+            rights_status='LIBRARY_LICENSED',
+            is_active=True
+        )
+
+        # Test Staff-Only Book
+        self.staff_book = Book.objects.create(
+            title='Circulation Staff Desk Procedures',
+            isbn='978-0-STAFF-003',
+            category=self.category,
+            book_type='EBOOK',
+            description='Internal operating procedures.'
+        )
+        staff_file = protected_root / 'test_staff_book.html'
+        staff_file.write_text('<html><body><h1>Staff Manual</h1></body></html>', encoding='utf-8')
+
+        self.staff_ebook = EBookMetadata.objects.create(
+            book=self.staff_book,
+            protected_filename='test_staff_book.html',
+            original_file_name='test_staff_book.html',
+            format='HTML',
+            page_count=45,
+            access_level='STAFF_ONLY',
+            access_mode='READ_ONLY',
+            rights_status='DEMO_ONLY',
+            is_active=True
+        )
+
+    def test_guest_can_browse_homepage_and_catalog(self):
+        """Guest (unauthenticated) can browse the portal home and e-book catalog without login."""
+        guest_client = Client()
+        resp_home = guest_client.get('/')
+        self.assertEqual(resp_home.status_code, 200)
+
+        resp_cat = guest_client.get('/ebooks/')
+        self.assertEqual(resp_cat.status_code, 200)
+        self.assertContains(resp_cat, 'FREE ACCESS')
+        self.assertContains(resp_cat, 'MEMBERS ONLY')
+
+    def test_guest_filter_catalog_by_free_access(self):
+        """Guest can filter the catalog to view only Free e-books."""
+        guest_client = Client()
+        resp = guest_client.get('/ebooks/?access=FREE')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'The Art of Public Domain')
+        self.assertNotContains(resp, 'Advanced System Architecture')
+
+    def test_guest_can_read_and_stream_free_ebook(self):
+        """Guest user CAN open and stream a FREE access e-book without being forced to register."""
+        guest_client = Client()
+        # Detail view
+        resp_detail = guest_client.get(f'/ebooks/{self.free_ebook.id}/')
+        self.assertEqual(resp_detail.status_code, 200)
+        self.assertContains(resp_detail, 'Read Online Now')
+
+        # Read view
+        resp_read = guest_client.get(f'/ebooks/{self.free_ebook.id}/read/')
+        self.assertEqual(resp_read.status_code, 200)
+        self.assertContains(resp_read, f'/ebooks/{self.free_ebook.id}/stream/')
+
+        # Stream view
+        resp_stream = guest_client.get(f'/ebooks/{self.free_ebook.id}/stream/')
+        self.assertEqual(resp_stream.status_code, 200)
+        self.assertIn(b'Free Classic Book Content', b''.join(resp_stream.streaming_content))
+
+    def test_guest_cannot_read_or_stream_members_only_ebook(self):
+        """Guest user CANNOT read, stream, or download a MEMBERS_ONLY e-book."""
+        guest_client = Client()
+
+        # Detail view displays restriction notice and no reader button
+        resp_detail = guest_client.get(f'/ebooks/{self.restricted_ebook.id}/')
+        self.assertEqual(resp_detail.status_code, 200)
+        self.assertContains(resp_detail, 'Membership Required')
+        self.assertContains(resp_detail, 'Apply for Membership')
+        self.assertNotContains(resp_detail, 'Read Online Now')
+
+        # Read view redirects to login with informative notice
+        resp_read = guest_client.get(f'/ebooks/{self.restricted_ebook.id}/read/')
+        self.assertEqual(resp_read.status_code, 302)
+        self.assertIn('/accounts/login/', resp_read.url)
+
+        # Direct stream call returns HTTP 401 Unauthorized
+        resp_stream = guest_client.get(f'/ebooks/{self.restricted_ebook.id}/stream/')
+        self.assertEqual(resp_stream.status_code, 401)
+        self.assertNotIn(b'Restricted Member Content', resp_stream.content)
+        self.assertIn('no-store', resp_stream.headers.get('Cache-Control', ''))
+
+        # Direct download call redirects to login / 401
+        resp_down = guest_client.get(f'/ebooks/{self.restricted_ebook.id}/download/')
+        self.assertEqual(resp_down.status_code, 302)
+
+    def test_active_member_can_read_free_and_members_only_ebooks(self):
+        """Active library member can read both Free and Members-Only e-books."""
+        client = Client()
+        client.force_login(self.active_member)
+
+        # Can read free
+        resp_free = client.get(f'/ebooks/{self.free_ebook.id}/read/')
+        self.assertEqual(resp_free.status_code, 200)
+
+        # Can read members only
+        resp_restricted = client.get(f'/ebooks/{self.restricted_ebook.id}/read/')
+        self.assertEqual(resp_restricted.status_code, 200)
+
+        # Can stream members only
+        resp_stream = client.get(f'/ebooks/{self.restricted_ebook.id}/stream/')
+        self.assertEqual(resp_stream.status_code, 200)
+        self.assertIn(b'Restricted Member Content', b''.join(resp_stream.streaming_content))
+
+    def test_expired_member_denied_access_to_members_only_content(self):
+        """Expired library member is denied access to Members-Only e-books."""
+        client = Client()
+        client.force_login(self.expired_member)
+
+        # Read view returns 403 Membership Required
+        resp_read = client.get(f'/ebooks/{self.restricted_ebook.id}/read/')
+        self.assertEqual(resp_read.status_code, 403)
+        self.assertContains(resp_read, 'Membership Required', status_code=403)
+        self.assertContains(resp_read, 'expired', status_code=403)
+
+        # Stream view returns 403
+        resp_stream = client.get(f'/ebooks/{self.restricted_ebook.id}/stream/')
+        self.assertEqual(resp_stream.status_code, 403)
+
+    def test_suspended_member_denied_access_to_members_only_content(self):
+        """Suspended library member is denied access to Members-Only e-books."""
+        client = Client()
+        client.force_login(self.suspended_member)
+
+        # AccountStatusMiddleware immediately revokes active session and redirects to login (302)
+        resp_read = client.get(f'/ebooks/{self.restricted_ebook.id}/read/')
+        self.assertEqual(resp_read.status_code, 302)
+        self.assertIn('/accounts/login/', resp_read.url)
+
+        # Direct authorization check confirms denial with SUSPENDED code and 403
+        from ebooks.authorization import check_ebook_access
+        access = check_ebook_access(self.suspended_member, self.restricted_ebook)
+        self.assertFalse(access.is_authorized)
+        self.assertEqual(access.status_code, 403)
+        self.assertEqual(access.code, 'SUSPENDED')
+
+    def test_staff_admin_can_access_all_levels_including_staff_only(self):
+        """Staff/Admins can access all e-books including STAFF_ONLY."""
+        client = Client()
+        client.force_login(self.admin)
+
+        resp_staff_read = client.get(f'/ebooks/{self.staff_ebook.id}/read/')
+        self.assertEqual(resp_staff_read.status_code, 200)
+
+        resp_staff_stream = client.get(f'/ebooks/{self.staff_ebook.id}/stream/')
+        self.assertEqual(resp_staff_stream.status_code, 200)
+        self.assertIn(b'Staff Manual', b''.join(resp_staff_stream.streaming_content))
+
+    def test_regular_member_denied_access_to_staff_only_ebook(self):
+        """Regular patrons cannot read or stream STAFF_ONLY e-books."""
+        client = Client()
+        client.force_login(self.active_member)
+
+        resp_read = client.get(f'/ebooks/{self.staff_ebook.id}/read/')
+        self.assertEqual(resp_read.status_code, 403)
+
+        resp_stream = client.get(f'/ebooks/{self.staff_ebook.id}/stream/')
+        self.assertEqual(resp_stream.status_code, 403)
+
+    def test_dynamic_reclassification_enforced_immediately(self):
+        """Changing an e-book from FREE to MEMBERS_ONLY immediately revokes guest access."""
+        guest_client = Client()
+
+        # Initially Free -> Guest can stream
+        resp1 = guest_client.get(f'/ebooks/{self.free_ebook.id}/stream/')
+        self.assertEqual(resp1.status_code, 200)
+
+        # Admin changes classification to MEMBERS_ONLY
+        self.free_ebook.access_level = 'MEMBERS_ONLY'
+        self.free_ebook.save()
+
+        # Next guest request is immediately rejected with 401
+        resp2 = guest_client.get(f'/ebooks/{self.free_ebook.id}/stream/')
+        self.assertEqual(resp2.status_code, 401)
+
 
 

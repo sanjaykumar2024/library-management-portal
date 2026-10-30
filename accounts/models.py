@@ -76,7 +76,11 @@ class UserProfile(models.Model):
         return self.role == 'MEMBER'
 
     def is_active_member(self):
-        return self.membership_status == 'ACTIVE' and self.is_approved
+        if self.membership_status != 'ACTIVE' or not self.is_approved:
+            return False
+        if self.membership_expiry_date and self.membership_expiry_date < timezone.now().date():
+            return False
+        return True
 
     def can_borrow_books(self):
         return self.is_active_member() and self.can_borrow

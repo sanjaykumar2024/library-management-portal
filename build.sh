@@ -43,9 +43,13 @@ else:
     print('✅ Catalog already fully populated (300+ books verified). Skipping heavy ingestion for fast deployment!')
 "
 
+echo "🎨 Ensuring all book cover artwork is present..."
+python manage.py regenerate_book_covers --missing-only
+
 echo "📖 Running automated e-book library audit & repair suite..."
 python manage.py remove_short_ebooks
 python manage.py repair_ebook_library
+python manage.py classify_ebook_access
 
 echo "👤 Ensuring default demo accounts (admin, librarian, member) are active..."
 python manage.py shell -c "

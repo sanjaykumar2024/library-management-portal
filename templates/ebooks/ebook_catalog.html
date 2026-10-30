@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}Digital E-Book Library{% endblock %}
+{% block page_title %}Digital E-Book Library — LibrarySphere{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,14 +18,54 @@
     {% endif %}
 </div>
 
+{% if is_guest %}
+<!-- Guest Welcome & Membership Awareness Banner -->
+<div class="glass-card p-3 p-md-4 mb-4 rounded-4" style="border-left: 4px solid var(--accent-success); background: rgba(16, 185, 129, 0.06);">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div class="d-flex align-items-start gap-3">
+            <div class="rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="background: rgba(16, 185, 129, 0.2); color: #34d399; width: 40px; height: 40px;">
+                <i class="bi bi-compass fs-5"></i>
+            </div>
+            <div>
+                <div class="fw-bold small mb-1" style="color: var(--text-primary);">
+                    Welcome Guest Explorer! <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">Guest Mode</span>
+                </div>
+                <div class="small text-muted" style="line-height: 1.5;">
+                    You are exploring as a guest. All <strong>150+ Free Classic E-Books</strong> are instantly readable with zero login required. Books marked <span class="badge bg-indigo-subtle text-indigo border" style="font-size: 0.7rem;">MEMBERS ONLY</span> require an active library membership.
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-shrink-0">
+            <a href="{% url 'accounts:register' %}" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                <i class="bi bi-person-plus me-1"></i> Apply for Membership
+            </a>
+            <a href="{% url 'ebooks:catalog' %}?access=FREE" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                <i class="bi bi-unlock-fill me-1"></i> Filter Free Books
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Search & Filter Controls -->
 <div class="glass-card p-4 mb-4">
     <form method="GET" class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Search</label>
-            <input type="text" name="q" class="form-control" placeholder="Search by title, author, or ISBN..." value="{{ q }}">
+            <input type="text" name="q" class="form-control" placeholder="Title, author, or ISBN..." value="{{ q }}">
         </div>
         <div class="col-md-3">
+            <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Access Level</label>
+            <select name="access" class="form-select">
+                <option value="">All Access Levels</option>
+                <option value="FREE" {% if selected_access == 'FREE' %}selected{% endif %}>Free Access (Everyone & Guests)</option>
+                <option value="MEMBERS_ONLY" {% if selected_access == 'MEMBERS_ONLY' %}selected{% endif %}>Members Only (Active Card Required)</option>
+                {% if user.profile.is_librarian or user.profile.is_admin %}
+                <option value="STAFF_ONLY" {% if selected_access == 'STAFF_ONLY' %}selected{% endif %}>Staff Only</option>
+                {% endif %}
+            </select>
+        </div>
+        <div class="col-md-2">
             <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Category</label>
             <select name="category" class="form-select">
                 <option value="">All Categories</option>
@@ -34,7 +74,7 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label class="form-label small text-uppercase" style="color: var(--text-secondary); letter-spacing: 1px;">Rights Status</label>
             <select name="rights" class="form-select">
                 <option value="">All Rights Statuses</option>
@@ -53,12 +93,24 @@
 <div class="row g-4">
     {% for ebook in ebooks %}
     <div class="col-md-6 col-lg-4 col-xl-3">
-        <div class="glass-card h-100 d-flex flex-column hover-lift p-3 position-relative">
-            <!-- Cover image or fallback -->
+        <div class="glass-card h-100 d-flex flex-column hover-lift p-3 position-relative rounded-4">
+            <!-- Cover image with robust fallback -->
             <a href="{% url 'ebooks:detail' ebook.id %}" class="text-decoration-none">
                 <div class="book-cover-wrapper mb-3">
                     {% if ebook.book.cover_image %}
-                        <img src="{{ ebook.book.cover_image.url }}" class="book-cover" alt="{{ ebook.book.title }}">
+                        <img src="{{ ebook.book.cover_image.url }}" class="book-cover" alt="{{ ebook.book.title }}" 
+                             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                        <div class="book-cover-fallback d-none">
+                            <div class="fallback-header">{{ ebook.book.category.name|default:"Classic Edition" }}</div>
+                            <div class="fallback-body">
+                                <div class="fallback-title">{{ ebook.book.title }}</div>
+                                <div class="fallback-divider"></div>
+                                <div class="fallback-author">
+                                    {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% empty %}Library Classic{% endfor %}
+                                </div>
+                            </div>
+                            <div class="fallback-footer">LibrarySphere Edition</div>
+                        </div>
                     {% else %}
                         <div class="book-cover-fallback">
                             <div class="fallback-header">{{ ebook.book.category.name|default:"Classic Edition" }}</div>
@@ -77,28 +129,58 @@
 
             <!-- Content -->
             <div class="d-flex flex-column flex-grow-1">
+                <!-- Badges: Access Level + Mode -->
                 <div class="d-flex flex-wrap gap-1 mb-2">
-                    <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">E-Book</span>
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">Read Online</span>
-                    {% if ebook.access_mode == 'READ_AND_DOWNLOAD' %}
-                    <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">Download Available</span>
+                    {% if ebook.access_level == 'FREE' %}
+                    <span class="badge rounded-pill" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.7rem;">
+                        <i class="bi bi-unlock-fill me-1"></i>FREE ACCESS
+                    </span>
+                    {% elif ebook.access_level == 'STAFF_ONLY' %}
+                    <span class="badge rounded-pill" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 0.7rem;">
+                        <i class="bi bi-shield-fill me-1"></i>STAFF ONLY
+                    </span>
+                    {% else %}
+                    <span class="badge rounded-pill" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4); font-size: 0.7rem;">
+                        <i class="bi bi-shield-lock-fill me-1"></i>MEMBERS ONLY
+                    </span>
                     {% endif %}
+
+                    {% if ebook.access_mode == 'READ_AND_DOWNLOAD' %}
+                    <span class="badge rounded-pill" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 0.7rem;">
+                        Downloadable
+                    </span>
+                    {% endif %}
+
                     {% if not ebook.is_active %}
-                    <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3);">Inactive</span>
+                    <span class="badge rounded-pill" style="background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.7rem;">
+                        Inactive
+                    </span>
                     {% endif %}
                 </div>
 
-                <h5 class="h6 text-truncate mb-1" style="color: var(--text-primary);" title="{{ ebook.book.title }}">{{ ebook.book.title }}</h5>
-                <div class="small text-truncate mb-2" style="color: var(--text-secondary);">
+                <h5 class="h6 text-truncate mb-1" style="color: var(--text-primary); font-size: 0.92rem;" title="{{ ebook.book.title }}">
+                    <a href="{% url 'ebooks:detail' ebook.id %}" class="text-decoration-none" style="color: inherit;">{{ ebook.book.title }}</a>
+                </h5>
+                <div class="small text-truncate mb-2" style="color: var(--text-secondary); font-size: 0.78rem;">
                     {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
                 </div>
 
-                <div class="small mb-3" style="color: var(--text-muted);">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> {{ ebook.page_count|default:"--" }} pages &bull; {{ ebook.get_rights_status_display }}
+                <div class="small mb-3" style="color: var(--text-muted); font-size: 0.75rem;">
+                    <i class="bi bi-file-earmark-text me-1"></i> {{ ebook.page_count|default:"--" }} pages &bull; {{ ebook.get_rights_status_display }}
                 </div>
 
+                <!-- Action Button -->
                 <div class="mt-auto pt-2 border-top" style="border-color: var(--glass-border) !important;">
-                    <a href="{% url 'ebooks:detail' ebook.id %}" class="btn btn-sm btn-outline-primary w-100" style="border-color: rgba(99,102,241,0.5);">View & Read</a>
+                    {% if ebook.user_can_read %}
+                    <a href="{% url 'ebooks:read' ebook.id %}" class="btn btn-sm btn-primary w-100 rounded-pill shadow-sm py-2" style="font-size: 0.82rem;">
+                        <i class="bi bi-book-half me-1"></i> Read Online
+                    </a>
+                    {% else %}
+                    <a href="{% url 'ebooks:detail' ebook.id %}" class="btn btn-sm btn-outline-warning w-100 rounded-pill py-2" 
+                       style="border-color: rgba(245, 158, 11, 0.6); color: #fbbf24; font-size: 0.82rem;">
+                        <i class="bi bi-shield-lock me-1"></i> Membership Required
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

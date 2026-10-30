@@ -1,0 +1,62 @@
+{% extends "portal_base.html" %}
+
+{% block page_title %}Membership Required — LibrarySphere{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card p-4 p-md-5 text-center shadow-lg rounded-4" style="border: 1px solid rgba(245, 158, 11, 0.35);">
+                <!-- Animated Lock / Badge Icon -->
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-4" 
+                     style="width: 76px; height: 76px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 2px solid rgba(245, 158, 11, 0.35);">
+                    <i class="bi bi-shield-lock-fill fs-1"></i>
+                </div>
+
+                <div class="mb-2">
+                    <span class="badge rounded-pill px-3 py-1 font-monospace" style="background: rgba(99, 102, 241, 0.2); color: #c7d2fe; font-size: 0.75rem; letter-spacing: 1px;">
+                        MEMBERS ONLY E-BOOK
+                    </span>
+                </div>
+
+                <h3 class="h4 fw-bold mb-2" style="color: var(--text-primary);">
+                    Membership Required
+                </h3>
+
+                {% if ebook %}
+                <h5 class="h6 mb-3 text-truncate" style="color: var(--accent-primary-hover);" title="{{ ebook.book.title }}">
+                    <em>"{{ ebook.book.title }}"</em>
+                </h5>
+                {% endif %}
+
+                <p class="text-secondary small mb-4" style="line-height: 1.7; color: var(--text-secondary);">
+                    {{ error_message|default:"This e-book is available exclusively to active LibrarySphere members. Please sign in with your active library account or submit a quick membership application to unlock instant digital access." }}
+                </p>
+
+                <div class="d-grid gap-2 mb-4">
+                    {% if is_guest %}
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary btn-lg rounded-pill fw-semibold shadow-sm">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Log In to Read
+                    </a>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-warning btn-lg rounded-pill fw-semibold" style="border-color: rgba(245, 158, 11, 0.6); color: #fbbf24;">
+                        <i class="bi bi-person-plus me-2"></i> Apply for Library Membership
+                    </a>
+                    {% else %}
+                    <a href="{% url 'accounts:profile' %}" class="btn btn-primary btn-lg rounded-pill fw-semibold shadow-sm">
+                        <i class="bi bi-person-vcard me-2"></i> View Membership Details & Renew
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'ebooks:catalog' %}?access=FREE" class="btn btn-link text-decoration-none small text-muted">
+                        <i class="bi bi-book me-1"></i> Or browse 150+ 100% Free Classic E-Books
+                    </a>
+                </div>
+
+                <div class="pt-3 border-top small" style="border-color: var(--glass-border) !important; color: var(--text-muted);">
+                    Need assistance? Visit the <a href="{% url 'core:help' %}" class="text-decoration-none" style="color: var(--accent-primary-hover);">Help Center</a> or contact circulation staff.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

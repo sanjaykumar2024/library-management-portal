@@ -264,12 +264,18 @@
                 
                 <!-- Digital E-Book Reader CTA -->
                 {% if book.ebook_metadata and book.ebook_metadata.is_active %}
-                <a href="{% url 'ebooks:read' book.ebook_metadata.id %}" class="btn btn-primary rounded-pill px-4 py-2">
-                    <i class="bi bi-book me-1"></i> Read Online Now
-                </a>
-                <a href="{% url 'ebooks:detail' book.ebook_metadata.id %}" class="btn btn-outline-primary rounded-pill px-3 py-2">
-                    <i class="bi bi-file-earmark-pdf me-1"></i> E-Book Details
-                </a>
+                    {% if book.ebook_metadata.access_level == 'FREE' or user.profile.is_active_member or user.is_staff %}
+                    <a href="{% url 'ebooks:read' book.ebook_metadata.id %}" class="btn btn-primary rounded-pill px-4 py-2">
+                        <i class="bi bi-book me-1"></i> Read Online Now
+                    </a>
+                    {% else %}
+                    <a href="{% url 'ebooks:detail' book.ebook_metadata.id %}" class="btn btn-outline-warning rounded-pill px-4 py-2" style="border-color: rgba(245,158,11,0.6); color: #fbbf24;">
+                        <i class="bi bi-shield-lock me-1"></i> Membership Required to Read
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'ebooks:detail' book.ebook_metadata.id %}" class="btn btn-outline-primary rounded-pill px-3 py-2">
+                        <i class="bi bi-file-earmark-pdf me-1"></i> E-Book Details
+                    </a>
                 {% endif %}
 
                 <!-- Bookshelf Dropdown (For Logged In Users) -->

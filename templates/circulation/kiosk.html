@@ -264,6 +264,7 @@
                 <button type="button" id="btnCheckout" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-lg py-3" onclick="submitCheckout()" disabled>
                     <i class="bi bi-bag-check me-2"></i> Borrow Scanned Books (0)
                 </button>
+                <span id="checkoutTotalCount" class="d-none">0</span>
             </div>
 
             <!-- Step 3 Checkout Complete Summary Card (Visible on Step 3) -->
@@ -619,10 +620,14 @@ function renderCart() {
     const clearBtn = document.getElementById('clearCartBtn');
     const checkoutBtn = document.getElementById('btnCheckout');
     const cartCountEl = document.getElementById('cartCount');
+    const checkoutTotalCountEl = document.getElementById('checkoutTotalCount');
     const count = scannedCopies.length;
 
     if (cartCountEl) {
         cartCountEl.textContent = count;
+    }
+    if (checkoutTotalCountEl) {
+        checkoutTotalCountEl.textContent = count;
     }
 
     if (count === 0) {
@@ -751,23 +756,25 @@ function submitCheckout() {
         }
 
         const loansListEl = document.getElementById('successLoansList');
-        loansListEl.innerHTML = `
-            <h6 class="fw-bold mb-3" style="color: var(--text-primary);"><i class="bi bi-check-circle text-success me-2"></i>Issued to ${data.member_name}:</h6>
-            <div class="d-flex flex-column gap-2">
-                ${data.loans.map(l => `
-                    <div class="p-3 rounded-3 d-flex justify-content-between align-items-center" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
-                        <div>
-                            <div class="fw-semibold" style="color: var(--text-primary);">${l.title}</div>
-                            <div class="small text-muted">Accession: <code class="text-indigo">${l.accession_number}</code></div>
+        if (loansListEl) {
+            loansListEl.innerHTML = `
+                <h6 class="fw-bold mb-3" style="color: var(--text-primary);"><i class="bi bi-check-circle text-success me-2"></i>Issued to ${data.member_name}:</h6>
+                <div class="d-flex flex-column gap-2">
+                    ${data.loans.map(l => `
+                        <div class="p-3 rounded-3 d-flex justify-content-between align-items-center" style="background: var(--glass-bg-hover); border: 1px solid var(--glass-border);">
+                            <div>
+                                <div class="fw-semibold" style="color: var(--text-primary);">${l.title}</div>
+                                <div class="small text-muted">Accession: <code class="text-indigo">${l.accession_number}</code></div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning text-dark font-monospace">Due: ${l.due_date}</span>
+                                <div><a href="${l.receipt_url}" target="_blank" class="small text-indigo text-decoration-none"><i class="bi bi-receipt me-1"></i>Slip</a></div>
+                            </div>
                         </div>
-                        <div class="text-end">
-                            <span class="badge bg-warning text-dark font-monospace">Due: ${l.due_date}</span>
-                            <div><a href="${l.receipt_url}" target="_blank" class="small text-indigo text-decoration-none"><i class="bi bi-receipt me-1"></i>Slip</a></div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+                    `).join('')}
+                </div>
+            `;
+        }
     })
     .catch(err => {
         playErrorTone();

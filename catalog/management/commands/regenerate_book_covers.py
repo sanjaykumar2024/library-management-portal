@@ -32,8 +32,14 @@ class Command(BaseCommand):
 
         for book in books:
             has_cover = bool(book.cover_image and hasattr(book.cover_image, 'name') and book.cover_image.name)
+            file_exists_on_disk = False
+            if has_cover:
+                try:
+                    file_exists_on_disk = os.path.exists(book.cover_image.path)
+                except Exception:
+                    file_exists_on_disk = False
 
-            if missing_only and has_cover:
+            if missing_only and has_cover and file_exists_on_disk:
                 skipped_count += 1
                 continue
 

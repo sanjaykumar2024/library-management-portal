@@ -1,6 +1,6 @@
 {% extends "portal_base.html" %}
 
-{% block page_title %}E-Book Details{% endblock %}
+{% block page_title %}{{ ebook.book.title }} — E-Book Details{% endblock %}
 
 {% block content %}
 <div class="mb-4">
@@ -12,7 +12,19 @@
     <div class="col-md-4 col-lg-3 mb-4">
         <div class="book-cover-wrapper mb-3 shadow-lg">
             {% if ebook.book.cover_image %}
-                <img src="{{ ebook.book.cover_image.url }}" class="book-cover" alt="{{ ebook.book.title }}">
+                <img src="{{ ebook.book.cover_image.url }}" class="book-cover" alt="{{ ebook.book.title }}"
+                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');">
+                <div class="book-cover-fallback d-none">
+                    <div class="fallback-header">{{ ebook.book.category.name|default:"Classic Edition" }}</div>
+                    <div class="fallback-body">
+                        <div class="fallback-title fs-4">{{ ebook.book.title }}</div>
+                        <div class="fallback-divider"></div>
+                        <div class="fallback-author">
+                            {% for author in ebook.book.authors.all %}{{ author.full_name }}{% if not forloop.last %}, {% endif %}{% empty %}Library Classic{% endfor %}
+                        </div>
+                    </div>
+                    <div class="fallback-footer">LibrarySphere Edition</div>
+                </div>
             {% else %}
                 <div class="book-cover-fallback">
                     <div class="fallback-header">{{ ebook.book.category.name|default:"Classic Edition" }}</div>
@@ -48,24 +60,36 @@
 
     <!-- Details Column -->
     <div class="col-md-8 col-lg-9 mb-4">
-        <div class="glass-card p-4 p-lg-5">
+        <div class="glass-card p-4 p-lg-5 rounded-4">
+            <!-- Access & Category Badges -->
             <div class="d-flex flex-wrap gap-2 mb-3">
-                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">{{ ebook.book.category.name }}</span>
-                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">{{ ebook.get_rights_status_display }}</span>
+                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-primary-hover); border: 1px solid rgba(99, 102, 241, 0.3);">
+                    {{ ebook.book.category.name }}
+                </span>
+
+                <!-- Access Level Badge -->
+                {% if ebook.access_level == 'FREE' %}
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">
+                    <i class="bi bi-unlock-fill me-1"></i>FREE ACCESS (Everyone)
+                </span>
+                {% elif ebook.access_level == 'STAFF_ONLY' %}
+                <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">
+                    <i class="bi bi-shield-fill me-1"></i>STAFF ONLY
+                </span>
+                {% else %}
+                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.4);">
+                    <i class="bi bi-shield-lock-fill me-1"></i>MEMBERS ONLY
+                </span>
+                {% endif %}
+
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);">
+                    {{ ebook.get_rights_status_display }}
+                </span>
+
                 {% if can_download %}
                 <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">Download Enabled</span>
                 {% else %}
                 <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); border: 1px solid rgba(245, 158, 11, 0.3);">Read Only</span>
-                {% endif %}
-                
-                {% if ebook.rental_price > 0 %}
-                    {% if has_unlocked %}
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);"><i class="bi bi-unlock-fill me-1"></i>Pass Unlocked</span>
-                    {% else %}
-                    <span class="badge" style="background: rgba(236, 72, 153, 0.2); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3);"><i class="bi bi-tag-fill me-1"></i>₹{{ ebook.rental_price|floatformat:2 }} Pass</span>
-                    {% endif %}
-                {% else %}
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border: 1px solid rgba(16, 185, 129, 0.3);"><i class="bi bi-check-circle-fill me-1"></i>Free Access</span>
                 {% endif %}
             </div>
 
@@ -78,7 +102,7 @@
 
             <!-- Member Access Note -->
             {% if ebook.access_note %}
-            <div class="p-3 mb-4" style="background: rgba(99, 102, 241, 0.1); border-left: 3px solid var(--accent-primary); border-radius: var(--radius-sm);">
+            <div class="p-3 mb-4 rounded" style="background: rgba(99, 102, 241, 0.1); border-left: 3px solid var(--accent-primary); border-radius: var(--radius-sm);">
                 <div class="small fw-semibold mb-1" style="color: var(--accent-primary-hover);"><i class="bi bi-info-circle me-1"></i> Library Notice:</div>
                 <div class="small" style="color: var(--text-primary);">{{ ebook.access_note }}</div>
             </div>
@@ -113,33 +137,57 @@
             </div>
 
             <!-- Action Area -->
+            {% if can_read %}
+            <!-- Authorized Actions for Guest (Free books) or Active Members (All authorized books) -->
             <div class="d-flex flex-wrap gap-3 pt-4 border-top" style="border-color: var(--glass-border) !important;">
-                {% if has_unlocked %}
-                    <a href="{% url 'ebooks:read' ebook.id %}" class="btn btn-primary px-4 py-2">
-                        <i class="bi bi-book-half me-2"></i> Read Online Now
-                    </a>
-                {% else %}
-                    <a href="{% url 'ebooks:unlock' ebook.id %}" class="btn btn-primary px-4 py-2">
-                        <i class="bi bi-unlock-fill me-2"></i> Unlock Pass (₹{{ ebook.rental_price|floatformat:2 }})
-                    </a>
-                {% endif %}
+                <a href="{% url 'ebooks:read' ebook.id %}" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+                    <i class="bi bi-book-half me-2"></i> Read Online Now
+                </a>
 
                 {% if can_download %}
-                    {% if has_unlocked %}
-                        <a href="{% url 'ebooks:download' ebook.id %}" class="btn btn-outline-primary px-4 py-2" style="border-color: rgba(99,102,241,0.5);">
-                            <i class="bi bi-download me-2"></i> Download Document
-                        </a>
-                    {% else %}
-                        <button class="btn btn-outline-primary px-4 py-2" disabled style="border-color: rgba(99,102,241,0.5); opacity: 0.6;">
-                            <i class="bi bi-lock-fill me-2"></i> Unlock to Download
-                        </button>
-                    {% endif %}
+                <a href="{% url 'ebooks:download' ebook.id %}" class="btn btn-outline-primary px-4 py-2 rounded-pill" style="border-color: rgba(99,102,241,0.5);">
+                    <i class="bi bi-download me-2"></i> Download Document
+                </a>
                 {% else %}
-                <button class="btn btn-outline-secondary px-4 py-2" disabled title="This e-book is read-only. Download is disabled by library policy.">
+                <button class="btn btn-outline-secondary px-4 py-2 rounded-pill" disabled title="This e-book is read-only. Download is disabled by library policy.">
                     <i class="bi bi-lock me-2"></i> Download Unavailable (Read-Only)
                 </button>
                 {% endif %}
             </div>
+            {% else %}
+            <!-- Restricted Action Notice (Guests or non-members on restricted books) -->
+            <div class="alert p-4 rounded-4 shadow-sm mb-0 mt-4" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35);">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle p-2 d-flex align-items-center justify-content-center flex-shrink-0" 
+                         style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; width: 44px; height: 44px;">
+                        <i class="bi bi-shield-lock-fill fs-5"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="h6 fw-bold mb-1" style="color: #fbbf24;">Membership Required</h5>
+                        <p class="small mb-3" style="color: var(--text-secondary); line-height: 1.6;">
+                            {{ access_result.reason|default:"Membership Required. This ebook is available exclusively to active LibrarySphere members. Please log in with an active membership or apply for membership to access this book." }}
+                        </p>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if is_guest %}
+                            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                                <i class="bi bi-person-plus me-1"></i> Apply for Membership
+                            </a>
+                            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Log In
+                            </a>
+                            {% else %}
+                            <a href="{% url 'accounts:my_profile' %}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+                                <i class="bi bi-person-vcard me-1"></i> Manage Membership
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'ebooks:catalog' %}?access=FREE" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                <i class="bi bi-book me-1"></i> Explore Free Books
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
         </div>
     </div>

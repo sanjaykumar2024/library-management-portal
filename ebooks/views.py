@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import FileResponse, HttpResponseForbidden, Http404
+from django.http import HttpResponse, FileResponse, HttpResponseForbidden, Http404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
@@ -13,69 +13,19 @@ from catalog.models import Book, Category, EBookMetadata
 from .models import EBookAccessLog
 from .forms import EBookUploadForm, EBookEditForm
 from . import services
+from .authorization import check_ebook_access, is_user_active_member, is_user_staff
 from core.decorators import librarian_required
 
 def is_librarian(user):
-    return user.is_authenticated and (user.profile.is_librarian() or user.profile.is_admin())
+    return is_user_staff(user)
 
 def can_user_access_ebook(user, ebook):
     """
     Checks if a user is permitted to view/read/stream an e-book.
-    Free library e-books (rental_price == 0), public domain, and open licenses
-    are accessible to all visitors and patrons.
-    For paid/restricted e-books, user must be authenticated with active membership
-    and have an active digital reading pass.
+    Delegates directly to the centralized authorization engine.
     """
-    if not ebook.is_active:
-        return False, "This e-book is currently inactive or unavailable."
-
-    if is_librarian(user):
-        return True, ""
-
-    # All free library collection books, public domain classics, and open licenses are open for online reading
-    if ebook.rental_price == 0 or ebook.rights_status in ['PUBLIC_DOMAIN', 'OPEN_LICENSE', 'LIBRARY_LICENSED']:
-        return True, ""
-
-    if not user.is_authenticated:
-        return False, "Authentication required to access this e-book."
-        
-    # Regular member check
-    profile = getattr(user, 'profile', None)
-    if profile:
-        if profile.membership_status == 'SUSPENDED':
-            return False, "Your account has been suspended by the library administration."
-        if not getattr(profile, 'can_access_ebooks', True):
-            return False, "E-book reading privileges have been disabled for this account."
-    if not profile or profile.membership_status != 'ACTIVE':
-        return False, "Active library membership is required to access e-books."
-        
-    # Check concurrent reader limit (15 min active window)
-    if ebook.max_concurrent_readers > 0:
-        from django.utils import timezone
-        import datetime
-        recent_window = timezone.now() - datetime.timedelta(minutes=15)
-        active_readers_count = ebook.access_logs.filter(
-            action='READ',
-            accessed_at__gte=recent_window
-        ).values('user').distinct().count()
-
-        already_reading = False
-        if user.is_authenticated:
-            already_reading = ebook.access_logs.filter(
-                user=user, action='READ', accessed_at__gte=recent_window
-            ).exists()
-        
-        if not already_reading and active_readers_count >= ebook.max_concurrent_readers:
-            return False, f"All {ebook.max_concurrent_readers} simultaneous reader licenses for this e-book are currently in use. Please try again shortly."
-
-    # Check digital reading pass requirement (if rental_price > 0)
-    if ebook.rental_price > 0:
-        from .models import EBookPass
-        has_pass = EBookPass.objects.filter(user=user, ebook=ebook, is_active=True).exists()
-        if not has_pass:
-            return False, "PAYMENT_REQUIRED"
-
-    return True, ""
+    result = check_ebook_access(user, ebook)
+    return result.is_authorized, result.reason
 
 
 
@@ -91,10 +41,11 @@ def get_client_ip(request):
 
 def ebook_catalog_view(request):
     """Public/Member E-Book catalogue with search and filtering."""
-    q = request.GET.get('q', '')
+    q = request.GET.get('q', '').strip()
     category_id = request.GET.get('category', '').strip()
-    rights_status = request.GET.get('rights', '')
-    access_mode = request.GET.get('mode', '')
+    rights_status = request.GET.get('rights', '').strip()
+    access_mode = request.GET.get('mode', '').strip()
+    access_filter = request.GET.get('access', '').strip().upper()
     
     category_obj = Category.resolve(category_id) if category_id else None
     selected_category = str(category_obj.id) if category_obj else (category_id if category_id.isdigit() else '')
@@ -124,18 +75,31 @@ def ebook_catalog_view(request):
         
     if access_mode:
         ebooks = ebooks.filter(access_mode=access_mode)
+
+    if access_filter in ['FREE', 'MEMBERS_ONLY', 'STAFF_ONLY']:
+        ebooks = ebooks.filter(access_level=access_filter)
         
     categories = Category.objects.all().order_by('name')
+
+    # Annotate each e-book card with current user reading permission
+    ebook_list = list(ebooks)
+    for eb in ebook_list:
+        res = check_ebook_access(request.user, eb)
+        eb.user_can_read = res.is_authorized
+        eb.access_code = res.code
     
     context = {
-        'ebooks': ebooks,
+        'ebooks': ebook_list,
         'categories': categories,
         'q': q,
         'selected_category': selected_category,
         'selected_rights': rights_status,
         'selected_mode': access_mode,
+        'selected_access': access_filter,
         'rights_choices': EBookMetadata.RIGHTS_STATUS_CHOICES,
         'mode_choices': EBookMetadata.ACCESS_MODE_CHOICES,
+        'access_choices': EBookMetadata.ACCESS_LEVEL_CHOICES,
+        'is_guest': not (request.user and request.user.is_authenticated),
     }
     return render(request, 'ebooks/ebook_catalog.html', context)
 
@@ -144,11 +108,8 @@ def ebook_detail_view(request, ebook_id):
     """Detailed view for a specific e-book."""
     ebook = get_object_or_404(EBookMetadata.objects.select_related('book', 'book__category', 'uploaded_by'), id=ebook_id)
     
-    from .models import EBookPass
-    if request.user.is_authenticated:
-        has_unlocked = is_librarian(request.user) or (ebook.rental_price == 0) or EBookPass.objects.filter(user=request.user, ebook=ebook, is_active=True).exists()
-    else:
-        has_unlocked = (ebook.rental_price == 0) or (ebook.rights_status == 'PUBLIC_DOMAIN')
+    access_res = check_ebook_access(request.user, ebook)
+    can_read = access_res.is_authorized
 
     # Read & download counts for Librarians/Admins only
     read_count = 0
@@ -159,10 +120,12 @@ def ebook_detail_view(request, ebook_id):
         
     context = {
         'ebook': ebook,
-        'has_unlocked': has_unlocked,
+        'can_read': can_read,
+        'access_result': access_res,
+        'is_guest': not (request.user and request.user.is_authenticated),
         'read_count': read_count,
         'download_count': download_count,
-        'can_download': ebook.access_mode == 'READ_AND_DOWNLOAD',
+        'can_download': ebook.access_mode == 'READ_AND_DOWNLOAD' and can_read,
     }
     return render(request, 'ebooks/ebook_detail.html', context)
 
@@ -171,15 +134,19 @@ def ebook_read_view(request, ebook_id):
     """Online protected reader view."""
     ebook = get_object_or_404(EBookMetadata.objects.select_related('book'), id=ebook_id)
     
-    can_access, reason = can_user_access_ebook(request.user, ebook)
-    if not can_access:
-        if not request.user.is_authenticated:
-            messages.info(request, "Please sign in or use a quick demo login to read this e-book.")
+    access_res = check_ebook_access(request.user, ebook)
+    if not access_res.is_authorized:
+        if access_res.code == 'AUTH_REQUIRED':
+            messages.info(request, "Membership Required. This ebook is available exclusively to active LibrarySphere members. Please log in or apply for membership.")
             return redirect_to_login(request.get_full_path())
-        if reason == "PAYMENT_REQUIRED":
-            return redirect('ebooks:unlock', ebook_id=ebook.id)
-        messages.error(request, reason)
-        return redirect('ebooks:catalog')
+        
+        context = {
+            'ebook': ebook,
+            'error_message': access_res.reason,
+            'error_code': access_res.code,
+            'is_guest': not (request.user and request.user.is_authenticated),
+        }
+        return render(request, 'ebooks/membership_required.html', context, status=access_res.status_code)
         
     # Log the reading access if authenticated
     if request.user.is_authenticated:
@@ -238,12 +205,14 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 @xframe_options_sameorigin
 def ebook_stream_view(request, ebook_id):
-    """Serves inline binary/HTML stream directly to embedded viewer."""
+    """Serves inline binary/HTML stream directly to embedded viewer with strict authorization."""
     ebook = get_object_or_404(EBookMetadata, id=ebook_id)
     
-    can_access, reason = can_user_access_ebook(request.user, ebook)
-    if not can_access:
-        return HttpResponseForbidden(f"Access denied: {reason}")
+    access_res = check_ebook_access(request.user, ebook)
+    if not access_res.is_authorized:
+        response = HttpResponse(access_res.reason, status=access_res.status_code, content_type='text/plain; charset=utf-8')
+        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
+        return response
         
     try:
         file_path = services.get_protected_file_path(ebook)
@@ -261,6 +230,7 @@ def ebook_stream_view(request, ebook_id):
                 response = FileResponse(open(html_companion, 'rb'), content_type='text/html; charset=utf-8')
                 response['Content-Disposition'] = f'inline; filename="{html_companion.name}"'
                 response['X-Frame-Options'] = 'SAMEORIGIN'
+                response['Cache-Control'] = 'private, no-cache, must-revalidate'
                 return response
 
             content_type = 'application/epub+zip'
@@ -275,23 +245,50 @@ def ebook_stream_view(request, ebook_id):
         response = FileResponse(open(file_path, 'rb'), content_type=content_type)
         response['Content-Disposition'] = f'inline; filename="{ebook.original_file_name or "ebook" + default_ext}"'
         response['X-Frame-Options'] = 'SAMEORIGIN'
+        response['Cache-Control'] = 'private, no-cache, must-revalidate'
         return response
     except FileNotFoundError:
         raise Http404("Protected e-book file not found on server storage.")
 
 
-
-@login_required
 def ebook_download_view(request, ebook_id):
     """Handles protected file download for PDF or HTML files."""
     ebook = get_object_or_404(EBookMetadata.objects.select_related('book'), id=ebook_id)
     
-    can_access, reason = can_user_access_ebook(request.user, ebook)
-    if not can_access:
-        if reason == "PAYMENT_REQUIRED":
-            return redirect('ebooks:unlock', ebook_id=ebook.id)
-        messages.error(request, reason)
-        return redirect('ebooks:catalog')
+    access_res = check_ebook_access(request.user, ebook)
+    if not access_res.is_authorized:
+        if access_res.code == 'AUTH_REQUIRED':
+            messages.info(request, "Membership Required. Please log in or apply for an active membership to download this e-book.")
+            return redirect_to_login(request.get_full_path())
+        return HttpResponse(access_res.reason, status=access_res.status_code, content_type='text/plain; charset=utf-8')
+
+    if ebook.access_mode != 'READ_AND_DOWNLOAD':
+        messages.error(request, "This e-book is read-only and cannot be downloaded.")
+        return redirect('ebooks:detail', ebook_id=ebook.id)
+        
+    try:
+        file_path = services.get_protected_file_path(ebook)
+        ext_lower = str(file_path).lower()
+        if ebook.format == 'EPUB' or ext_lower.endswith('.epub'):
+            content_type = 'application/epub+zip'
+            default_ext = '.epub'
+        elif ebook.format == 'HTML' or ext_lower.endswith('.html') or ext_lower.endswith('.htm'):
+            content_type = 'text/html; charset=utf-8'
+            default_ext = '.html'
+        else:
+            content_type = 'application/pdf'
+            default_ext = '.pdf'
+        
+        # Log download access if authenticated
+        if request.user.is_authenticated:
+            services.log_ebook_access(request.user, ebook, 'DOWNLOAD', get_client_ip(request))
+        
+        download_filename = ebook.original_file_name or f"{ebook.book.title}{default_ext}"
+        response = FileResponse(open(file_path, 'rb'), content_type=content_type, as_attachment=True, filename=download_filename)
+        response['Cache-Control'] = 'private, no-cache, must-revalidate'
+        return response
+    except FileNotFoundError:
+        raise Http404("Protected e-book file not found on server storage.")
 
         
     if ebook.access_mode != 'READ_AND_DOWNLOAD':
@@ -460,6 +457,7 @@ def ebook_upload_view(request):
                             description=f"Digital E-Book: {title_clean}"
                         )
 
+                access_level = form.cleaned_data.get('access_level', 'MEMBERS_ONLY')
                 ebook = services.validate_and_save_ebook(
                     file_obj=request.FILES['file'],
                     book=target_book,
@@ -467,11 +465,13 @@ def ebook_upload_view(request):
                     access_mode=form.cleaned_data['access_mode'],
                     rights_status=form.cleaned_data['rights_status'],
                     rights_text=form.cleaned_data['rights_text'],
-                    access_note=form.cleaned_data.get('access_note', '')
+                    access_note=form.cleaned_data.get('access_note', ''),
+                    access_level=access_level
                 )
-                # Save rental price
+                # Save rental price and access level
                 ebook.rental_price = form.cleaned_data.get('rental_price', 0)
-                ebook.save(update_fields=['rental_price'])
+                ebook.access_level = access_level
+                ebook.save(update_fields=['rental_price', 'access_level'])
                 messages.success(request, f"E-Book for '{ebook.book.title}' uploaded successfully ({ebook.page_count} pages).")
                 return redirect('ebooks:manage')
             except ValueError as e:
@@ -492,6 +492,7 @@ def ebook_edit_view(request, ebook_id):
         form = EBookEditForm(request.POST, request.FILES)
         if form.is_valid():
             try:
+                access_level = form.cleaned_data.get('access_level', 'MEMBERS_ONLY')
                 rental_price = form.cleaned_data.get('rental_price', 0)
                 if request.FILES.get('file'):
                     updated_ebook = services.validate_and_save_ebook(
@@ -502,10 +503,12 @@ def ebook_edit_view(request, ebook_id):
                         rights_status=form.cleaned_data['rights_status'],
                         rights_text=form.cleaned_data['rights_text'],
                         access_note=form.cleaned_data.get('access_note', ''),
-                        existing_ebook=ebook
+                        existing_ebook=ebook,
+                        access_level=access_level
                     )
                     updated_ebook.rental_price = rental_price
-                    updated_ebook.save(update_fields=['rental_price'])
+                    updated_ebook.access_level = access_level
+                    updated_ebook.save(update_fields=['rental_price', 'access_level'])
                 else:
                     services.update_ebook_metadata_only(
                         ebook=ebook,
@@ -514,7 +517,8 @@ def ebook_edit_view(request, ebook_id):
                         rights_text=form.cleaned_data['rights_text'],
                         access_note=form.cleaned_data.get('access_note', ''),
                         is_active=form.cleaned_data.get('is_active', True),
-                        rental_price=rental_price
+                        rental_price=rental_price,
+                        access_level=access_level
                     )
                 messages.success(request, f"E-Book '{ebook.book.title}' updated successfully.")
                 return redirect('ebooks:manage')
@@ -522,6 +526,7 @@ def ebook_edit_view(request, ebook_id):
                 messages.error(request, str(e))
     else:
         form = EBookEditForm(initial={
+            'access_level': ebook.access_level,
             'access_mode': ebook.access_mode,
             'rental_price': ebook.rental_price,
             'rights_status': ebook.rights_status,
@@ -651,7 +656,7 @@ def ebook_commons_view(request):
     selected_category = str(category_obj.id) if category_obj else (category_id if category_id.isdigit() else '')
 
     ebooks = EBookMetadata.objects.filter(
-        rights_status='PUBLIC_DOMAIN',
+        access_level='FREE',
         is_active=True
     ).select_related('book', 'book__category').prefetch_related('book__authors')
 
