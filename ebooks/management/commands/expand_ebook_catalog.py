@@ -1441,8 +1441,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE(f"\n🚀 Initiating LibrarySphere Catalog Expansion to 300+ E-Books..."))
         self.stdout.write(f"   Current Books in DB: {initial_books} | Current E-Books: {initial_ebooks}\n")
 
-        # 1. First ensure existing books without ebook metadata (e.g. Echoes of Antiquity) get files
-        missing_ebook_books = Book.objects.filter(ebook_metadata__isnull=True)
+        # 1. First ensure existing books marked for e-book access get files
+        missing_ebook_books = Book.objects.filter(ebook_metadata__isnull=True, book_type__in=['EBOOK', 'BOTH'])
         for b in missing_ebook_books:
             self.stdout.write(self.style.WARNING(f"  ⚡ Synthesizing missing e-book document for existing book: '{b.title}'..."))
             first_author = b.authors.first()

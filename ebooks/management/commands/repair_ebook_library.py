@@ -126,6 +126,22 @@ class Command(BaseCommand):
             title = book.title
             cat_name = book.category.name if book.category else 'General'
             author_name = book.author or 'Author'
+
+            # Library standard: E-books must have at least 25 pages to remain in the digital collection
+            if eb.page_count < 25:
+                fpath = protected_root / eb.protected_filename if eb.protected_filename else None
+                if fpath and fpath.exists():
+                    try:
+                        os.remove(fpath)
+                    except OSError:
+                        pass
+                if book.copies.exists():
+                    book.book_type = 'PHYSICAL'
+                    book.save(update_fields=['book_type'])
+                eb.delete()
+                results.append({'id': eb.id, 'title': title, 'status': 'PRUNED (< 25 pages)', 'pages': eb.page_count})
+                self.stdout.write(f"[{idx}/{total}] Pruned: '{title}' ({eb.page_count} pages < 25 threshold)")
+                continue
             
             fpath = protected_root / eb.protected_filename if eb.protected_filename else None
             needs_repair = force or (not fpath) or (not fpath.exists())

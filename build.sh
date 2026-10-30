@@ -44,6 +44,7 @@ else:
 "
 
 echo "📖 Running automated e-book library audit & repair suite..."
+python manage.py remove_short_ebooks
 python manage.py repair_ebook_library
 
 echo "👤 Ensuring default demo accounts (admin, librarian, member) are active..."
